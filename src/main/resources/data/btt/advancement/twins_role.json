@@ -1,0 +1,20 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:player_head"
+    },
+    "title": "真假美猴王",
+    "description": "在因缘奇遇中，与另一名相同角色的玩家同时存活至结算并共同获胜",
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:modes"
+}

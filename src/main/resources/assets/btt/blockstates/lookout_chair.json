@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "wathe:block/brown_leather_couch"
+    },
+    "facing=east": {
+      "model": "wathe:block/brown_leather_couch",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "wathe:block/brown_leather_couch",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "wathe:block/brown_leather_couch",
+      "y": 270
+    }
+  }
+}

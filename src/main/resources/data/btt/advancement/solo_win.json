@@ -1,0 +1,20 @@
+{
+  "display": {
+    "icon": {
+      "id": "btt:master_key"
+    },
+    "title": "独善其身",
+    "description": "获得独行胜利",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:neutral_win"
+}

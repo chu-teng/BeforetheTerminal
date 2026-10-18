@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "": {
+      "model": "wathe:block/stainless_steel_sprinkler",
+      "x": 270
+    }
+  }
+}

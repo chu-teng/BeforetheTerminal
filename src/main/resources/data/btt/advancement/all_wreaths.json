@@ -1,0 +1,35 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:flowering_azalea"
+    },
+    "title": "满园春色",
+    "description": "获得全部六种花环",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "laurel": {
+      "trigger": "minecraft:impossible"
+    },
+    "lily": {
+      "trigger": "minecraft:impossible"
+    },
+    "spider_lily": {
+      "trigger": "minecraft:impossible"
+    },
+    "iris": {
+      "trigger": "minecraft:impossible"
+    },
+    "gladiolus": {
+      "trigger": "minecraft:impossible"
+    },
+    "artichoke": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:laurel"
+}

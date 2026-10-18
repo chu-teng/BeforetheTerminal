@@ -1,0 +1,20 @@
+{
+  "display": {
+    "icon": {
+      "id": "btt:lantern_trap"
+    },
+    "title": "祸不单行",
+    "description": "单局内使用吊灯和电线机关各杀死至少一个人",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:poison_kill"
+}

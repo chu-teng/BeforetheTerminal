@@ -1,0 +1,20 @@
+{
+  "display": {
+    "icon": {
+      "id": "wathe:mojito"
+    },
+    "title": "亡羊补牢",
+    "description": "作为提线木偶，处决一个乘客",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:mad_conversion"
+}

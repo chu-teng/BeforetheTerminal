@@ -1,0 +1,108 @@
+{
+  "epilogue_majo": {
+    "sounds": []
+  },
+  "epilogue_messiah": {
+    "sounds": []
+  },
+  "epilogue_kidnapper": {
+    "sounds": []
+  },
+  "epilogue_gardener": {
+    "sounds": []
+  },
+  "epilogue_survival": {
+    "sounds": []
+  },
+  "btt_pour_gasoline": {
+    "sounds": [
+      "btt:skill/gasoline_drip"
+    ]
+  },
+  "epilogue_astral": {
+    "sounds": []
+  },
+  "epilogue_cold_wave": {
+    "sounds": []
+  },
+  "btt_pipe_hit": {
+    "sounds": [
+      "btt:item/pipe_hit"
+    ]
+  },
+  "btt_bomb_beep": {
+    "sounds": [
+      "btt:item/bomb_beep"
+    ]
+  },
+  "btt_novelist_correct": {
+    "sounds": [
+      "btt:skill/novelist_success"
+    ]
+  },
+  "btt_flower_grow": {
+    "sounds": [
+      "btt:skill/flower_growth"
+    ]
+  },
+  "btt_flower_bloom": {
+    "sounds": [
+      "btt:skill/flower_devour"
+    ]
+  },
+  "btt_swapper_swap": {
+    "sounds": [
+      "btt:skill/player_swap"
+    ]
+  },
+  "btt_rigger_bind": {
+    "sounds": [
+      "btt:skill/player_bind"
+    ]
+  },
+  "btt_thief_scavenge": {
+    "sounds": [
+      "btt:skill/corpse_search"
+    ]
+  },
+  "btt_judgment": {
+    "sounds": [
+      "btt:skill/death_bell"
+    ]
+  },
+  "btt_star_death": {
+    "sounds": [
+      "btt:skill/death_bell"
+    ]
+  },
+  "btt_ui_key_e": {
+    "sounds": [
+      "btt:ui/key_e"
+    ]
+  },
+  "btt_ui_key_g": {
+    "sounds": [
+      "btt:ui/key_g"
+    ]
+  },
+  "btt_astral_magic": {
+    "sounds": [
+      "btt:skill/magic_death"
+    ]
+  },
+  "btt_trap_lantern": {
+    "sounds": [
+      "btt:item/lantern_creak"
+    ]
+  },
+  "btt_trap_wire": {
+    "sounds": [
+      "btt:item/wire_shock"
+    ]
+  },
+  "btt_cold_wave_contamination": {
+    "sounds": [
+      "btt:skill/cold_wave_contamination"
+    ]
+  }
+}

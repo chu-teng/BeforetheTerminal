@@ -1,0 +1,20 @@
+{
+  "display": {
+    "icon": {
+      "id": "btt:poison_needle"
+    },
+    "title": "不速之客",
+    "description": "以中立类别角色胜利",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false,
+    "background": "wathe:textures/block/dark_marble.png"
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false
+}

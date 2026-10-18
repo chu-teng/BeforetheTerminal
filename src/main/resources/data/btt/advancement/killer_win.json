@@ -1,0 +1,20 @@
+{
+  "display": {
+    "icon": {
+      "id": "wathe:knife"
+    },
+    "title": "无人生还",
+    "description": "作为凶手阵营获胜",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false,
+    "background": "wathe:textures/block/smooth_maroon_steel.png"
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false
+}

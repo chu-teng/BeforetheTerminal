@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "id": "btt",
+  "version": "${version}",
+  "name": "Before the Terminal",
+  "description": "Social deduction aboard a train bound for the terminal station: role abilities, epilogues, drafts and data-pack driven maps, as a standalone add-on mode for Wathe.",
+  "authors": [
+    "hae-si"
+  ],
+  "contributors": [
+    "agmass (NoellesRoles, referenced design)"
+  ],
+  "contact": {
+    "homepage": "https://github.com/chu-teng/BeforetheTerminal",
+    "sources": "https://github.com/chu-teng/BeforetheTerminal",
+    "issues": "https://github.com/chu-teng/BeforetheTerminal/issues"
+  },
+  "license": "LGPL-3.0",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "dev.hae.btt.client.BttDataGenerator"
+    ],
+    "client": [
+      "dev.hae.btt.client.BttClient"
+    ],
+    "main": [
+      "dev.hae.btt.BeforeTheTerminal"
+    ],
+    "cardinal-components": [
+      "dev.hae.btt.BttComponents"
+    ],
+    "voicechat": [
+      "dev.hae.btt.voice.VoiceChatPlugin"
+    ]
+  },
+  "custom": {
+    "cardinal-components": [
+      "btt:ability",
+      "btt:body",
+      "btt:config",
+      "btt:corpse",
+      "btt:curse",
+      "btt:disguise",
+      "btt:draft",
+      "btt:executioner",
+      "btt:game",
+      "btt:letters",
+      "btt:mapvote",
+      "btt:player",
+      "btt:rotation",
+      "btt:shop",
+      "btt:needs",
+      "btt:scavenger",
+      "btt:debate"
+    ]
+  },
+  "mixins": [
+    "btt.mixins.json",
+    {
+      "config": "btt.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}",
+    "java": ">=21",
+    "harpymodloader": ">=1.2.5-h1.4",
+    "wathe": "1.4.1-1.21.1",
+    "yet_another_config_lib_v3": ">=3.8.0+1.21.1-fabric"
+  },
+  "recommends": {
+    "voicechat": "*"
+  },
+  "icon": "assets/btt/icon.png"
+}

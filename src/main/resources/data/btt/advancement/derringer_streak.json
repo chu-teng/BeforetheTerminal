@@ -1,0 +1,20 @@
+{
+  "display": {
+    "icon": {
+      "id": "wathe:derringer"
+    },
+    "title": "百步穿杨",
+    "description": "使用德林加手枪连续射中三次",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:poison_kill"
+}

@@ -1,0 +1,29 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:dragon_egg"
+    },
+    "title": "全剧终？",
+    "description": "分别作为乘客、凶手、独行中立和外人中立获胜",
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "PASSENGER": {
+      "trigger": "minecraft:impossible"
+    },
+    "KILLER": {
+      "trigger": "minecraft:impossible"
+    },
+    "SOLO": {
+      "trigger": "minecraft:impossible"
+    },
+    "OUTSIDER": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:ten_rounds"
+}
