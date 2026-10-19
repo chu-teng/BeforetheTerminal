@@ -127,6 +127,14 @@ jar {
     from("README.zh-CN.md")
 }
 
+tasks.named('sourcesJar', Jar) {
+    from("LICENSE.txt") {
+        rename { "LICENSE_btt" }
+    }
+    from("README.md")
+    from("README.zh-CN.md")
+}
+
 
 publishing {
     publications {

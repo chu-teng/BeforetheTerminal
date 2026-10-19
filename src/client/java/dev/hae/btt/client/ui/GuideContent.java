@@ -19,8 +19,6 @@ import java.util.regex.Pattern;
 
 
 
-
-
 public final class GuideContent {
 
     private GuideContent() {}
@@ -47,7 +45,9 @@ public final class GuideContent {
 
 
     private static final String[] RULE_LABELS =
-            {"类别", "席位", "阵营", "理智", "狂气", "道具", "能力", "处决", "死亡", "尾声", "结局"};
+            {"类别", "席位", "阵营", "理智", "狂气", "道具", "能力", "处决", "死亡", "尾声", "结局",
+                    "Categories.", "Seats.", "Factions.", "Sanity.", "Madness.", "Items.", "Abilities.",
+                    "Executions.", "Death.", "Epilogues.", "Endings."};
 
 
     private static final Pattern ENTRY = Pattern.compile("^(\\d+)?\\s*【([^】]+)】\\s*(.*)$");

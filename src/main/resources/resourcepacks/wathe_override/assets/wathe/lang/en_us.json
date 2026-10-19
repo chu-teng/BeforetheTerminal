@@ -6,12 +6,21 @@
   "announcement.win.killer": "Murderers Win!",
   "credits.wathe.thank_you": "I have long observed things through my own point of view. But that is only seeing with one eye.\nIf you never accept viewpoints other than your own, if you never add more eyes, you cannot observe the truth in three dimensions.\nThat is my explanation of “without love, it cannot be seen.”\n...Without love, it cannot be seen? .......Ha. It is the other way around.\nIt is because there is love that we see things which do not exist at all.\n......It is a mere illusion: visible only to yourself, yet beyond even your own touch.\nIf only there were no love, humanity would be spared from seeing any truth or falsehood.\nAnd it is precisely because we see truth and falsehood....... that we are bewildered. That we suffer. That we cry out.\n- Umineko no Naku Koro ni\n - RAT / doctor4t \n ",
   "game.player.stung": "",
-  "game.tip.cohort": "Murderer Cohort",
+  "game.tip.cohort": "Murderer Ally",
   "game.win.killers": "The murderers reached their kill count, they win!",
   "game.win.passengers": "All murderers were eliminated: the passengers win!",
   "game.win.time": "The murderers ran out of time: the passengers win!",
   "item.wathe.blackout": "Circuit Breaker",
   "item.wathe.body_bag.tooltip": "Wrap a body and carry it away",
   "item.wathe.lockpick": "Door Bolt",
-  "item.wathe.lockpick.tooltip": "Temporarily seal a door; it will reopen on its own"
+  "item.wathe.lockpick.tooltip": "Temporarily seal a door; it will reopen on its own",
+  "itemGroup.wathe.building": "Wathe: Building",
+  "itemGroup.wathe.decoration": "Wathe: Decoration and Utilities",
+  "itemGroup.wathe.equipment": "Wathe: Equipment",
+  "item.wathe.letter": "Grimoire",
+  "item.wathe.old_fashioned": "Black Tea",
+  "item.wathe.mojito": "Vegetable Juice",
+  "item.wathe.martini": "Lemon Water",
+  "item.wathe.cosmopolitan": "Watermelon Juice",
+  "item.wathe.champagne": "Barley Tea"
 }

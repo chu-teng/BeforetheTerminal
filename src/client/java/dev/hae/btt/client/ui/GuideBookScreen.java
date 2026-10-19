@@ -182,7 +182,7 @@ public class GuideBookScreen extends Screen {
         }
         if (tabIndex < 0) return false;
         selectTab(tabIndex, true);
-        int idx = this.sections.indexOf(loc[1]);
+        int idx = this.sections.indexOf(Text.translatable("btt.guide." + loc[0] + "." + loc[1] + ".title").getString());
         if (idx < 0) return true;
         this.sectionIndex = idx;
         this.page = 0;
