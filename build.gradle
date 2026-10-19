@@ -124,7 +124,7 @@ jar {
         rename { "LICENSE_btt" }
     }
     from("README.md")
-    from("README.en.md")
+    from("README.zh-CN.md")
 }
 
 
