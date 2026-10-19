@@ -125,6 +125,7 @@ jar {
     }
     from("README.md")
     from("README.zh-CN.md")
+    from("CREDIT.md")
 }
 
 tasks.named('sourcesJar', Jar) {
@@ -133,6 +134,7 @@ tasks.named('sourcesJar', Jar) {
     }
     from("README.md")
     from("README.zh-CN.md")
+    from("CREDIT.md")
 }
 
 

@@ -1,4 +1,4 @@
-Copyright (c) 2025-2026 hae-si and Before the Terminal contributors
+Copyright (c) 2025-2026 chu-teng and Before the Terminal contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by

@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文**
 
-在一列驶向终点站的快车上，寻找同伴、隐藏角色，并在谎言与真相之间活到最后。
+在一列驶向终点站的快车上进行的社交推理游戏。
 
 终点站抵达之前是 Minecraft 的多人社交推理模组，依赖 Wathe 与 HarpyModLoader。
 
@@ -69,11 +69,13 @@ Linux/macOS 使用 `./gradlew`。专用服首次运行需接受 Minecraft EULA�
 
 ## 致谢与许可
 
-BTT 的代码和文档采用 [GNU LGPL v3 或更新版本](LICENSE.txt)。Copyright © 2025–2026 hae-si and Before the Terminal contributors。第三方内容保留各自许可。
+BTT 的代码和文档采用 [GNU LGPL v3 或更新版本](LICENSE.txt)。Copyright © 2025–2026 chu-teng and Before the Terminal contributors。第三方内容保留各自许可。
 
 玩法灵感来自《Town of Salem》《Blood on the Clocktower》《Goose Goose Duck》等作品。
 
-音效采用 CC0-1.0。可以使用社区的可选尾声音乐资源包。许可证全文随 jar 以 `LICENSE_btt` 附带，本文件与英文版也随 jar 分发。
+音效采用 CC0-1.0。可以使用社区的可选尾声音乐资源包。许可证全文随 jar 以 `LICENSE_btt` 附带，CREDIT.md 及双语 README 也随 jar 分发。
+
+部分工具类改编自 [NoellesRoles](https://github.com/agmass/NoellesRoles)（agmass，LGPL-3.0），继续以 LGPL-3.0 授权。修改包括包名与 modid 调整、删除不适用分支、重命名及 BTT 机制修订，见[CREDIT.md](CREDIT.md)。
 
 | 项目                      | 作者                  | 许可与用途                         |
 | ----------------------- | ------------------- | ----------------------------- |
@@ -85,7 +87,3 @@ BTT 的代码和文档采用 [GNU LGPL v3 或更新版本](LICENSE.txt)。Copyri
 | Cardinal Components API | Ladysnake           | MIT；由 Wathe 内嵌提供              |
 | Simple Voice Chat       | maxhenkel           | All Rights Reserved；语音支持      |
 | Gradle Wrapper          | Gradle contributors | Apache-2.0；构建工具，保留其许可证声明      |
-
-### 改编代码
-
-部分工具类改编自 [NoellesRoles](https://github.com/agmass/NoellesRoles)（agmass，LGPL-3.0），继续以 LGPL-3.0 授权。修改包括包名与 modid 调整、删除不适用分支、重命名及 BTT 机制修订。清单与修改日期见[英文主版本的 Adapted code](README.md#adapted-code)。
