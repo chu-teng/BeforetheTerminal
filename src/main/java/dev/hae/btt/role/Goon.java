@@ -32,7 +32,7 @@ public final class Goon {
                 && GameFunctions.isPlayerAliveAndSurvival(target)
                 && dev.hae.btt.trait.Traits.has(target, dev.hae.btt.trait.Traits.ALLERGIC)
                 && !RoleDefs.isNearbySkill(Roles.effectiveRole(GameWorldComponent.KEY.get(caster.getWorld()), caster)))
-            target.sendMessage(net.minecraft.text.Text.translatable("btt.trait.allergic.notice"), true);
+            target.sendMessage(net.minecraft.text.Text.translatable("btt.trait.allergic.notice").withColor(dev.hae.btt.trait.Traits.ALLERGIC.color()), true);
         var def = RoleDefs.get(Roles.effectiveRole(GameWorldComponent.KEY.get(target.getWorld()), target));
         return def != null && def.intercept(target, caster) || dev.hae.btt.trait.TraitRules.intercept(caster, target);
     }

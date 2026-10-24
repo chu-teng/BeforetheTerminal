@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:netherite_sword"
     },
-    "title": "尼罗河上的惨案",
-    "description": "作为凶手单局内杀死至少五个人",
+    "title": {
+      "translate": "btt.advancement.kill_five.title"
+    },
+    "description": {
+      "translate": "btt.advancement.kill_five.description"
+    },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

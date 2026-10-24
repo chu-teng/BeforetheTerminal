@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:bell"
     },
-    "title": "审判日",
-    "description": "使用魔法杀死非乘客",
+    "title": {
+      "translate": "btt.advancement.magic_kill.title"
+    },
+    "description": {
+      "translate": "btt.advancement.magic_kill.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

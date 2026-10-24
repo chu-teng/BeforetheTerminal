@@ -151,13 +151,24 @@ public class RolePickScreen extends Screen {
             }
             if (!campBuffer.isEmpty()) out.add(new ChoiceRow(List.copyOf(campBuffer)));
         }
+        var client = MinecraftClient.getInstance();
+        if (!camps.isEmpty() && client.world != null
+                && dev.hae.btt.game.GameModes.modeOf(dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(client.world))
+                    == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.DRAFT) {
+            out.add(new HeaderRow(Text.translatable("btt.pick.known")));
+            var known = java.util.Arrays.stream(dev.hae.btt.component.DraftState.KEY.get(client.world).knownRoles.split(","))
+                    .map(Roles::byId).filter(java.util.Objects::nonNull).distinct()
+                    .sorted(java.util.Comparator.comparingInt(dev.hae.btt.game.Scripts::number))
+                    .map(Choice::of).toList();
+            for (int i = 0; i < known.size(); i += columns)
+                out.add(new ChoiceRow(known.subList(i, Math.min(i + columns, known.size()))));
+        }
 
         List<Choice> buffer = new ArrayList<>();
         String currentCategory = null;
         for (Choice choice : identities.stream().sorted(java.util.Comparator.comparing(c -> {
             Role role = Roles.resolve(c.value());
-            return (role == null || Roles.kindOf(role) == null ? 99 : Roles.kindOf(role).ordinal()) * 10000
-                    + GuideContent.roleOrder(role);
+            return dev.hae.btt.game.Scripts.number(role);
         })).toList()) {
             Role role = Roles.resolve(choice.value());
             String category = role == null ? "btt.guide.neutrals.title" : categoryKey(role);
@@ -203,9 +214,10 @@ public class RolePickScreen extends Screen {
         if (kind == null) return "btt.guide.neutrals.title";
         return switch (kind) {
             case ENFORCER -> "btt.guide.passengers.执法乘客.title";
-            case ACTION -> "btt.guide.passengers.行动乘客.title";
-            case INFORMATION -> "btt.guide.passengers.信息乘客.title";
-            case SUPPORT -> "btt.guide.passengers.辅助乘客.title";
+
+
+
+            case CIVILIAN -> "btt.guide.passengers.平民乘客.title";
             case PRINCIPAL -> "btt.guide.killers.主犯凶手.title";
             case ACCOMPLICE -> "btt.guide.killers.从犯凶手.title";
             case LONE -> "btt.guide.neutrals.独行中立.title";

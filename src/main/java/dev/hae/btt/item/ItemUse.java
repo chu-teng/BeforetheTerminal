@@ -43,6 +43,8 @@ public final class ItemUse {
 
     public static void applyCooldown(PlayerEntity player, Item item, int fallbackTicks) {
         if (player.isCreative()) return;
+        if (!player.getItemCooldownManager().isCoolingDown(item) && cooldownTicks(item, fallbackTicks) > 0)
+            dev.hae.btt.record.SkillUseRecording.cooldownSpent(player);
         player.getItemCooldownManager().set(item, cooldownTicks(item, fallbackTicks));
     }
 }

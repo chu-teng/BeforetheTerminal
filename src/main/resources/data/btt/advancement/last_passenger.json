@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:diamond_chestplate"
     },
-    "title": "最后一案",
-    "description": "结算时作为唯一存活乘客阵营成员获胜",
+    "title": {
+      "translate": "btt.advancement.last_passenger.title"
+    },
+    "description": {
+      "translate": "btt.advancement.last_passenger.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

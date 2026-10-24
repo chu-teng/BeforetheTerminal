@@ -43,7 +43,7 @@ public final class RoleDefs {
     private RoleDefs() {}
 
 
-    static final int VETERAN_KNIFE_USES = 3;
+    static final int PRIEST_KNIFE_USES = 3;
 
     public static final int CD_1MIN = GameConstants.getInTicks(1, 0);
 
@@ -68,7 +68,7 @@ public final class RoleDefs {
         def(Roles.MARIONETTE).opening(Decoy::marionette);
         def(Roles.LUNATIC).opening(Decoy::lunatic);
         def(Roles.VOODOO).anyDeath(Voodoo::observeDeath).onDeath(Voodoo::ownerDied).targeted(Voodoo::revive)
-                .outsider("VOODOO", dev.hae.btt.victory.Endings.Ending.VOODOO_WIN, 2);
+                .outsider("VOODOO", dev.hae.btt.victory.Endings.Ending.VOODOO_WIN, 2, dev.hae.btt.registry.Sounds.EPILOGUE_VOODOO);
         def(Roles.ANGEL).initialize(Angel::initialize).nearby(Angel::ready, Angel::guard)
                 .protection(Angel::protects, Angel::redirect).lethal(Angel::allowLethal).onDeath(Angel::died);
         def(Roles.WARDEN).kit(p -> giveWithInitialCd(p, BttItems.CAGE));
@@ -78,6 +78,9 @@ public final class RoleDefs {
         def(Roles.CRAFTSMAN).initialize(p -> initialAbilityCd(p, CD_1MIN)).nearby(Craftsman::ready, Craftsman::use);
         def(Roles.GAMBLER).initialize(Gambler::initialize).roleChoice(Gambler::guess);
         def(Roles.GOON).beforeTargeted(Goon::intercept);
+        def(Roles.ASTRAL).anyDeath((victim, killer, reason) -> KillObjectives.observe(Roles.ASTRAL, victim, killer, reason));
+        def(Roles.KIDNAPPER).anyDeath((victim, killer, reason) -> KillObjectives.observe(Roles.KIDNAPPER, victim, killer, reason));
+        def(Roles.COLD_WAVE).anyDeath((victim, killer, reason) -> KillObjectives.observe(Roles.COLD_WAVE, victim, killer, reason));
 
 
         def(Roles.AGENT).kit(knife());
@@ -123,22 +126,16 @@ public final class RoleDefs {
         def(Roles.TERRORIST).kit(item(BttItems.BOMB));
 
         def(Roles.SWORDSMAN).kit(p -> giveWithInitialCd(p, dev.hae.btt.registry.BttItems.SWORD));
-        def(Roles.VETERAN).initialize(p -> {
-            PlayerState.KEY.get(p).veteranUses = dev.hae.btt.game.GameModes.isDebate(p.getWorld())
-                    ? VETERAN_KNIFE_USES - 1 : VETERAN_KNIFE_USES;
-        }).kit(p -> {
-            knife().give(p);
-
+        def(Roles.VETERAN).kit(knife()).knifeUse(p -> {
+            if (dev.hae.btt.game.GameModes.isDebate(p.getWorld())) removeOne(p, WatheItems.KNIFE);
         });
+        def(Roles.PRIEST).initialize(p -> PlayerState.KEY.get(p).priestKnifeUses = dev.hae.btt.game.GameModes.isDebate(p.getWorld()) ? 1 : PRIEST_KNIFE_USES)
+                .kit(knife()).misexecution(Priest::misexecution);
         revolverKit(Roles.VIGILANTE);
         revolverKit(Roles.RAILWAY_POLICE);
         revolverKit(Roles.JUDGE);
         def(Roles.JUDGE).multiTargeted(RoleDef.distinctTargets(1, 24), MultiTargetAbilities::judge);
         revolverKit(Roles.HUNTER);
-
-
-
-
         revolverKit(Roles.GUNSLINGER);
         revolverKit(Roles.NIGHT_WATCHMAN);
 
@@ -181,20 +178,35 @@ public final class RoleDefs {
         def(Roles.LEECH).targeted(Guard::parasitize).kit(knife());
 
 
-        def(Roles.COMEDIAN).targeted(TargetedAbilities::isolation).initialize(p -> {
-            initialAbilityCd(p, CD_30S);
+        def(Roles.COMEDIAN).targeted(Comedian::inflate).initialize(p -> {
+            initialAbilityCd(p, CD_1MIN);
         }).kit(p -> {
             giveWithInitialCd(p, BttItems.BALLOON);
         });
 
         def(Roles.POPPY_GROWER);
+        def(Roles.HARPY).picks(2).kit(knife()).multiTargeted(RoleDef.distinctTargets(2, 2), Harpy::shroud)
+                .fizzleCooldown(Harpy.COOLDOWN).initialize(p -> initialAbilityCd(p, Harpy.COOLDOWN));
+        Harpy.register();
+        def(Roles.MASTERMIND).kit(knife()).anyDeath(Mastermind::death);
+        def(Roles.LIBRARIAN).targeted(TargetedAbilities::isolation)
+                .initialize(p -> initialAbilityCd(p, CD_30S));
+        def(Roles.WEREWOLF).opening(Werewolf::recruit).onDeath(Werewolf::died)
+                .outsider("WEREWOLF", dev.hae.btt.victory.Endings.Ending.WEREWOLF_WIN, 4, dev.hae.btt.registry.Sounds.EPILOGUE_WEREWOLF);
+        def(Roles.DAMSEL).opening(Damsel::opening).onDeath(Damsel::died);
+        def(Roles.SAINT).onDeath((victim, killer, reason) -> {
+            if (!Drunk.isDrunk(victim)
+                    && dev.hae.btt.trait.TraitRules.passengerExecution(victim, killer, reason))
+                dev.hae.btt.victory.EndingPipeline.factionLoss(victim);
+        });
+        def(Roles.SMUGGLER).self(Smuggler::use).onDeath((victim, killer, reason) -> Smuggler.releaseOwned(victim))
+                .initialize(p -> initialAbilityCd(p, CD_30S));
+        def(Roles.EMPATH).onTick(Empath::tick);
         def(Roles.NOBLE);
-        def(Roles.BALLOONIST);
+
 
         def(Roles.RIOT);
         def(Roles.VORTEX);
-
-
 
         def(Roles.VORTEX).onTick((player, world, gwc) -> {
             if (!GameFunctions.isPlayerAliveAndSurvival(player)) return;
@@ -202,7 +214,7 @@ public final class RoleDefs {
             if (PlayerState.KEY.get(player).isDrunk()) return;
             for (var p : world.getPlayers()) {
                 if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
-                if (p != player && Roles.kindOf(gwc.getRole(p)) == Roles.Kind.INFORMATION) {
+                if (p != player && Roles.kindOf(gwc.getRole(p)) == Roles.Kind.CIVILIAN) {
                     PlayerState.KEY.get(p).applyDrunk(2);
                 }
             }
@@ -219,16 +231,24 @@ public final class RoleDefs {
         def(Roles.RANGER).kit(p -> p.giveItemStack(new ItemStack(Items.BOW)));
 
 
-        def(Roles.PSYCHOPATH).kit(p -> giveWithInitialCd(p, BttItems.FIRE_AXE));
+        def(Roles.PSYCHOPATH).kit(p -> giveWithInitialCd(p, BttItems.FIRE_AXE))
+                .onTick((player, world, game) -> {
+                    var pc = PlayerState.KEY.get(player);
+                    boolean axe = GameFunctions.isPlayerAliveAndSurvival(player)
+                            && (player.getMainHandStack().isOf(BttItems.FIRE_AXE)
+                                || player.getOffHandStack().isOf(BttItems.FIRE_AXE));
+                    if (axe && !pc.holdingFireAxe) {
+                        for (var audience : player.getServerWorld().getPlayers()) {
+                            audience.sendMessage(net.minecraft.text.Text.translatable("btt.action.psychopath.draw", player.getDisplayName()).withColor(Roles.PSYCHOPATH.color()), true);
+                            audience.playSoundToPlayer(dev.hae.btt.registry.Sounds.METAL_NOTICE,
+                                    net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
+                        }
+                    }
+                    pc.holdingFireAxe = axe;
+                });
         def(Roles.DETECTIVE).targeted(TargetedAbilities::detective).initialize(p -> initialAbilityCd(p, CD_1MIN));
 
         def(Roles.INVESTIGATOR).targeted(TargetedAbilities::investigator).initialize(p -> initialAbilityCd(p, CD_1MIN));
-
-        def(Roles.TAILOR)
-                .multiTargeted((user, picks) -> picks.size() == 2
-                        && new java.util.HashSet<>(picks).size() == 2 && !picks.contains(user.getUuid()),
-                        MultiTargetAbilities::tailor)
-                .initialize(p -> initialAbilityCd(p, CD_1MIN));
 
 
         def(Roles.MEDIUM).targeted(Medium::retain).initialize(p -> initialAbilityCd(p, CD_30S));
@@ -260,11 +280,8 @@ public final class RoleDefs {
         def(Roles.LEGION).kit(item(BttItems.POISON_NEEDLE)).poisonRecruit(Legion::recruit).onDeath(Legion::died);
         def(Roles.MAJO).outsider("MAJO", dev.hae.btt.victory.Endings.Ending.MAJO_WIN, 0, dev.hae.btt.registry.Sounds.EPILOGUE_MAJO);
         def(Roles.MESSIAH).outsider("MESSIAH", dev.hae.btt.victory.Endings.Ending.MESSIAH_WIN, 1, dev.hae.btt.registry.Sounds.EPILOGUE_MESSIAH);
-        def(Roles.KIDNAPPER).outsider("KIDNAPPER", dev.hae.btt.victory.Endings.Ending.KIDNAPPER_WIN, 4, dev.hae.btt.registry.Sounds.EPILOGUE_KIDNAPPER);
-        def(Roles.ASTRAL).outsider("ASTRAL", dev.hae.btt.victory.Endings.Ending.ASTRAL_WIN, 5, dev.hae.btt.registry.Sounds.EPILOGUE_ASTRAL);
         def(Roles.GARDENER).outsider("GARDENER", dev.hae.btt.victory.Endings.Ending.GARDENER_WIN, 6, dev.hae.btt.registry.Sounds.EPILOGUE_GARDENER);
-        def(Roles.COLD_WAVE).outsider("COLD_WAVE", dev.hae.btt.victory.Endings.Ending.COLD_WAVE_WIN, 7, dev.hae.btt.registry.Sounds.EPILOGUE_COLD_WAVE);
-        def(Roles.LEGION).outsider("LEGION", dev.hae.btt.victory.Endings.Ending.LEGION_WIN, 3);
+        def(Roles.LEGION).outsider("LEGION", dev.hae.btt.victory.Endings.Ending.LEGION_WIN, 3, dev.hae.btt.registry.Sounds.EPILOGUE_LEGION);
 
         def(Roles.RIGGER).multiTargeted(RoleDef.distinctTargets(2, 2), MultiTargetAbilities::rigger).initialize(p -> {
             initialAbilityCd(p, CD_1MIN);
@@ -295,7 +312,7 @@ public final class RoleDefs {
 
 
 
-        def(Roles.PROPHET).multiTargeted(RoleDef.distinctTargets(3, 3), MultiTargetAbilities::prophet).initialize(p -> initialAbilityCd(p, CD_1MIN));
+        def(Roles.PROPHET).multiTargeted((user, picks) -> picks.size() == 3 && new java.util.HashSet<>(picks).size() >= 2, MultiTargetAbilities::prophet).initialize(p -> initialAbilityCd(p, CD_1MIN));
 
         def(Roles.ASSASSIN).targeted(RoleSelectionAbilities::assassin).initialize(p -> {
             initialAbilityCd(p, CD_1MIN);
@@ -333,12 +350,9 @@ public final class RoleDefs {
 
 
 
-
-        def(Roles.VETERAN).onKill((shooter, victim, reason, gwc) -> {
-            if (reason != GameConstants.DeathReasons.KNIFE) return;
-            PlayerState comp = PlayerState.KEY.get(shooter);
-            comp.veteranUses--;
-            if (comp.veteranUses <= 0) removeOne(shooter, WatheItems.KNIFE);
+        def(Roles.PRIEST).knifeUse(player -> {
+            var state = PlayerState.KEY.get(player);
+            if (--state.priestKnifeUses <= 0) removeOne(player, WatheItems.KNIFE);
         });
 
 
@@ -380,10 +394,10 @@ public final class RoleDefs {
 
 
         def(Roles.JESTER).onKill((shooter, victim, reason, gwc) -> {
-            if (dev.hae.btt.game.GameModes.modeOf(gwc) == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.DUEL
+            if (dev.hae.btt.game.GameModes.modeOf(gwc) == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.SCRIPT
                     && PlayerPsychoComponent.KEY.get(shooter).getPsychoTicks() > 0
                     && victim.getUuidAsString().equals(PlayerState.KEY.get(shooter).jesterExecutioner))
-                dev.hae.btt.game.Duel.complete(shooter);
+                dev.hae.btt.game.ScriptObjectives.complete(shooter);
         }).onTick((player, world, gwc) -> {
             PlayerPsychoComponent psycho = PlayerPsychoComponent.KEY.get(player);
             if (psycho.getPsychoTicks() > 0) {
@@ -416,7 +430,7 @@ public final class RoleDefs {
 
     public static boolean isNearbySkill(dev.doctor4t.wathe.api.Role role) {
         if (get(role) != null && get(role).hasNearby()) return true;
-        return role != null && java.util.Set.of(Roles.PHARMACIST, Roles.COMEDIAN, Roles.BODYGUARD, Roles.LEECH, Roles.MONK,
+        return role != null && java.util.Set.of(Roles.PHARMACIST, Roles.COMEDIAN, Roles.LIBRARIAN, Roles.BODYGUARD, Roles.LEECH, Roles.MONK,
                 Roles.KIDNAPPER, Roles.IMP, Roles.INVESTIGATOR, Roles.EXECUTIONER, Roles.COLD_WAVE,
                 Roles.LAWYER, Roles.VIRGIN, Roles.DETECTIVE).contains(role);
     }
@@ -440,6 +454,7 @@ public final class RoleDefs {
     }
 
     public static boolean killerVictory(ServerWorld world) {
+        if (dev.hae.btt.component.GameState.KEY.get(world).killerObjectiveMet) return true;
         var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world);
         for (ServerPlayerEntity player : world.getPlayers()) {
             if (!player.isAlive() || !GameFunctions.isPlayerAliveAndSurvival(player) || Drunk.isDrunk(player)) continue;

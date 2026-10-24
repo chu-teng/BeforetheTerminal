@@ -38,6 +38,9 @@ public abstract class KidnapHudMixin {
             Text line = mine.digestible
                     ? Text.translatable("btt.hud.kidnapped.timer", secs)
                     : Text.translatable("btt.hud.kidnapped.stuck");
+            if ("SMUGGLER".equals(mine.attachKind)) {
+                line = Text.translatable("btt.hud.smuggler.held");
+            }
 
             context.drawTextWithShadow(tr, line, (right - tr.getWidth(line)) / 2,
                     context.getScaledWindowHeight() / 2 + 20, 0xFFFFFF);

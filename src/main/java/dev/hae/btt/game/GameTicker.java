@@ -52,6 +52,7 @@ public final class GameTicker {
             }
         }
         if (!(gwc.getGameMode() instanceof BeforeTheTerminalGameMode)) return;
+        dev.hae.btt.role.Smuggler.tickWorld(serverWorld);
 
         Debate.tick(serverWorld);
         if (!gwc.isRunning()) {
@@ -61,8 +62,9 @@ public final class GameTicker {
         }
 
         dev.hae.btt.trait.TraitEffects.tickWorld(serverWorld);
+        dev.hae.btt.role.Librarian.refreshListeners(serverWorld);
+        dev.hae.btt.role.Harpy.tick(serverWorld);
         ColdWave.updateSanity(serverWorld);
-        ColdWave.tickContamination(serverWorld);
         ColdWave.tickCorpseSources(serverWorld);
         for (var player : serverWorld.getPlayers()) {
             tickPlayer(player, serverWorld, gwc);
@@ -144,6 +146,7 @@ public final class GameTicker {
 
         if (pc.starGlowTicks > 0 && --pc.starGlowTicks % 20 == 0) pc.sync();
         dev.hae.btt.role.Architect.tick(player);
+        dev.hae.btt.role.Librarian.tickSpeaker(player);
         dev.hae.btt.game.Needs.tick(player);
         Traits.tickMood(player);
         Traits.tickTease(player);

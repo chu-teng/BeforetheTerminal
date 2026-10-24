@@ -30,6 +30,12 @@ public abstract class BackgroundHudMixin {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(client.world);
         if (!(gwc.getGameMode() instanceof BeforeTheTerminalGameMode)) return;
         if (!gwc.isRunning()) return;
+        String script = GameState.KEY.get(client.world).script;
+        if (script != null && !script.isEmpty()) {
+            context.drawTextWithShadow(client.textRenderer,
+                    Text.translatable("btt.script.announce", Text.translatable("btt.script." + script)),
+                    4, client.getWindow().getScaledHeight() - 24, 0xFFFFFF);
+        }
         String id = GameState.KEY.get(client.world).background;
         if (id == null || id.isEmpty()) return;
         Text line = Text.translatable("btt.background.hud", Text.translatable("btt.background." + id));

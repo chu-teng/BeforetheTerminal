@@ -3,11 +3,14 @@
     "icon": {
       "id": "wathe:body_bag"
     },
-    "title": "完美犯罪",
-    "description": "使用裹尸袋移除一具尸体",
+    "title": {
+      "translate": "btt.advancement.body_bag.title"
+    },
+    "description": {
+      "translate": "btt.advancement.body_bag.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {
@@ -16,5 +19,5 @@
     }
   },
   "sends_telemetry_event": false,
-  "parent": "btt:killer_win"
+  "parent": "btt:kill_one"
 }

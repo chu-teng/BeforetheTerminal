@@ -40,7 +40,7 @@ public class ActionPlayerWidget extends SelectPlayerWidget {
             }
             if (AbilityKey.isMultiPick(actingRole)) {
 
-                if (MultiSelectState.isPicked(targetUUID)) {
+                if (actingRole != dev.hae.btt.role.Roles.PROPHET && MultiSelectState.isPicked(targetUUID)) {
                     MultiSelectState.picks().remove(targetUUID);
                 } else {
                     MultiSelectState.picks().add(targetUUID);

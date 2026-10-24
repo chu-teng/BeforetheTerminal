@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:wither_rose"
     },
-    "title": "大疫之年",
-    "description": "作为黑死病带领凶手阵营获胜",
+    "title": {
+      "translate": "btt.advancement.black_death.title"
+    },
+    "description": {
+      "translate": "btt.advancement.black_death.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

@@ -43,8 +43,6 @@ public final class Backgrounds {
     public static final String ZHISHAN = "zhishan";
 
 
-    public static final String UPRISING = "uprising";
-
 
 
 
@@ -81,17 +79,6 @@ public final class Backgrounds {
         return world != null && id != null && IMPLEMENTED.contains(id) && id.equals(GameState.KEY.get(world).background);
     }
 
-
-    private static void uprising(ServerWorld world, List<ServerPlayerEntity> players) {
-        GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
-        for (ServerPlayerEntity player : players) {
-            Role real = dev.hae.btt.role.Roles.realRole(gwc, player);
-            if (real == null || dev.hae.btt.role.Roles.factionOf(real) != dev.hae.btt.role.Roles.Faction.SOLO) continue;
-            dev.hae.btt.role.RoleDefs.giveWithInitialCd(player, dev.doctor4t.wathe.index.WatheItems.KNIFE);
-            player.sendMessage(Text.translatable("btt.background.uprising.knife")
-                    .withColor(real.color()), true);
-        }
-    }
 
 
 
@@ -157,7 +144,7 @@ public final class Backgrounds {
         var game = GameWorldComponent.KEY.get(world);
         var mode = GameModes.modeOf(game);
         if (mode == BeforeTheTerminalGameMode.Mode.MEMORY) players.forEach(Memory::restoreSlip);
-        if (mode != BeforeTheTerminalGameMode.Mode.DUEL) return;
+        if (mode != BeforeTheTerminalGameMode.Mode.SCRIPT) return;
         for (var player : players) {
             var faction = dev.hae.btt.role.Roles.factionOf(dev.hae.btt.role.Roles.realRole(game, player));
             if (faction == dev.hae.btt.role.Roles.Faction.OUTSIDER)

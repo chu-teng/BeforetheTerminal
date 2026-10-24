@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:white_bed"
     },
-    "title": "梦日记",
-    "description": "作为梦游病或星界入梦",
+    "title": {
+      "translate": "btt.advancement.dream_walk.title"
+    },
+    "description": {
+      "translate": "btt.advancement.dream_walk.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

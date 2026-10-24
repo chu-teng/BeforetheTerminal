@@ -3,11 +3,14 @@
     "icon": {
       "id": "wathe:old_fashioned"
     },
-    "title": "但愿长醉不愿醒",
-    "description": "进入一次醉酒状态",
+    "title": {
+      "translate": "btt.advancement.drunk.title"
+    },
+    "description": {
+      "translate": "btt.advancement.drunk.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

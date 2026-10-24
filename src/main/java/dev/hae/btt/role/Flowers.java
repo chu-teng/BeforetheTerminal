@@ -144,7 +144,7 @@ public final class Flowers {
         for (ServerPlayerEntity p : f.world.getPlayers()) {
             if (p.getBlockPos().getSquaredDistance(f.pos) <= HINT_RADIUS * HINT_RADIUS) {
 
-                p.sendMessage(message.copy().formatted(net.minecraft.util.Formatting.GRAY), true);
+                p.sendMessage(message.copy().withColor(Roles.GARDENER.color()), true);
             }
         }
     }

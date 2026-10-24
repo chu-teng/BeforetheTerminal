@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:paper"
     },
-    "title": "舌战群儒",
-    "description": "在辩论模式中，成功地进行一次投票处决",
+    "title": {
+      "translate": "btt.advancement.debate.title"
+    },
+    "description": {
+      "translate": "btt.advancement.debate.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

@@ -33,6 +33,12 @@ public final class Warden {
     }
 
     public static boolean select(ServerPlayerEntity caster, ServerPlayerEntity target, ItemStack cage) {
+        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(caster)) {
+            return selectBody(caster, target, cage);
+        }
+    }
+
+    private static boolean selectBody(ServerPlayerEntity caster, ServerPlayerEntity target, ItemStack cage) {
         var state = PlayerState.KEY.get(caster);
         var prisoner = PlayerState.KEY.get(target);
         if (!caster.isAlive() || caster.isSpectator() || !target.isAlive()
@@ -48,8 +54,9 @@ public final class Warden {
         prisoner.cageChooseDeath = false;
         prisoner.cageForfeit = false;
         prisoner.sync();
-        cage.set(DataComponentTypes.CUSTOM_NAME, ids.size() < 3
-                ? Text.translatable("item.btt.cage.selected", ids.size()) : Text.translatable("item.btt.cage"));
+        cage.set(DataComponentTypes.CUSTOM_NAME, (ids.size() < 3
+                ? Text.translatable("item.btt.cage.selected", ids.size()) : Text.translatable("item.btt.cage"))
+                .styled(style -> style.withItalic(false)));
         if (ids.size() == 3) {
             ItemUse.applyCooldown(caster, BttItems.CAGE, COOLDOWN);
             var redirected = Puppeteer.redirectPicks(caster, ids.stream().map(UUID::fromString).toList());
@@ -100,7 +107,7 @@ public final class Warden {
         String key = PlayerState.KEY.get(player).cageChooseDeath ? "item.btt.cage_choice.death" : "item.btt.cage_choice";
         for (int i = 0; i < player.getInventory().size(); i++) {
             var item = player.getInventory().getStack(i);
-            if (item.isOf(BttItems.CAGE_CHOICE)) item.set(DataComponentTypes.CUSTOM_NAME, Text.translatable(key));
+            if (item.isOf(BttItems.CAGE_CHOICE)) item.set(DataComponentTypes.CUSTOM_NAME, Text.translatable(key).styled(style -> style.withItalic(false)));
         }
         player.currentScreenHandler.syncState();
     }
@@ -115,6 +122,10 @@ public final class Warden {
         if (state.cagePhase == 1) {
             if (targets.size() != 3 || targets.stream().anyMatch(p -> !p.isAlive() || !GameFunctions.isPlayerAliveAndSurvival(p))) {
                 clearGroup(caster); return;
+            }
+            for (ServerPlayerEntity audience : world.getPlayers()) {
+                audience.sendMessage(Text.translatable("btt.action.warden.cage", targets.get(0).getDisplayName(), targets.get(1).getDisplayName(), targets.get(2).getDisplayName()).withColor(Roles.WARDEN.color()), true);
+                audience.playSoundToPlayer(dev.hae.btt.registry.Sounds.METAL_NOTICE, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
             }
             state.cagePhase = 2;
             state.cageAt = world.getTime() + DECISION_TICKS;

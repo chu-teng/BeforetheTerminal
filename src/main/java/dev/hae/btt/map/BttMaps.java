@@ -79,6 +79,18 @@ public final class BttMaps {
         return new ArrayList<>(MAPS.values());
     }
 
+
+    public static BttMapEntry current(net.minecraft.server.world.ServerWorld world) {
+        String dimension = world.getRegistryKey().getValue().toString();
+        var state = dev.hae.btt.component.MapVoteState.KEY.get(world);
+        BttMapEntry selected = get(state.roomsMapId);
+        if (selected != null && dimension.equals(selected.dimension())) return selected;
+        selected = get(dev.hae.btt.component.MapVoteState.KEY.get(world.getServer().getOverworld()).lastSelected);
+        if (selected != null && dimension.equals(selected.dimension())) return selected;
+        List<BttMapEntry> matches = all().stream().filter(e -> dimension.equals(e.dimension())).toList();
+        return matches.size() == 1 ? matches.getFirst() : null;
+    }
+
     public static int count() {
         return MAPS.size();
     }
@@ -145,7 +157,7 @@ public final class BttMaps {
         List<String> out = new ArrayList<>();
         for (BttMapEntry e : MAPS.values()) {
             if (!playableRange(e)) {
-                out.add(e.id() + " (人数区间 " + e.minPlayers() + "~" + e.maxPlayers() + " 与 BTT 6~24 无交集)");
+                out.add(e.id() + " (人数区间 " + e.minPlayers() + "~" + e.maxPlayers() + " 与 BTT 6~22 无交集)");
                 continue;
             }
             if (e.isEligible(playerCount)) continue;

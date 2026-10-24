@@ -43,6 +43,12 @@ public final class RoleDef {
     }
 
     public final Role role;
+    private java.util.function.Consumer<ServerPlayerEntity> misexecution;
+    RoleDef misexecution(java.util.function.Consumer<ServerPlayerEntity> handler) { misexecution = handler; return this; }
+    public void onMisexecution(ServerPlayerEntity player) { if (misexecution != null) misexecution.accept(player); }
+    private java.util.function.Consumer<ServerPlayerEntity> knifeUse;
+    RoleDef knifeUse(java.util.function.Consumer<ServerPlayerEntity> handler) { knifeUse = handler; return this; }
+    public void useKnife(ServerPlayerEntity player) { if (knifeUse != null) knifeUse.accept(player); }
     private Kit kit;
     private java.util.function.Consumer<ServerPlayerEntity> initialize;
     private dev.hae.btt.api.event.BttEvents.Death anyDeath;
@@ -69,6 +75,12 @@ public final class RoleDef {
     }
     private java.util.function.BiPredicate<ServerPlayerEntity, java.util.List<java.util.UUID>> multiInput;
     private MultiTargeted multiTargeted;
+    private int fizzleCooldown;
+    RoleDef fizzleCooldown(int ticks) { fizzleCooldown = ticks; return this; }
+    public int fizzleCooldown() { return fizzleCooldown; }
+    private int fixedPicks;
+    RoleDef picks(int count) { fixedPicks = count; return this; }
+    public int fixedPicks() { return fixedPicks; }
     RoleDef multiTargeted(java.util.function.BiPredicate<ServerPlayerEntity, java.util.List<java.util.UUID>> input,
                           MultiTargeted handler) {
         multiInput = input;

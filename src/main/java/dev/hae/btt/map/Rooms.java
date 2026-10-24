@@ -26,13 +26,11 @@ public final class Rooms {
 
     public static List<BttRoom> activeFor(ServerWorld world) {
         MapVoteState st = MapVoteState.KEY.get(world);
-        if (!st.rooms.isEmpty()) return st.rooms;
-        ServerWorld overworld = world.getServer() == null ? null : world.getServer().getOverworld();
-        if (overworld != null && overworld != world) {
-            List<BttRoom> main = MapVoteState.KEY.get(overworld).rooms;
-            if (!main.isEmpty()) return main;
-        }
-        return List.of();
+        BttMapEntry owner = BttMaps.get(st.roomsMapId);
+        boolean local = owner == null || owner.dimension().equals(world.getRegistryKey().getValue().toString());
+        if (local && (!st.roomsMapId.isEmpty() || !st.rooms.isEmpty())) return st.rooms;
+        BttMapEntry entry = BttMaps.current(world);
+        return entry == null ? List.of() : entry.rooms();
     }
 
 
@@ -141,6 +139,12 @@ public final class Rooms {
         }
         dev.hae.btt.component.GameState state = dev.hae.btt.component.GameState.KEY.get(world);
         state.letterNumbers = csv.toString();
+        state.letterProfiles = new net.minecraft.nbt.NbtCompound();
+        for (var player : ordered) {
+            var profile = new net.minecraft.component.type.ProfileComponent(player.getGameProfile());
+            net.minecraft.component.type.ProfileComponent.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, profile)
+                    .result().ifPresent(tag -> state.letterProfiles.put(player.getUuidAsString(), tag));
+        }
         state.sync();
         BeforeTheTerminalGameMode.LOGGER.info("[BTT] letter numbers assigned for {} player(s)", ordered.size());
     }

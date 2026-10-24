@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:map"
     },
-    "title": "南柯一梦",
-    "description": "在南柯奇遇中参与投票，使对局重新开始",
+    "title": {
+      "translate": "btt.advancement.dream_restart.title"
+    },
+    "description": {
+      "translate": "btt.advancement.dream_restart.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

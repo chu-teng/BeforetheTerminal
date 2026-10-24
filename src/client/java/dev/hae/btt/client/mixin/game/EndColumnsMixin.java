@@ -62,7 +62,7 @@ public abstract class EndColumnsMixin {
 
     @Inject(method = "renderHud", at = @At("HEAD"), cancellable = true)
     private static void bttEndScreen(TextRenderer renderer, ClientPlayerEntity player, DrawContext context, CallbackInfo ci) {
-        if (!SeatAssignment.isBttMode(player.getWorld())) return;
+        if (!SeatAssignment.isBttMode(player.getWorld()) && !GameState.KEY.get(player.getWorld()).roundResultBtt) return;
         GameWorldComponent game = GameWorldComponent.KEY.get(player.getWorld());
         if (!(endTime > 0 && endTime < 200 - (GameConstants.FADE_TIME * 2) && !game.isRunning())) return;
 

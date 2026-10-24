@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:dragon_egg"
     },
-    "title": "全剧终？",
-    "description": "分别作为乘客、凶手、独行中立和外人中立获胜",
+    "title": {
+      "translate": "btt.advancement.all_camps.title"
+    },
+    "description": {
+      "translate": "btt.advancement.all_camps.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

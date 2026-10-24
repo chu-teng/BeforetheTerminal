@@ -9,9 +9,16 @@ public final class PlayerStateSync {
     public static NbtCompound forOwner(NbtCompound saved) {
         NbtCompound view = saved.copy();
         view.remove("tenaciousKiller");
+        view.remove("priestKnifeUses");
         view.remove("jesterExecutioner");
+        view.remove("werewolfOwner");
+        view.remove("smugglerHost");
+        view.remove("smugglerReleaseAt");
+        view.remove("objectiveVictims");
         view.remove("kins");
-        view.remove("balloonReps");
+        view.remove("branchKins");
+        view.remove("drunkKins");
+        view.remove("drunkBranchKins");
         view.remove("advancementRound");
         view.remove("drunkTicks");
         view.remove("philosopherSources");
@@ -33,6 +40,7 @@ public final class PlayerStateSync {
         NbtCompound view = forOwner(saved);
         view.putInt("novelistRequired", (viewer.getServerWorld().getPlayers().size() + 2) / 3);
         var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(viewer.getWorld());
+        view.putBoolean("werewolfAlly", dev.hae.btt.role.Werewolf.member(viewer));
         view.putInt("observedPassiveColor", dev.hae.btt.perception.PlayerObservation.passiveColor(game, viewer, viewer));
         var role = dev.hae.btt.role.Decoy.displayRole(viewer, dev.hae.btt.role.Roles.realRole(game, viewer));
         view.putString("observedGuideRole", game.getGameStatus() == dev.doctor4t.wathe.cca.GameWorldComponent.GameStatus.STARTING

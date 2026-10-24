@@ -3,11 +3,14 @@
     "icon": {
       "id": "wathe:champagne"
     },
-    "title": "找到你了",
-    "description": "作为疯子，杀死主犯",
-    "frame": "challenge",
+    "title": {
+      "translate": "btt.advancement.lunatic_principal.title"
+    },
+    "description": {
+      "translate": "btt.advancement.lunatic_principal.description"
+    },
+    "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

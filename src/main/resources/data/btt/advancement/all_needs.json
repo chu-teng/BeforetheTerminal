@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:cooked_beef"
     },
-    "title": "马斯洛需求层次",
-    "description": "单局内完成全部八种需求",
+    "title": {
+      "translate": "btt.advancement.all_needs.title"
+    },
+    "description": {
+      "translate": "btt.advancement.all_needs.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

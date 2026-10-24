@@ -35,8 +35,8 @@ public final class ServerSettings {
     public record RoundSettings(String script, String encounter) {}
 
     public static BeforeTheTerminalGameMode.Mode configuredMode() {
-        try { return BeforeTheTerminalGameMode.Mode.valueOf(BttConfig.HANDLER.instance().serverMode); }
-        catch (RuntimeException ex) { return BeforeTheTerminalGameMode.Mode.SCRIPT; }
+        try { var mode = BeforeTheTerminalGameMode.Mode.valueOf(BttConfig.HANDLER.instance().serverMode); return mode; }
+        catch (RuntimeException ex) { return BeforeTheTerminalGameMode.Mode.DRAFT; }
     }
     public static boolean isAdmin(UUID uuid) { return ADMINS.contains(uuid); }
 
@@ -167,7 +167,6 @@ public final class ServerSettings {
         }
         BttConfig.HANDLER.save();
         player.sendMessage(Text.translatable("btt.admin.saved"), true);
-        player.closeHandledScreen();
         for (ServerPlayerEntity admin : player.getServer().getPlayerManager().getPlayerList()) AdminEquipment.refresh(admin);
     }
 
@@ -245,8 +244,21 @@ public final class ServerSettings {
         Set<String> opposed = Backgrounds.opposedRoles(encounter);
         if (fixed.stream().filter(Objects::nonNull).anyMatch(role -> opposed.contains(role.identifier().getPath()))) return refuse(world);
         if (Backgrounds.WHIRLPOOL.equals(encounter) && dev.hae.btt.map.Rooms.activeFor(world).stream().filter(room -> !room.spawnPoints().isEmpty()).count() < 2) return refuse(world);
-        String script = !mode.mode.usesScript() ? "" : "random".equals(config.serverScript)
-                ? Scripts.draw(world.getRandom()).id() : config.serverScript;
+        var ready = world.getPlayers(p -> dev.doctor4t.wathe.cca.MapVariablesWorldComponent.KEY.get(world)
+                .getReadyArea().contains(p.getPos()));
+        if (ready.size() < SeatAssignment.MIN_PLAYERS || ready.size() > mode.maxPlayers()) {
+            world.getPlayers().forEach(p -> p.sendMessage(Text.translatable("btt.start_error.player_range",
+                    SeatAssignment.MIN_PLAYERS, mode.maxPlayers(), ready.size()), true));
+            return false;
+        }
+        String script = "";
+        if (mode.mode.usesScript()) {
+            var candidates = Scripts.ALL.stream()
+                    .filter(candidate -> "random".equals(config.serverScript) || candidate.id().equals(config.serverScript))
+                    .toList();
+            if (candidates.isEmpty()) return refuse(world);
+            script = candidates.get(world.getRandom().nextInt(candidates.size())).id();
+        }
         PENDING.put(world, new RoundSettings(script, encounter));
         SeatAssignment.setOpposed(opposed);
         SeatAssignment.setDuplicates(Backgrounds.DUPLICATES.equals(encounter));

@@ -3,11 +3,14 @@
     "icon": {
       "id": "btt:remote"
     },
-    "title": "请君入瓮",
-    "description": "使用机关完成一次击杀",
+    "title": {
+      "translate": "btt.advancement.trap_kill.title"
+    },
+    "description": {
+      "translate": "btt.advancement.trap_kill.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

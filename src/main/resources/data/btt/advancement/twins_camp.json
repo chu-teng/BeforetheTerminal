@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:chain"
     },
-    "title": "同舟共济",
-    "description": "具有双子特质，与双子对象经历一次共同阵营变化",
+    "title": {
+      "translate": "btt.advancement.twins_camp.title"
+    },
+    "description": {
+      "translate": "btt.advancement.twins_camp.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

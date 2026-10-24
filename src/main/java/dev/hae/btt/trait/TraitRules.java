@@ -42,6 +42,12 @@ public final class TraitRules {
                 && dev.hae.btt.encounter.EncounterRules.execution(reason);
     }
 
+    public static boolean passengerExecution(PlayerEntity victim, PlayerEntity killer, Identifier reason) {
+        return DeathReasons.EXECUTION.equals(reason) || killer != null && killer != victim
+                && Roles.isPassengerCampFor(GameWorldComponent.KEY.get(victim.getWorld()), killer)
+                && execution(victim, killer, reason);
+    }
+
     public static boolean harmfulDeath(Identifier reason) {
         if (reason == null || DeathReasons.isSuicide(reason)) return false;
         return java.util.Set.of(GameConstants.DeathReasons.KNIFE, GameConstants.DeathReasons.GUN,

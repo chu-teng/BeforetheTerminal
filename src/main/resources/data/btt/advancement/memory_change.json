@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:oak_boat"
     },
-    "title": "忒修斯之船",
-    "description": "在追忆模式中经历角色变化",
+    "title": {
+      "translate": "btt.advancement.memory_change.title"
+    },
+    "description": {
+      "translate": "btt.advancement.memory_change.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

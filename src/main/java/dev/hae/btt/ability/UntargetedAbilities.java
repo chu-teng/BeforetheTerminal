@@ -69,6 +69,12 @@ public final class UntargetedAbilities {
     }
 
     public static void stowaway(ServerPlayerEntity user) {
+        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
+            stowawayBody(user);
+        }
+    }
+
+    private static void stowawayBody(ServerPlayerEntity user) {
         if (!dev.hae.btt.ability.AbilityRules.canAct(user)) return;
         if (!SeatAssignment.isBttMode(user.getWorld())) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());

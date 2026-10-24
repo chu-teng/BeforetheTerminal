@@ -55,7 +55,7 @@ public final class EncounterRules {
                         ? List.of(Text.translatable("btt.background.storm.absent", SeatAssignment.displayName(protectedRole), SeatAssignment.displayName(protectedRole)))
                         : present.stream().<Text>map(other -> Text.translatable("btt.background.storm.role_present", other.getDisplayName(), SeatAssignment.displayName(protectedRole))).toList())
                         : List.of(Text.translatable("btt.background.storm.role", SeatAssignment.displayName(protectedRole)));
-                p.giveItemStack(slip(killer ? "btt.background.storm.killer" : "btt.background.storm.slip", lore));
+                p.giveItemStack(slip("btt.background.storm.slip", lore));
             }
             state.sync();
         }
@@ -64,7 +64,7 @@ public final class EncounterRules {
 
     private static ItemStack slip(String name, List<Text> lines) {
         var stack = new ItemStack(BttItems.SLIP);
-        stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable(name));
+        stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable(name).styled(style -> style.withItalic(false)));
         stack.set(DataComponentTypes.LORE, new LoreComponent(lines));
         return stack;
     }
@@ -87,8 +87,8 @@ public final class EncounterRules {
         var world = player.getServerWorld();
         var game = GameWorldComponent.KEY.get(world);
         var state = GameState.KEY.get(world);
-        if (game.isRole(player, Roles.SAINT) && !PlayerState.KEY.get(player).saintUsed
-                && !dev.hae.btt.game.GameEvents.saintNotMurder(reason)) return;
+        if (game.isRole(player, Roles.AVIATEUR) && !PlayerState.KEY.get(player).aviateurUsed
+                && !dev.hae.btt.game.GameEvents.aviateurNotMurder(reason)) return;
         boolean sixPaths = Backgrounds.isActive(world, Backgrounds.REBIRTH) && Roles.isPassengerCampFor(game, player)
                 && !state.reborn.contains(player.getUuid().toString())
                 && Arrays.stream(state.reborn.split(";")).filter(s -> !s.isEmpty()).count() < 2;
@@ -206,7 +206,7 @@ public final class EncounterRules {
     }
 
     private static void giveDreamSlip(ServerPlayerEntity player) {
-        var stack = slip("btt.background.dream.slip", List.of(Text.translatable("btt.background.dream.question")));
+        var stack = slip("btt.background.dream.yes", List.of(Text.translatable("btt.background.dream.question")));
         var data = new NbtCompound();
         data.putBoolean("btt_dream", true);
         stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(data));
@@ -221,7 +221,7 @@ public final class EncounterRules {
         if (!allowed.getAsBoolean()) return true;
         boolean yes = Arrays.asList(state.dreamNo.split(",")).contains(player.getUuid().toString());
         vote(player, yes);
-        stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable(yes ? "btt.background.dream.yes" : "btt.background.dream.no"));
+        stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable(yes ? "btt.background.dream.yes" : "btt.background.dream.no").styled(style -> style.withItalic(false)));
         player.currentScreenHandler.syncState();
         return true;
     }

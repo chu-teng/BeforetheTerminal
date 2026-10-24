@@ -41,7 +41,7 @@ public final class GuideContent {
 
     public static final int ACCENT = 0xFFF2B84B;
 
-    public static final int INK = 0xFF392B1B;
+    public static final int INK = 0xFFE4D8C3;
 
 
     private static final String[] RULE_LABELS =
@@ -50,7 +50,7 @@ public final class GuideContent {
                     "Executions.", "Death.", "Epilogues.", "Endings."};
 
 
-    private static final Pattern ENTRY = Pattern.compile("^(\\d+)?\\s*【([^】]+)】\\s*(.*)$");
+    private static final Pattern ENTRY = Pattern.compile("^([ECPAMSO]\\d+[ABC]|\\d+)?\\s*【([^】]+)】\\s*(.*)$");
 
     private static final Pattern ENTRY_LABEL = Pattern.compile("^(\\d+)\\s*[、.．]\\s*([^：:]{1,16})[：:]\\s*(.*)$");
 
@@ -70,10 +70,9 @@ public final class GuideContent {
 
 
             {"items", "免费道具", "乘客基础道具", "凶手基础道具"},
-
-            {"passengers", "执法乘客", "行动乘客", "信息乘客", "辅助乘客"},
+            {"passengers", "执法乘客", "平民乘客"},
             {"killers", "主犯凶手", "从犯凶手"},
-            {"neutrals", "独行中立", "外人中立", "狂人中立"},
+            {"neutrals", "狂人中立", "独行中立", "外人中立"},
             {"traits", "关系特质", "通用特质", "乘客特质", "凶手特质", "独行特质", "外人特质"},
     };
 
@@ -136,9 +135,10 @@ public final class GuideContent {
         if (kind == null) return null;
         return switch (kind) {
             case ENFORCER -> new String[]{"passengers", "执法乘客"};
-            case ACTION -> new String[]{"passengers", "行动乘客"};
-            case INFORMATION -> new String[]{"passengers", "信息乘客"};
-            case SUPPORT -> new String[]{"passengers", "辅助乘客"};
+
+
+
+            case CIVILIAN -> new String[]{"passengers", "平民乘客"};
             case PRINCIPAL -> new String[]{"killers", "主犯凶手"};
             case ACCOMPLICE -> new String[]{"killers", "从犯凶手"};
             case LONE -> new String[]{"neutrals", "独行中立"};

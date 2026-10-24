@@ -3,11 +3,14 @@
     "icon": {
       "id": "btt:walkie_talkie"
     },
-    "title": "东方快车谋杀案",
-    "description": "作为凶手，让凶手阵营总人数达到乘客阵营总人数",
+    "title": {
+      "translate": "btt.advancement.parity.title"
+    },
+    "description": {
+      "translate": "btt.advancement.parity.description"
+    },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

@@ -32,6 +32,7 @@ public class DraftState implements AutoSyncedComponent, ServerTickingComponent {
     private final World world;
 
 
+    public String knownRoles = "";
     public boolean active = false;
 
     public int ordinal = 0;
@@ -61,6 +62,7 @@ public class DraftState implements AutoSyncedComponent, ServerTickingComponent {
 
     @Override
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.@NotNull WrapperLookup lookup) {
+        knownRoles = tag.getString("KnownRoles");
         active = tag.getBoolean("Active");
         ordinal = tag.getInt("Ordinal");
         totalTurns = tag.getInt("Total");
@@ -70,6 +72,7 @@ public class DraftState implements AutoSyncedComponent, ServerTickingComponent {
 
     @Override
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.@NotNull WrapperLookup lookup) {
+        tag.putString("KnownRoles", knownRoles);
         tag.putBoolean("Active", active);
         tag.putInt("Ordinal", ordinal);
         tag.putInt("Total", totalTurns);

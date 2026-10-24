@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:arrow"
     },
-    "title": "斩草除根",
-    "description": "单局内正确进行两次处决",
+    "title": {
+      "translate": "btt.advancement.execution_two.title"
+    },
+    "description": {
+      "translate": "btt.advancement.execution_two.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

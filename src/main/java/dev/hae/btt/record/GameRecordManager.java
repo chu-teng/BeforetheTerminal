@@ -172,7 +172,7 @@ public final class GameRecordManager {
             BeforeTheTerminalGameMode.LOGGER.warn("[BTT] match recorded: {} —— **0 事件**（记录链路可能没接到；"
                     + "见 BttRecordHooks 的事件订阅）", match.id());
         } else {
-            BeforeTheTerminalGameMode.LOGGER.info("[BTT] match recorded: {} ({} events, 不落盘 → 仅 /maps replay 可看)",
+            BeforeTheTerminalGameMode.LOGGER.info("[BTT] match recorded: {} ({} events, 不落盘 → 仅 /btt replay 可看)",
                     match.id(), match.events().size());
         }
 

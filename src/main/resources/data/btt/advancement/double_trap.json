@@ -3,11 +3,14 @@
     "icon": {
       "id": "btt:lantern_trap"
     },
-    "title": "祸不单行",
-    "description": "单局内使用吊灯和电线机关各杀死至少一个人",
+    "title": {
+      "translate": "btt.advancement.double_trap.title"
+    },
+    "description": {
+      "translate": "btt.advancement.double_trap.description"
+    },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

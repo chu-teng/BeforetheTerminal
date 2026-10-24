@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:wither_skeleton_skull"
     },
-    "title": "四签名",
-    "description": "作为唯一存活的凶手获胜",
+    "title": {
+      "translate": "btt.advancement.last_killer.title"
+    },
+    "description": {
+      "translate": "btt.advancement.last_killer.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:respawn_anchor"
     },
-    "title": "起死回生",
-    "description": "通过任意手段复活",
+    "title": {
+      "translate": "btt.advancement.revival.title"
+    },
+    "description": {
+      "translate": "btt.advancement.revival.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

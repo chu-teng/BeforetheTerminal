@@ -59,6 +59,15 @@ public final class GameEvents {
     public static void init() {
         ensureWatheClientConfig();
         registerKitDispatch();
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+                server.execute(() -> LateJoin.placeSpectator(handler.getPlayer())));
+        net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+            if (!(entity instanceof ServerPlayerEntity victim)
+                    || !(source.getAttacker() instanceof PlayerEntity attacker) || attacker == victim) return true;
+            if (!dev.hae.btt.role.Priest.protects(victim, attacker, DeathReasons.MAGIC)) return true;
+            dev.hae.btt.combat.DeathResolution.shieldBreak(victim, attacker);
+            return false;
+        });
         dev.hae.btt.api.event.BttEvents.DeathReaction.EVENT.register((victim, killer, reason) -> dev.hae.btt.role.Warden.died(victim));
         dev.hae.btt.api.event.BttEvents.DeathReaction.EVENT.register((victim, killer, reason) -> {
             if (!SeatAssignment.isBttMode(victim.getWorld())) return;
@@ -176,7 +185,7 @@ public final class GameEvents {
     }
 
 
-    public static boolean saintNotMurder(Identifier reason) {
+    public static boolean aviateurNotMurder(Identifier reason) {
         if (reason == null) return false;
         if (reason.equals(GameConstants.DeathReasons.FELL_OUT_OF_TRAIN)) return true;
         if (reason.equals(dev.hae.btt.combat.DeathReasons.COLLAPSE)) return true;
@@ -218,20 +227,20 @@ public final class GameEvents {
 
         dev.hae.btt.api.event.BttEvents.DeathReaction.EVENT.register((victim, killer, reason) -> {
             if (!SeatAssignment.isBttMode(victim.getWorld())) return;
-            if (!GameWorldComponent.KEY.get(victim.getWorld()).isRole(victim, Roles.SAINT)) return;
-            PlayerState saintPc = PlayerState.KEY.get(victim);
-            if (saintPc.saintUsed || saintNotMurder(reason)) return;
-            saintPc.saintUsed = true;
+            if (!GameWorldComponent.KEY.get(victim.getWorld()).isRole(victim, Roles.AVIATEUR)) return;
+            PlayerState aviateurPc = PlayerState.KEY.get(victim);
+            if (aviateurPc.aviateurUsed || aviateurNotMurder(reason)) return;
+            aviateurPc.aviateurUsed = true;
             if (!GameFunctions.isPlayerAliveAndSurvival(victim)) {
                 victim.changeGameMode(net.minecraft.world.GameMode.ADVENTURE);
             }
-            victim.teleport(victim.getServerWorld(), saintPc.roomX, saintPc.roomY, saintPc.roomZ,
+            victim.teleport(victim.getServerWorld(), aviateurPc.roomX, aviateurPc.roomY, aviateurPc.roomZ,
                     victim.getYaw(), victim.getPitch());
             victim.giveItemStack(new net.minecraft.item.ItemStack(
                     dev.doctor4t.wathe.index.WatheItems.REVOLVER));
 
             dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(victim).setMood(1.0f);
-            saintPc.sync();
+            aviateurPc.sync();
         });
         dev.hae.btt.api.event.BttEvents.DeathReaction.EVENT.register((victim, killer, reason) -> {
             if (!SeatAssignment.isBttMode(victim.getWorld())) return;
@@ -517,9 +526,8 @@ public final class GameEvents {
             if (!SeatAssignment.isBttMode(victim.getWorld())) return true;
 
 
-            if (reason == GameConstants.DeathReasons.FELL_OUT_OF_TRAIN) {
-                return true;
-            }
+            if (dev.hae.btt.trait.TraitRules.voluntaryDeath(victim, killer, reason)
+                    || !dev.hae.btt.trait.TraitRules.harmfulDeath(reason)) return true;
 
             if (dev.hae.btt.role.Gunslinger.unblockable(killer, reason)) return true;
             boolean blocked = Guard.vetoDeath(serverVictim);

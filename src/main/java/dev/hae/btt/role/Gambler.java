@@ -22,6 +22,12 @@ public final class Gambler {
         state.sync();
     }
     public static void guess(ServerPlayerEntity player, String id) {
+        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(player)) {
+            guessBody(player, id);
+        }
+    }
+
+    private static void guessBody(ServerPlayerEntity player, String id) {
         AbilityState ability = AbilityState.KEY.get(player);
         if (ability.cooldown > 0) return;
         var guessed = Roles.byId(id.contains(":") ? id : "btt:" + id);

@@ -124,22 +124,30 @@ public final class BttCommands {
                     .requires(src -> src.hasPermissionLevel(2))
                     .executes(ctx -> listMaps(ctx.getSource()))
                     .then(vote)
-                    .then(weights)
-                    .then(replay)
-                    .then(rotation)
                     .then(rooms)
                     .then(variables)
-                    .then(exportMap));
+                    .then(exportMap)
+                    .then(CommandManager.literal("autoStart")
+                            .executes(ctx -> autoStart(ctx.getSource(), -1))
+                            .then(CommandManager.argument("seconds", IntegerArgumentType.integer(0, 60))
+                                    .executes(ctx -> autoStart(ctx.getSource(), IntegerArgumentType.getInteger(ctx, "seconds")))))
+                    .then(visualCommands())
+                    .then(CommandManager.literal("start")
+                            .executes(ctx -> startHere(ctx.getSource(), 8))
+                            .then(CommandManager.argument("minutes", IntegerArgumentType.integer(1, 60))
+                                    .executes(ctx -> startHere(ctx.getSource(), IntegerArgumentType.getInteger(ctx, "minutes"))))));
 
-
-
-
-            dispatcher.register(CommandManager.literal("start")
+            dispatcher.register(CommandManager.literal("btt")
                     .requires(src -> src.hasPermissionLevel(2))
-                    .executes(ctx -> startHere(ctx.getSource(), 8))
-                    .then(CommandManager.argument("minutes", IntegerArgumentType.integer(1, 60))
-                            .executes(ctx -> startHere(ctx.getSource(),
-                                    IntegerArgumentType.getInteger(ctx, "minutes")))));
+                    .then(weights).then(replay).then(rotation)
+                    .then(CommandManager.literal("timer")
+                            .then(CommandManager.argument("minutes", IntegerArgumentType.integer(0, 240))
+                                    .then(CommandManager.argument("seconds", IntegerArgumentType.integer(0, 59))
+                                            .executes(ctx -> setTimer(ctx.getSource(),
+                                                    IntegerArgumentType.getInteger(ctx, "minutes"),
+                                                    IntegerArgumentType.getInteger(ctx, "seconds")))))));
+
+
         });
     }
 
@@ -154,7 +162,7 @@ public final class BttCommands {
         ServerWorld world = src.getWorld();
         if (!dev.hae.btt.game.SeatAssignment.isBttMode(world)) {
             src.sendMessage(Text.literal("[BTT] 当前维度不是 BTT 局：先用 `/maps vote <id>` 或 "
-                    + "`/execute in <维度> run wathe:mapVariables …` 切到目标地图的维度").formatted(Formatting.RED));
+                    + "`/wathe:mapVariables set gameModeAndMapEffect <模式> <特效>` 设置本维度模式").formatted(Formatting.RED));
             return 0;
         }
         dev.doctor4t.wathe.cca.GameWorldComponent gwc =
@@ -172,8 +180,8 @@ public final class BttCommands {
 
     private static int listMaps(ServerCommandSource src) {
         if (BttMaps.count() == 0) {
-            src.sendMessage(Text.literal("[BTT] 没有已注册的地图（数据包 `data/btt/maps/*.json`，"
-                    + "或 Spark 的 `data/wathe/maps/*.json`／旧版 `data/wathe/areas/*.json`）；"
+            src.sendMessage(Text.literal("[BTT] 没有已注册的地图（数据包 `data/wathe/maps/*.json`，"
+                    + "或旧版 `data/wathe/areas/*.json`）；"
                     + "当前模式下不会有地图投票。").formatted(Formatting.YELLOW));
             return 0;
         }
@@ -234,7 +242,7 @@ public final class BttCommands {
     private static int variablesDumpCmd(ServerCommandSource src) {
         ServerWorld world = src.getWorld();
         src.sendMessage(Text.literal("[BTT] " + dimName(world)
-                + " 的地图变量（贴进 `data/btt/maps/<id>.json`）:").formatted(Formatting.GOLD));
+                + " 的地图变量（贴进 `data/wathe/maps/<id>.json`）:").formatted(Formatting.GOLD));
         for (String line : variablesJson(world).split("\n")) src.sendMessage(Text.literal(line));
         return 1;
     }
@@ -245,14 +253,14 @@ public final class BttCommands {
         var st = roomsStateOf(src);
 
         src.sendMessage(Text.literal("[BTT] 存成 `data/wathe/maps/" + id + ".json`（Spark 标准格式；维度 = "
-                + dimName(world) + "，人数区间默认 6~24）:").formatted(Formatting.GOLD));
+                + dimName(world) + "，人数区间默认 6~22）:").formatted(Formatting.GOLD));
         List<String> out = new ArrayList<>();
         out.add("{");
         out.add("  \"dimension\": \"" + dimName(world) + "\",");
         out.add("  \"display_name\": \"" + id + "\",");
         out.add("  \"description\": \"\",");
         out.add("  \"min_players\": 6,");
-        out.add("  \"max_players\": 24,");
+        out.add("  \"max_players\": 22,");
 
         for (String line : variablesJson(world).split("\n")) out.add(line);
         out.set(out.size() - 1, out.get(out.size() - 1) + ",");
@@ -316,12 +324,9 @@ public final class BttCommands {
         if (isZeroVec(v.getPlayAreaOffset())) notes.add("play_area_offset = (0,0,0)：开局不做游玩区位移（靠 rooms 落点时正常）");
         if (isZeroVec(v.getResetPasteOffset())) notes.add("reset_paste_offset = (0,0,0)：列车重置＝原地覆盖（若 reset 区没配好会覆盖原建筑）");
 
-        if (spawnSet && !v.getReadyArea().contains(spawn.pos)) {
-            notes.add("⚠ 出生点不在 ready_area 内 → 开局 `getReadyPlayerList` 不会算上站/传到该点的玩家");
-        }
-        var st = dev.hae.btt.component.MapVoteState.KEY.get(world);
+        List<BttRoom> effectiveRooms = Rooms.activeFor(world);
         int outside = 0;
-        for (BttRoom room : st.rooms) {
+        for (BttRoom room : effectiveRooms) {
             for (BttRoom.Spawn s : room.spawnPoints()) {
                 if (!v.getPlayArea().contains(new net.minecraft.util.math.Vec3d(s.x(), s.y(), s.z()))) outside++;
             }
@@ -329,12 +334,12 @@ public final class BttCommands {
         if (outside > 0) notes.add("⚠ 有 " + outside + " 个房间出生点不在 play_area 内");
 
         int roomSpawns = 0;
-        for (BttRoom room : st.rooms) roomSpawns += room.spawnPoints().size();
-        if (st.rooms.isEmpty()) {
+        for (BttRoom room : effectiveRooms) roomSpawns += room.spawnPoints().size();
+        if (effectiveRooms.isEmpty()) {
             notes.add("⚠ 该维度没有任何房间（rooms 为空）→ 开局不按房间铺人、回退 wathe 原版落点；"
                     + "补：站到落点执行 `/maps rooms set <房间号>`");
         } else if (roomSpawns == 0) {
-            notes.add("⚠ 房间表里有 " + st.rooms.size() + " 间，但**一个出生点都没有** → 等同没配");
+            notes.add("⚠ 房间表里有 " + effectiveRooms.size() + " 间，但**一个出生点都没有** → 等同没配");
         } else if (roomSpawns < 6) {
             notes.add("⚠ 房间出生点只有 " + roomSpawns + " 个（< 最小 6 人）→ 多人局会出现多人同点");
         }
@@ -349,16 +354,13 @@ public final class BttCommands {
             if (e.rooms().isEmpty()) {
                 entryNotes.add("⚠ " + e.id() + "：条目里**没有 rooms** → 套用该地图后不会按房间落点"
                         + "（该图若需要房间，用 `/maps rooms` 配好后 `/maps export " + e.id() + "` 回写）");
-            } else if (st.rooms.isEmpty()) {
-                entryNotes.add("· " + e.id() + "：条目声明了 " + e.rooms().size()
-                        + " 间房间（尚未套用到本维度 → 本维度运行时房间表为空）");
             }
             if (!BttMaps.playableRange(e)) {
                 entryNotes.add("⚠ " + e.id() + " 的人数区间 " + e.minPlayers() + "~" + e.maxPlayers() + " 与 BTT 6–24 无交集");
             }
             String fx = e.mapEffect();
             if (fx == null || fx.isEmpty()) {
-                entryNotes.add("· " + e.id() + "：map_effect 为空 → 沿用该维度当前特效");
+                entryNotes.add("· " + e.id() + "：未覆盖原生地图特效；当前 = " + dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world).getMapEffect().identifier + "");
             } else {
                 net.minecraft.util.Identifier fid = Identifier.tryParse(fx);
                 if (fid == null || dev.doctor4t.wathe.api.WatheMapEffects.MAP_EFFECTS.get(fid) == null) {
@@ -371,9 +373,13 @@ public final class BttCommands {
             }
             if (enh != null && !enh.baselineLocked().isEmpty()) {
                 entryNotes.add("· " + e.id() + "：" + enh.baselineLocked()
-                        + " 由 wathe 客户端写死（附加模组无法接管；这三张自带地图的取值与 wathe 内置相同，故无视觉差异）");
+                        + " 由 wathe 客户端写死（此配置段未生效，不代表地图变量缺失）");
             }
         }
+        var auto = dev.doctor4t.wathe.cca.AutoStartComponent.KEY.get(world);
+        var train = dev.doctor4t.wathe.cca.TrainWorldComponent.KEY.get(world);
+        notes.add("有效房间 " + effectiveRooms.size() + " 间；自动开局 " + auto.startTime / 20
+                + " 秒（0=关闭）；当前时段 " + train.getTimeOfDay());
         src.sendMessage(Text.literal("[BTT] " + dim + " 地图变量检查：").formatted(Formatting.GOLD));
         if (missing.isEmpty()) {
             src.sendMessage(Text.literal(" ✅ 7 项均已设置（spawn / spectator / ready / play / reset / playOffset / pasteOffset）")
@@ -382,15 +388,79 @@ public final class BttCommands {
             src.sendMessage(Text.literal(" ⚠ 缺失 " + missing.size() + " 项：" + String.join("、", missing))
                     .formatted(Formatting.RED));
         }
-        for (String n : notes) src.sendMessage(Text.literal(" · " + n).formatted(Formatting.YELLOW));
+        for (String n : notes) src.sendMessage(Text.literal(" · " + n).formatted(
+                n.startsWith("⚠") ? Formatting.YELLOW : Formatting.GRAY));
         src.sendMessage(Text.literal(" 注册条目：" + (entries.isEmpty()
-                ? "无（该维度没有 `data/btt/maps/*.json` 条目 → 不会出现在投票里）"
+                ? "无（该维度没有 `data/wathe/maps/*.json` 条目 → 不会出现在投票里）"
                 : String.join("、", entries))).formatted(entries.isEmpty() ? Formatting.RED : Formatting.GRAY));
         for (String n : entryNotes) src.sendMessage(Text.literal(" " + n).formatted(
                 n.startsWith("⚠") ? Formatting.RED : Formatting.GRAY));
         boolean hasWarn = !missing.isEmpty() || notes.stream().anyMatch(n -> n.startsWith("⚠"))
                 || entryNotes.stream().anyMatch(n -> n.startsWith("⚠"));
         return hasWarn ? 0 : 1;
+    }
+
+    private static int autoStart(ServerCommandSource src, int seconds) {
+        var auto = dev.doctor4t.wathe.cca.AutoStartComponent.KEY.get(src.getWorld());
+        if (seconds >= 0) {
+            auto.setStartTime(seconds * 20);
+            auto.reset();
+        }
+        src.sendMessage(Text.literal("[BTT] " + dimName(src.getWorld()) + " 自动开局："
+                + auto.startTime / 20 + " 秒（0=关闭），剩余 " + Math.max(0, auto.getTime()) / 20 + " 秒"));
+        return 1;
+    }
+
+    private static int setTimer(ServerCommandSource src, int minutes, int seconds) {
+        var world = dev.hae.btt.map.MapDimensions.gameWorldOrOverworld(src.getServer());
+        if (world == null || !dev.hae.btt.game.SeatAssignment.isBttMode(world)
+                || !dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world).isRunning()) {
+            src.sendError(Text.literal("[BTT] 当前没有运行中的 BTT 对局。"));
+            return 0;
+        }
+        dev.doctor4t.wathe.cca.GameTimeComponent.KEY.get(world).setTime((minutes * 60 + seconds) * 20);
+        src.sendMessage(Text.literal("[BTT] 本局剩余时间已设为 " + minutes + " 分 " + seconds + " 秒。"));
+        return 1;
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<ServerCommandSource> visualCommands() {
+        var root = CommandManager.literal("visual").executes(ctx -> {
+            var train = dev.doctor4t.wathe.cca.TrainWorldComponent.KEY.get(ctx.getSource().getWorld());
+            var data = new net.minecraft.nbt.NbtCompound();
+            train.writeToNbt(data, ctx.getSource().getWorld().getRegistryManager());
+            ctx.getSource().sendMessage(Text.literal("[BTT] " + data));
+            return 1;
+        });
+        for (String key : List.of("snow", "fog", "hud")) {
+            root.then(CommandManager.literal(key).then(CommandManager.argument("enabled",
+                    com.mojang.brigadier.arguments.BoolArgumentType.bool()).executes(ctx -> {
+                var train = dev.doctor4t.wathe.cca.TrainWorldComponent.KEY.get(ctx.getSource().getWorld());
+                boolean value = com.mojang.brigadier.arguments.BoolArgumentType.getBool(ctx, "enabled");
+                switch (key) {
+                    case "snow" -> train.setSnow(value);
+                    case "fog" -> train.setFog(value);
+                    case "hud" -> train.setHud(value);
+                }
+                ctx.getSource().sendMessage(Text.literal("[BTT] " + key + " = " + value));
+                return 1;
+            })));
+        }
+        root.then(CommandManager.literal("trainSpeed").then(CommandManager.argument("speed",
+                IntegerArgumentType.integer(0)).executes(ctx -> {
+            int speed = IntegerArgumentType.getInteger(ctx, "speed");
+            dev.doctor4t.wathe.cca.TrainWorldComponent.KEY.get(ctx.getSource().getWorld()).setSpeed(speed);
+            ctx.getSource().sendMessage(Text.literal("[BTT] trainSpeed = " + speed));
+            return 1;
+        })));
+        var time = CommandManager.literal("time");
+        for (var value : dev.doctor4t.wathe.cca.TrainWorldComponent.TimeOfDay.values()) {
+            time.then(CommandManager.literal(value.name()).executes(ctx -> {
+                dev.doctor4t.wathe.cca.TrainWorldComponent.KEY.get(ctx.getSource().getWorld()).setTimeOfDay(value);
+                ctx.getSource().sendMessage(Text.literal("[BTT] time = " + value));
+                return 1;
+            }));
+        }
+        return root.then(time);
     }
 
     private static boolean isEmptyBox(Box b) {
@@ -442,17 +512,19 @@ public final class BttCommands {
 
     private static dev.hae.btt.component.MapVoteState roomsStateOf(ServerCommandSource src) {
         var st = dev.hae.btt.component.MapVoteState.KEY.get(src.getWorld());
-        if (!st.rooms.isEmpty() || src.getServer().getOverworld() == src.getWorld()) return st;
-        var main = dev.hae.btt.component.MapVoteState.KEY.get(src.getServer().getOverworld());
-        return main.rooms.isEmpty() ? st : main;
+        var owner = BttMaps.get(st.roomsMapId);
+        if (st.roomsMapId.isEmpty() || (owner != null && !owner.dimension().equals(dimName(src.getWorld())))) {
+            var effective = List.copyOf(Rooms.activeFor(src.getWorld()));
+            st.rooms.clear();
+            st.rooms.addAll(effective);
+            var entry = BttMaps.current(src.getWorld());
+            st.roomsMapId = entry == null ? "custom" : entry.id();
+        }
+        return st;
     }
 
-
     private static ServerWorld roomsWorldOf(ServerCommandSource src) {
-        ServerWorld w = src.getWorld();
-        ServerWorld main = src.getServer().getOverworld();
-        if (w == main || !dev.hae.btt.component.MapVoteState.KEY.get(w).rooms.isEmpty()) return w;
-        return main;
+        return src.getWorld();
     }
 
     private static int roomListCmd(ServerCommandSource src) {
@@ -460,7 +532,7 @@ public final class BttCommands {
         if (st.rooms.isEmpty()) {
             src.sendMessage(Text.literal("[BTT] " + dimName(roomsWorldOf(src)) + " 当前没有房间出生点配置。用法：站到目标点执行 "
                     + "/maps rooms set <房间号> —— 房间号从 1 开始，依次添加出生点；"
-                    + "也可以用数据包 `data/btt/maps/<id>.json` 的 \"rooms\" 或 Spark `enhancements.rooms` 给初值。"
+                    + "也可以用数据包 `data/wathe/maps/<id>.json` 的 \"rooms\" 或 Spark `enhancements.rooms` 给初值。"
                     + "给别的维度配置：/execute in <维度> positioned <x y z> run maps rooms set <房间号>。")
                     .formatted(Formatting.YELLOW));
             return 0;
@@ -536,7 +608,6 @@ public final class BttCommands {
         var st = roomsStateOf(src);
         if (room <= 0) {
             st.rooms.clear();
-            st.roomsMapId = "";
             st.sync();
             src.sendMessage(Text.literal("[BTT] 已清空全部房间出生点（开局恢复 wathe 原版落点）。"));
             return 1;
@@ -583,7 +654,7 @@ public final class BttCommands {
             return 0;
         }
         src.sendMessage(Text.literal("[BTT] " + dimName(roomsWorldOf(src))
-                + " 的房间片段 —— 贴进 `data/btt/maps/<id>.json`（与其它变量同级）:"));
+                + " 的房间片段 —— 贴进 `data/wathe/maps/<id>.json`（与其它变量同级）:"));
         for (String line : BttRoom.listToJson(st.rooms).split("\n")) {
             src.sendMessage(Text.literal(line));
         }
@@ -615,7 +686,7 @@ public final class BttCommands {
             return 0;
         }
         if (dev.hae.btt.record.replay.ReplayPlayer.isPlaying(player)) {
-            src.sendMessage(Text.literal("[BTT] 你已经在看回放了（/maps replay stop 停止）。").formatted(Formatting.YELLOW));
+            src.sendMessage(Text.literal("[BTT] 你已经在看回放了（/btt replay stop 停止）。").formatted(Formatting.YELLOW));
             return 0;
         }
         return dev.hae.btt.record.replay.ReplayPlayer.start(player) ? 1 : 0;

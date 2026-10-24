@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:oxeye_daisy"
     },
-    "title": "百合",
-    "description": "作为乘客正确进行两次处决，获得百合花环",
+    "title": {
+      "translate": "btt.advancement.lily.title"
+    },
+    "description": {
+      "translate": "btt.advancement.lily.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

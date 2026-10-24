@@ -2,27 +2,27 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-A social deduction game played on a fast train heading to the terminal.
+A social deduction game on an express train heading to the terminal.
 
 Before the Terminal is a multiplayer social deduction mod for Minecraft, requiring Wathe and HarpyModLoader.
 
-**Current version: 0.7.0-h1.4.** Extensive testing with human players is still needed. Issue reports are welcome; please include versions, logs and reproduction steps.
+**Development version: 0.7.1-h1.4 (unreleased).** Issue reports are welcome; please include versions, logs and reproduction steps.
 
 ## Gameplay
 
-- **Roles**: 92 roles across three main categories—passengers, murderers and neutrals—and nine subcategories: law enforcement, action, information and support passengers; principal and accomplice murderers; and solo, mad and outsider neutrals. Passengers and murderers oppose each other. Lone neutrals win by fulfilling their own objectives, while outsiders form their own factions.
+- **Roles**: Seven categories: law enforcement and civilian passengers; principal and accomplice murderers; and mad, solo and outsider neutrals. Passengers and murderers oppose each other. Solos pursue individual objectives, while outsiders form their own factions. See the [guide](GUIDE.md) for the current role roster.
 
-- **Factions**: Passengers, murderers, solos and outsiders. Outsiders include expanding factions such as the Cult, Coven, Remnant, Legion, Glutton, Astral, Gardener and Cold Wave.
+- **Factions**: Passenger, murderer, solo and outsider factions. Outsider factions include the Cult, Coven, Remnant, Legion, Gardener and Werewolf.
 
-- **Modes**: Rounds for 6–24 players across five modes: Script, Draft, Duel, Debate and Reminiscence. Each round also features a randomly selected encounter that introduces special rules.
+- **Modes**: Rounds for 6–22 players across four modes: Draft, Script, Debate and Reminiscence. Each round also features a randomly selected encounter that introduces special rules.
 
 - **Systems**: Sanity, madness, executions, wrongful kills, drunkenness, talents, abilities, epilogues and mechanisms.
 
-- **Traits**: Each player receives three traits. Passengers, murderers, lone neutrals and outsiders all have faction-specific traits; relationship traits are assigned between pairs of players.
+- **Traits**: Each player receives three traits. Passengers, murderers, solo neutrals and outsiders all have faction-specific traits; relationship traits are assigned between pairs of players.
 
 - **Maps**: Data-pack driven worlds supporting multiple maps, compatible with the Spark format.
 
-- **Advancements**: Wreaths are awarded at the end of each round: Laurel, Spider Lily, Iris, Lily, Gladiolus and Artichoke. Nearly a hundred custom advancements span five tabs: Before the Terminal, Until We Meet Again, And Then There Were None, Uninvited Guests and Wandering the Crossroads.
+- **Advancements**: Wreaths are awarded at the end of each round: Laurel, Spider Lily, Iris, Lily, Gladiolus and Artichoke. Custom advancements span five tabs: Before the Terminal, Until We Meet Again, And Then There Were None, Uninvited Guests and Wandering the Crossroads.
 
 ## Playing
 
@@ -35,11 +35,13 @@ Requires Minecraft **1.21.1**, Java **21** and Fabric Loader **0.17.2+**. Instal
 | [HarpyModLoader](https://modrinth.com/mod/harpymodloader) | 1.2.5-h1.4                                        |
 | Ratatouille                                               | 1.4.3-1.21.1                                      |
 | YetAnotherConfigLib                                       | 3.8.0+1.21.1-fabric or a compatible newer release |
-| Simple Voice Chat                                         | Required for voice communication                  |
+| Simple Voice Chat                                         | Recommended; required for voice-based abilities and communication                  |
 
 **Maps are not included.** Supply a map and its data pack separately. For example, the Harpy Express map requires rooms and spawn points to be added to its data pack. Community maps are recommended. Place a control panel at the front of the train and a lookout seat at the rear, along with one or two sets each of chandelier and wire mechanisms in the corridors; these are required for normal gameplay.
 
-Right-click the compass to select the mode, script and encounter. Use `/maps` to select a registered map. Pull the whistle to start a round, or use `/wathe:start btt:before_the_terminal <map_identifier>` as an administrator.
+Right-click the compass to select the mode, script and encounter. Use `/maps vote` to start a map vote, or `/maps vote <id>` to select a registered map directly. Pull the whistle to start a round, or use `/maps start` (using the selected next-round mode) or `/wathe:start btt:before_the_terminal wathe:harpy_express_night` as an administrator.
+
+Replay controls are under `/btt replay [play|stop]`; map-specific settings are under `/maps`. MidnightLib is bundled by Wathe and does not require a separate download for normal play.
 
 Default keys: **G** for abilities, **E** for inventory and available shops, and **K** for the guide. Use `/forceRole` and `/forceModifier` to specify roles and traits for the next round.
 
@@ -61,7 +63,7 @@ Gradle downloads the remaining dependencies. On Windows:
 .\gradlew.bat runServer
 ```
 
-Use `./gradlew` on Linux/macOS. Accept the Minecraft EULA before running a dedicated server for the first time. The mod is built as `build/libs/BeforetheTerminal-0.7.0-h1.4.jar`; the `-sources.jar` contains the corresponding source code.
+Use `./gradlew` on Linux/macOS. Accept the Minecraft EULA before running a dedicated server for the first time. The mod is built as `build/libs/BeforetheTerminal-0.7.1-h1.4.jar`; the `-sources.jar` contains the corresponding source code.
 
 ## Feedback
 
@@ -73,9 +75,9 @@ BTT code and documentation are licensed under the [GNU LGPL version 3 or later](
 
 Gameplay draws inspiration from Town of Salem, Blood on the Clocktower and Goose Goose Duck.
 
-Sound effects use CC0-1.0. Optional community epilogue music resource packs may be used. Full license texts are packaged as `LICENSE_btt`, together with CREDIT.md and both README files.
+Sound effects use CC0-1.0. Epilogue music is bundled with the mod. Full license texts are packaged as `LICENSE_btt`, together with CREDITS.md and both README files.
 
-Some utility classes are adapted from [NoellesRoles](https://github.com/agmass/NoellesRoles) (agmass, LGPL-3.0) and continue to be licensed under LGPL-3.0. The modifications include package name and modid adjustments, removal of unused branches, renaming, and revisions to the BTT mechanism; see [CREDIT.md](CREDIT.md).
+Some utility classes are adapted from [NoellesRoles](https://github.com/agmass/NoellesRoles) (agmass, LGPL-3.0) and continue to be licensed under LGPL-3.0. The modifications include package name and modid adjustments, removal of unused branches, renaming, and revisions to BTT mechanics; see [CREDITS.md](CREDITS.md).
 
 | Project                 | Author              | License and use                                              |
 | ----------------------- | ------------------- | ------------------------------------------------------------ |

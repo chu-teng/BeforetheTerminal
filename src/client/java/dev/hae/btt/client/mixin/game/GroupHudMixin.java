@@ -38,16 +38,14 @@ public abstract class GroupHudMixin {
         if (!(gwc.getGameMode() instanceof BeforeTheTerminalGameMode)) return;
         if (!gwc.isRunning()) return;
         boolean noble = gwc.isRole(player, Roles.NOBLE);
-        boolean balloonist = gwc.isRole(player, Roles.BALLOONIST);
-        if (!noble && !balloonist) return;
+        if (!noble) return;
 
         if (target == null || target == player || nametagAlpha <= 0.05f) return;
 
         String group = PlayerState.KEY.get(target).observedGroup;
-        String expected = noble ? "btt.hud.kins" : "btt.hud.balloon_rep";
-        if (!expected.equals(group)) return;
+        if (!"btt.hud.kins".equals(group) && !"btt.hud.branch_kins".equals(group)) return;
         Text label = Text.translatable(group);
-        int color = noble ? Roles.NOBLE.color() : Roles.BALLOONIST.color();
+        int color = Roles.NOBLE.color();
 
         Text line = Text.translatable("btt.hud.group_tag", label).withColor(color);
         context.getMatrices().push();

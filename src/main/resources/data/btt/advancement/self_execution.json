@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:spectral_arrow"
     },
-    "title": "自刎归天",
-    "description": "造成误杀自裁",
+    "title": {
+      "translate": "btt.advancement.self_execution.title"
+    },
+    "description": {
+      "translate": "btt.advancement.self_execution.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {
@@ -16,5 +19,5 @@
     }
   },
   "sends_telemetry_event": false,
-  "parent": "btt:misfire"
+  "parent": "btt:execution"
 }

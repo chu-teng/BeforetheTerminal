@@ -146,10 +146,12 @@ public final class MapVoting {
         st.ids.clear();
         st.names.clear();
         st.descs.clear();
+        st.minimums.clear(); st.maximums.clear();
         for (BttMapEntry e : candidates) {
             st.ids.add(e.id());
             st.names.add(e.displayName());
             st.descs.add(e.description());
+            st.minimums.add(e.minPlayers()); st.maximums.add(e.maxPlayers());
         }
         st.eligible = ok;
         st.counts = new int[candidates.size()];
@@ -304,6 +306,7 @@ public final class MapVoting {
             }
         }
 
+        dev.hae.btt.game.RoundResults.apply(target);
         Vec3d spawn = vars.getSpawnPos().pos;
         float yaw = vars.getSpawnPos().yaw;
         float pitch = vars.getSpawnPos().pitch;
@@ -318,17 +321,13 @@ public final class MapVoting {
         }
         MapVoteState st = state(anyWorld);
         st.lastSelected = entry.id();
-
-
-        if (!entry.rooms().isEmpty()) {
-            st.rooms.clear();
-            st.rooms.addAll(entry.rooms());
-            st.roomsMapId = entry.id();
-            st.sync();
-        }
-
-
         MapVoteState targetState = MapVoteState.KEY.get(target);
+        if (!entry.rooms().isEmpty()) {
+            targetState.rooms.clear();
+            targetState.rooms.addAll(entry.rooms());
+            targetState.roomsMapId = entry.id();
+        }
+        st.sync();
         targetState.enhancements = entry.enhancements() == null ? MapEnhancements.NONE : entry.enhancements();
         targetState.sync();
         if (!targetState.enhancements.isDefault()) {
@@ -338,6 +337,7 @@ public final class MapVoting {
                     targetState.enhancements.walkSpeedMultiplier(), targetState.enhancements.sprintSpeedMultiplier(),
                     targetState.enhancements.gravityMultiplier());
         }
+        MapEnhancements.restoreLobbyVisual(target);
         BeforeTheTerminalGameMode.LOGGER.info("[BTT] map applied: {} ({}) for {} player(s)",
                 entry.id(), dimId, server.getCurrentPlayerCount());
         return null;

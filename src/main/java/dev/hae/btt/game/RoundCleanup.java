@@ -17,13 +17,14 @@ public final class RoundCleanup {
         dev.hae.btt.draft.DraftManager.reset();
         dev.hae.btt.role.Engineer.clearAll();
         dev.hae.btt.trait.Traits.clearRoundState();
-        dev.hae.btt.role.ColdWave.forgetTransientState();
         dev.hae.btt.role.Flowers.forgetTransientState();
+        dev.hae.btt.role.Librarian.clear();
         Trophies.clearPendingAwards();
     }
 
 
     public static void prepareWorld(ServerWorld world, java.util.List<ServerPlayerEntity> players) {
+        dev.hae.btt.role.Librarian.clear(world);
         dev.hae.btt.role.ColdWave.clear(world);
         dev.hae.btt.role.Engineer.clear(world);
         Trophies.clearAll(world);
@@ -32,9 +33,12 @@ public final class RoundCleanup {
     }
 
     public static void clearWorldRules(ServerWorld world) {
+        dev.hae.btt.component.DraftState.KEY.get(world).knownRoles = "";
+        dev.hae.btt.component.DraftState.KEY.get(world).sync();
         dev.hae.btt.role.Warden.clear(world);
         dev.hae.btt.role.Voodoo.clear(world);
         dev.hae.btt.role.Flowers.clearWorld(world);
+        dev.hae.btt.role.Librarian.clear(world);
         dev.hae.btt.role.ColdWave.clear(world);
         dev.hae.btt.role.Engineer.clear(world);
         dev.hae.btt.trait.Traits.clearRoundState(world);

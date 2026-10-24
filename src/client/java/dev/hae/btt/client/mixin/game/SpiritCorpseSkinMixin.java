@@ -23,6 +23,6 @@ public abstract class SpiritCorpseSkinMixin {
 
     @Inject(method = "getTexture", at = @At("HEAD"), cancellable = true)
     private void btt$spiritAnonymousCorpse(PlayerBodyEntity body, CallbackInfoReturnable<Identifier> cir) {
-        if (SpiritCameraHandler.isActive()) cir.setReturnValue(BTT_STEVE_TEXTURE);
+        if (SpiritCameraHandler.isAnonymous()) cir.setReturnValue(BTT_STEVE_TEXTURE);
     }
 }

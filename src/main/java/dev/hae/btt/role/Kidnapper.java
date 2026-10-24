@@ -45,6 +45,12 @@ public final class Kidnapper {
         ability.setCooldown(COOLDOWN_TICKS);
         ability.sync();
 
+        attachVictim(user, target, true);
+    }
+
+
+    public static void attachVictim(ServerPlayerEntity user, ServerPlayerEntity target, boolean privateVoice) {
+        PlayerState targetPc = PlayerState.KEY.get(target);
         GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
         boolean passenger = Roles.isPassengerCampFor(gwc, target);
         PlayerMoodComponent mood = PlayerMoodComponent.KEY.get(target);
@@ -53,7 +59,8 @@ public final class Kidnapper {
         targetPc.beginDigestion(user.getUuidAsString(), mood.getMood(), drain, passenger);
         Attachment.attach(target, user, Attachment.KIND_KIDNAP);
         target.changeGameMode(GameMode.SPECTATOR);
-        VoiceChatPlugin.joinStomach(user, target);
+        if (privateVoice) VoiceChatPlugin.joinStomach(user, target);
+        else VoiceChatPlugin.leaveStomach(target);
 
         if (PlayerState.KEY.get(target).blackdeathPatient) BlackDeath.transferTo(user, target);
 
@@ -68,6 +75,7 @@ public final class Kidnapper {
             release(victim, pc, kidnapper);
             return;
         }
+        if (!pc.smugglerHost.isEmpty()) return;
         if (!pc.digestible) return;
 
 
@@ -96,7 +104,11 @@ public final class Kidnapper {
 
 
     public static void release(ServerPlayerEntity victim, PlayerState pc, ServerPlayerEntity kidnapper) {
-        float remainingMood = Math.max(0f, pc.digestTicks * pc.digestDrain);
+        if (!pc.smugglerHost.isEmpty()) { Smuggler.release(victim, kidnapper); return; }
+        releaseWithMood(victim, pc, kidnapper, Math.max(0f, pc.digestTicks * pc.digestDrain));
+    }
+
+    public static void releaseWithMood(ServerPlayerEntity victim, PlayerState pc, ServerPlayerEntity kidnapper, float remainingMood) {
         pc.clearDigestion();
         Attachment.detach(victim);
         VoiceChatPlugin.leaveStomach(victim);

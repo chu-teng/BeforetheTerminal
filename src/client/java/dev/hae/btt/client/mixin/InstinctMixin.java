@@ -39,7 +39,8 @@ public abstract class InstinctMixin {
             if (dev.hae.btt.role.Voodoo.isRemnant(bttClient.player)) { cir.setReturnValue(false); return; }
             GameWorldComponent gwc = GameWorldComponent.KEY.get(bttClient.player.getWorld());
             boolean eligible = gwc.getRole(bttClient.player) != null
-                    && !Roles.isPlayingAs(gwc, bttClient.player, Roles.TRAITOR)
+                    && !Roles.isPlayingAs(gwc, bttClient.player, Roles.WEREWOLF)
+                    && (!Roles.isPlayingAs(gwc, bttClient.player, Roles.TRAITOR) || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).werewolfAlly)
                     && (Roles.isKillerCampFor(gwc, bttClient.player)
                         || Roles.isPlayingAs(gwc, bttClient.player, Roles.LUNATIC)
                         || Roles.isPlayingAs(gwc, bttClient.player, Roles.ARSONIST)
@@ -49,7 +50,8 @@ public abstract class InstinctMixin {
                         || gwc.getRole(bttClient.player) == Roles.MESSIAH
                         || gwc.getRole(bttClient.player) == Roles.MAJO
                         || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).isMessiahFollower()
-                        || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).isMajoRecruit());
+                        || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).isMajoRecruit()
+                        || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).werewolfAlly);
             boolean allowed = dev.doctor4t.wathe.game.GameFunctions.isPlayerSpectatingOrCreative(bttClient.player)
                     || (eligible && WatheClient.isPlayerAliveAndInSurvival())
 ;

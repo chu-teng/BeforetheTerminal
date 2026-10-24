@@ -3,11 +3,14 @@
     "icon": {
       "id": "wathe:revolver"
     },
-    "title": "有缘再会",
-    "description": "作为乘客阵营获胜",
+    "title": {
+      "translate": "btt.advancement.passenger_win.title"
+    },
+    "description": {
+      "translate": "btt.advancement.passenger_win.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false,
     "background": "wathe:textures/block/khaki_steel_tiles.png"
   },

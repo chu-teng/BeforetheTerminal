@@ -3,11 +3,14 @@
     "icon": {
       "id": "wathe:knife"
     },
-    "title": "无人生还",
-    "description": "作为凶手阵营获胜",
+    "title": {
+      "translate": "btt.advancement.killer_win.title"
+    },
+    "description": {
+      "translate": "btt.advancement.killer_win.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false,
     "background": "wathe:textures/block/smooth_maroon_steel.png"
   },

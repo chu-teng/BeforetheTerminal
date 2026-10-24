@@ -31,7 +31,7 @@ public final class Monk {
         if (monk == target) return;
         if (monk.distanceTo(target) > RANGE) return;
         PlayerState targetState = PlayerState.KEY.get(target);
-        if (dev.hae.btt.game.GameModes.modeOf(dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(monk.getWorld())) == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.DUEL) {
+        if (dev.hae.btt.game.GameModes.modeOf(dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(monk.getWorld())) == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.SCRIPT) {
             if (Roles.kindOfReal(dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(monk.getWorld()), target) == Roles.Kind.LONE) {
                 dev.hae.btt.advancement.BttAdvancements.protection(monk, target);
                 targetState.monkShields++;

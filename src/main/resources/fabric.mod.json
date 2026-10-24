@@ -3,12 +3,9 @@
   "id": "btt",
   "version": "${version}",
   "name": "Before the Terminal",
-  "description": "Social deduction aboard a train bound for the terminal station: role abilities, epilogues, drafts and data-pack driven maps, as a standalone add-on mode for Wathe.",
+  "description": "A social deduction game on an express train heading to the terminal.",
   "authors": [
     "chu-teng"
-  ],
-  "contributors": [
-    "agmass (NoellesRoles, referenced design)"
   ],
   "contact": {
     "homepage": "https://github.com/chu-teng/BeforetheTerminal",

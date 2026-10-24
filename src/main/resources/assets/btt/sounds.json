@@ -1,29 +1,40 @@
 {
   "epilogue_majo": {
-    "sounds": []
+    "sounds": [
+      {
+        "name": "btt:epilogue/majo",
+        "stream": true
+      }
+    ]
   },
   "epilogue_messiah": {
-    "sounds": []
-  },
-  "epilogue_kidnapper": {
-    "sounds": []
+    "sounds": [
+      {
+        "name": "btt:epilogue/messiah",
+        "stream": true
+      }
+    ]
   },
   "epilogue_gardener": {
-    "sounds": []
+    "sounds": [
+      {
+        "name": "btt:epilogue/gardener",
+        "stream": true
+      }
+    ]
   },
   "epilogue_survival": {
-    "sounds": []
+    "sounds": [
+      {
+        "name": "btt:epilogue/survival",
+        "stream": true
+      }
+    ]
   },
   "btt_pour_gasoline": {
     "sounds": [
       "btt:skill/gasoline_drip"
     ]
-  },
-  "epilogue_astral": {
-    "sounds": []
-  },
-  "epilogue_cold_wave": {
-    "sounds": []
   },
   "btt_pipe_hit": {
     "sounds": [
@@ -103,6 +114,55 @@
   "btt_cold_wave_contamination": {
     "sounds": [
       "btt:skill/cold_wave_contamination"
+    ]
+  },
+  "btt_harpy_shroud": {
+    "sounds": [
+      "btt:skill/metal_announcement"
+    ]
+  },
+  "btt_public_notice": {
+    "sounds": [
+      "btt:skill/cold_wave_contamination"
+    ]
+  },
+  "btt_meeting_bell": {
+    "sounds": [
+      "btt:skill/meeting_bell"
+    ]
+  },
+  "btt_metal_notice": {
+    "sounds": [
+      "btt:skill/metal_announcement"
+    ]
+  },
+  "btt_fire_axe_hit": {
+    "sounds": [
+      "btt:item/fire_axe_hit"
+    ]
+  },
+  "epilogue_voodoo": {
+    "sounds": [
+      {
+        "name": "btt:epilogue/voodoo",
+        "stream": true
+      }
+    ]
+  },
+  "epilogue_legion": {
+    "sounds": [
+      {
+        "name": "btt:epilogue/legion",
+        "stream": true
+      }
+    ]
+  },
+  "epilogue_werewolf": {
+    "sounds": [
+      {
+        "name": "btt:epilogue/werewolf",
+        "stream": true
+      }
     ]
   }
 }

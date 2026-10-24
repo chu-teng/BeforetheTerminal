@@ -38,6 +38,29 @@ public abstract class AgentHudMixin {
 
     @Shadow private static float nametagAlpha;
 
+    @com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod(method = "renderHud")
+    private static void bttVotingInspect(TextRenderer renderer, ClientPlayerEntity player, DrawContext context,
+                                          RenderTickCounter counter,
+                                          com.llamalad7.mixinextras.injector.wrapoperation.Operation<Void> original) {
+        if (!dev.hae.btt.game.Debate.isVoting(player.getWorld())) {
+            original.call(renderer, player, context, counter);
+            return;
+        }
+        float range = dev.doctor4t.wathe.game.GameFunctions.isPlayerSpectatingOrCreative(player) ? 8f : 2f;
+        var hit = net.minecraft.entity.projectile.ProjectileUtil.getCollision(player, entity -> entity instanceof PlayerEntity, range);
+        if (!(hit instanceof net.minecraft.util.hit.EntityHitResult entityHit)
+                || !(entityHit.getEntity() instanceof PlayerEntity looked) || looked == player) return;
+        String names = dev.hae.btt.component.PlayerState.KEY.get(looked).observedVoters;
+        Text voters = names.isEmpty() ? Text.translatable("btt.debate.voters.none") : Text.literal(names);
+        Text line = Text.translatable("btt.debate.voters", voters);
+        context.getMatrices().push();
+        context.getMatrices().translate(context.getScaledWindowWidth() / 2f,
+                context.getScaledWindowHeight() / 2f + 6f, 0f);
+        context.getMatrices().scale(0.6f, 0.6f, 1f);
+        context.drawTextWithShadow(renderer, line, -renderer.getWidth(line) / 2, 16, 0xFFFFFF);
+        context.getMatrices().pop();
+    }
+
 
     @Inject(method = "renderHud", at = @At("HEAD"), cancellable = true)
     private static void bttHidePreGameNames(TextRenderer renderer, ClientPlayerEntity player, DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {

@@ -41,7 +41,6 @@ import java.util.List;
 
 
 
-
 public record MapEnhancements(
         List<String> blacklistBlocks,
         List<String> blacklistTags,
@@ -217,13 +216,6 @@ public record MapEnhancements(
         if (world == null) return NONE;
         MapEnhancements own = MapVoteState.KEY.get(world).enhancements;
         if (own != null && !own.isDefault()) return own;
-        if (world.getServer() != null) {
-            ServerWorld overworld = world.getServer().getOverworld();
-            if (overworld != null && overworld != world) {
-                MapEnhancements main = MapVoteState.KEY.get(overworld).enhancements;
-                if (main != null && !main.isDefault()) return main;
-            }
-        }
         return NONE;
     }
 
@@ -423,6 +415,33 @@ public record MapEnhancements(
 
     public static void clearExplicitEffects() {
         explicitEffects.clear();
+    }
+
+    public static void register() {
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            for (ServerWorld world : server.getWorlds()) restoreLobbyVisual(world);
+        });
+        dev.doctor4t.wathe.api.event.GameEvents.ON_FINISH_FINALIZE.register((world, game) -> {
+            if (world instanceof ServerWorld serverWorld
+                    && game.getGameMode() instanceof dev.hae.btt.game.BeforeTheTerminalGameMode) restoreLobbyVisual(serverWorld);
+        });
+    }
+
+
+    public static void restoreLobbyVisual(ServerWorld world) {
+        var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world);
+        if (game.isRunning() || !(game.getGameMode() instanceof dev.hae.btt.game.BeforeTheTerminalGameMode)) return;
+        var train = dev.doctor4t.wathe.cca.TrainWorldComponent.KEY.get(world);
+        var effect = game.getMapEffect();
+        if (effect == dev.doctor4t.wathe.api.WatheMapEffects.HARPY_EXPRESS_NIGHT)
+            train.setTimeOfDay(dev.doctor4t.wathe.cca.TrainWorldComponent.TimeOfDay.NIGHT);
+        else if (effect == dev.doctor4t.wathe.api.WatheMapEffects.HARPY_EXPRESS_DAY)
+            train.setTimeOfDay(dev.doctor4t.wathe.cca.TrainWorldComponent.TimeOfDay.DAY);
+        else if (effect == dev.doctor4t.wathe.api.WatheMapEffects.HARPY_EXPRESS_SUNDOWN)
+            train.setTimeOfDay(dev.doctor4t.wathe.cca.TrainWorldComponent.TimeOfDay.SUNDOWN);
+        var entry = BttMaps.current(world);
+        if (entry != null) applyVisual(world, entry.enhancements());
+        train.setSpeed(0);
     }
 
     public static void applyVisual(net.minecraft.server.world.ServerWorld world, MapEnhancements enhancement) {

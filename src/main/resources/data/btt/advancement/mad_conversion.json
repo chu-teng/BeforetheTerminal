@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:compass"
     },
-    "title": "我是谁？",
-    "description": "作为狂人中立改变阵营并获胜",
+    "title": {
+      "translate": "btt.advancement.mad_conversion.title"
+    },
+    "description": {
+      "translate": "btt.advancement.mad_conversion.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

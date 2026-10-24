@@ -44,6 +44,8 @@ public class MapVoteState implements AutoSyncedComponent, ServerTickingComponent
     public final List<String> ids = new ArrayList<>();
     public final List<String> names = new ArrayList<>();
     public final List<String> descs = new ArrayList<>();
+    public final List<Integer> minimums = new ArrayList<>();
+    public final List<Integer> maximums = new ArrayList<>();
 
     public int[] counts = new int[0];
 
@@ -105,7 +107,9 @@ public class MapVoteState implements AutoSyncedComponent, ServerTickingComponent
         names.clear();
         names.addAll(other.names);
         descs.clear();
+        minimums.clear(); maximums.clear();
         descs.addAll(other.descs);
+        minimums.addAll(other.minimums); maximums.addAll(other.maximums);
         counts = other.counts == null ? new int[0] : other.counts.clone();
         eligible = other.eligible == null ? new boolean[0] : other.eligible.clone();
         votes.clear();
@@ -130,6 +134,7 @@ public class MapVoteState implements AutoSyncedComponent, ServerTickingComponent
         ids.clear();
         names.clear();
         descs.clear();
+        minimums.clear(); maximums.clear();
         counts = new int[0];
         eligible = new boolean[0];
         votes.clear();
@@ -158,6 +163,7 @@ public class MapVoteState implements AutoSyncedComponent, ServerTickingComponent
         ids.clear();
         names.clear();
         descs.clear();
+        minimums.clear(); maximums.clear();
         java.util.List<Boolean> okList = new ArrayList<>();
         if (tag.contains("Maps", NbtElement.LIST_TYPE)) {
             NbtList list = tag.getList("Maps", NbtElement.COMPOUND_TYPE);
@@ -166,6 +172,7 @@ public class MapVoteState implements AutoSyncedComponent, ServerTickingComponent
                 ids.add(c.getString("Id"));
                 names.add(c.getString("Name"));
                 descs.add(c.getString("Desc"));
+                minimums.add(c.getInt("MinPlayers")); maximums.add(c.getInt("MaxPlayers"));
                 okList.add(!c.contains("Ok") || c.getBoolean("Ok"));
             }
         }
@@ -201,6 +208,8 @@ public class MapVoteState implements AutoSyncedComponent, ServerTickingComponent
             c.putString("Id", ids.get(i));
             c.putString("Name", i < names.size() ? names.get(i) : ids.get(i));
             c.putString("Desc", i < descs.size() ? descs.get(i) : "");
+            c.putInt("MinPlayers", i < minimums.size() ? minimums.get(i) : 6);
+            c.putInt("MaxPlayers", i < maximums.size() ? maximums.get(i) : 22);
             c.putBoolean("Ok", i >= eligible.length || eligible[i]);
             list.add(c);
         }

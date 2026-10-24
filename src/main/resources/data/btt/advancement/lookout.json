@@ -3,11 +3,14 @@
     "icon": {
       "id": "btt:lookout_chair"
     },
-    "title": "圆形监狱",
-    "description": "使用一次瞭望椅",
+    "title": {
+      "translate": "btt.advancement.lookout.title"
+    },
+    "description": {
+      "translate": "btt.advancement.lookout.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

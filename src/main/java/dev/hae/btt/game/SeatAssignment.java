@@ -31,14 +31,7 @@ public final class SeatAssignment {
 
 
     public static final int MIN_PLAYERS = 6;
-    public static final int MAX_PLAYERS = 24;
-
-
-
-
-
-
-
+    public static final int MAX_PLAYERS = 22;
 
 
     public static Map<UUID, Role> assignSeats(List<UUID> players) {
@@ -116,10 +109,10 @@ public final class SeatAssignment {
             }
         }
         int remaining = n - forced.size();
-        int passenger = remaining - (principal + accomplice + lone + outsider + mad);
+        int passenger = baseSeats.passengerCount(n);
         if (passenger < 0) return null;
 
-        int[] quota = passengerQuotas(passenger);
+        int[] quota = passengerQuotas(passenger, n);
         for (int k = 0; k < SEAT_ORDER.size(); k++) {
             quota[k] = Math.max(0, quota[k] - forcedSeat[SEAT_ORDER.get(k).ordinal()]);
         }
@@ -127,10 +120,8 @@ public final class SeatAssignment {
 
         Map<Roles.Kind, List<Role>> kindPools = Roles.kindPools();
         if (script != null) {
-            kindPools.put(Roles.Kind.PRINCIPAL,
-                    filterAllowed(kindPools.get(Roles.Kind.PRINCIPAL), script::allowsKiller));
-            kindPools.put(Roles.Kind.ENFORCER,
-                    filterAllowed(kindPools.get(Roles.Kind.ENFORCER), script::allowsEnforcer));
+            for (Roles.Kind kind : Roles.Kind.values())
+                kindPools.put(kind, filterAllowed(kindPools.get(kind), script::allows));
         }
 
         if (!OPPOSED.isEmpty()) {
@@ -139,6 +130,7 @@ public final class SeatAssignment {
             kindPools.replaceAll((k, pool) ->
                     filterAllowed(pool, r -> !opposed.contains(r.identifier().getPath())));
         }
+        kindPools.replaceAll((kind, pool) -> filterAllowed(pool, role -> !forced.containsValue(role)));
         List<Role> seats = new ArrayList<>();
         takeKind(seats, kindPools, Roles.Kind.PRINCIPAL, principal);
         takeKind(seats, kindPools, Roles.Kind.ACCOMPLICE, accomplice);
@@ -153,12 +145,13 @@ public final class SeatAssignment {
             if (seats.size() >= remaining) break;
             takeFrom(seats, kindPools.getOrDefault(s, List.of()), remaining - seats.size());
         }
+        Collections.shuffle(seats);
+        while (seats.size() > remaining) seats.removeLast();
         if (seats.size() != remaining) return null;
 
         java.util.List<Role> required = leads ? java.util.List.of(Roles.VIGILANTE, Roles.DETECTIVE, Roles.ASSASSIN) : java.util.List.of();
         for (Role role : required) {
             if (forced.containsValue(role)) continue;
-            if (forced.containsValue(Roles.sameColorPartner(role))) return null;
             if (seats.contains(role)) continue;
             int replace = -1;
             for (int i = 0; i < seats.size(); i++)
@@ -170,17 +163,6 @@ public final class SeatAssignment {
             seats.set(replace, role);
         }
 
-
-        List<List<Role>> groups = new ArrayList<>();
-
-        for (Roles.Kind k : SEAT_ORDER) groups.add(kindPools.getOrDefault(k, List.of()));
-        for (Roles.Kind k : Roles.Kind.values()) groups.add(kindPools.getOrDefault(k, List.of()));
-        java.util.Set<Role> usedRoles = new java.util.HashSet<>(forced.values());
-        java.util.List<Role> pinned = new java.util.ArrayList<>();
-        for (Role role : required) if (seats.remove(role)) pinned.add(role);
-        usedRoles.addAll(pinned);
-        seats = dedupeSameColorPairs(seats, groups, usedRoles);
-        seats.addAll(pinned);
         if (allowDuplicates) {
             var random = java.util.concurrent.ThreadLocalRandom.current();
             for (int i = 0; i < seats.size(); i++) {
@@ -191,8 +173,6 @@ public final class SeatAssignment {
                     long count = seats.stream().filter(r -> r == candidate).count()
                             + forced.values().stream().filter(r -> r == candidate).count();
                     if (count != 1 || candidate == original) continue;
-                    Role partner = Roles.sameColorPartner(candidate);
-                    if (partner != null && (seats.contains(partner) || forced.containsValue(partner))) continue;
                     choices.add(candidate);
                 }
                 if (!choices.isEmpty()) seats.set(i, choices.get(random.nextInt(choices.size())));
@@ -335,12 +315,11 @@ public final class SeatAssignment {
 
 
     private static final List<Roles.Kind> SEAT_ORDER = List.of(
-            Roles.Kind.ENFORCER, Roles.Kind.ACTION,
-            Roles.Kind.INFORMATION, Roles.Kind.SUPPORT);
+            Roles.Kind.ENFORCER, Roles.Kind.CIVILIAN);
 
 
     static int[] quotasForTest(int n) {
-        return new int[]{1, Math.max(0, n / 6 - 1), 1 + n / 12, n / 12, n / 8};
+        return new int[]{1, Math.max(0, n / 6 - 1), n / 8, n >= 12 ? 1 : 0, 1 + n / 8};
     }
 
 
@@ -385,51 +364,6 @@ public final class SeatAssignment {
         }
     }
 
-
-    private static List<Role> dedupeSameColorPairs(List<Role> seats, List<List<Role>> groups,
-                                                   java.util.Set<Role> usedRoles) {
-        List<Role> result = new ArrayList<>();
-        for (Role r : seats) {
-            Role partner = Roles.sameColorPartner(r);
-            if (partner == null || !usedRoles.contains(partner)) {
-                usedRoles.add(r);
-                result.add(r);
-                continue;
-            }
-            Role rep = findPartnerFreeReplacement(r, groups, usedRoles, result);
-            if (rep != null) {
-                usedRoles.add(rep);
-                result.add(rep);
-            } else {
-                usedRoles.add(r);
-                result.add(r);
-            }
-        }
-        return result;
-    }
-
-    private static Role findPartnerFreeReplacement(Role original, List<List<Role>> groups,
-                                                   java.util.Set<Role> usedRoles, List<Role> alreadyPicked) {
-
-        List<List<Role>> order = new ArrayList<>();
-        for (List<Role> pool : groups) {
-            if (pool.contains(original)) order.add(0, pool);
-            else order.add(pool);
-        }
-        for (List<Role> pool : order) {
-            for (int tier = 0; tier < 2; tier++) {
-                for (Role r : pool) {
-                    if (Roles.isImplemented(r) != (tier == 0)) continue;
-                    if (r == original || alreadyPicked.contains(r) || usedRoles.contains(r)) continue;
-                    Role partner = Roles.sameColorPartner(r);
-                    if (partner != null && usedRoles.contains(partner)) continue;
-                    return r;
-                }
-            }
-        }
-        return null;
-    }
-
     private record BaseSeats(int principal, int accomplice, int lone, int outsider, int mad) {
         int passengerCount(int players) {
             return players - (principal + accomplice + lone + outsider + mad);
@@ -438,16 +372,15 @@ public final class SeatAssignment {
 
 
     private static BaseSeats baseSeats(int players) {
-        return new BaseSeats(1, Math.max(0, players / 6 - 1), 1 + players / 12,
-                players / 12, players / 8);
+        return new BaseSeats(1, Math.max(0, players / 6 - 1), players / 8,
+                players >= 12 ? 1 : 0, 1 + players / 8);
     }
 
 
-    private static int[] passengerQuotas(int passenger) {
+    private static int[] passengerQuotas(int passenger, int players) {
         int[] quota = new int[SEAT_ORDER.size()];
-        int base = passenger / quota.length;
-        int rest = passenger % quota.length;
-        for (int k = 0; k < quota.length; k++) quota[k] = Math.max(0, base + (k < rest ? 1 : 0));
+        quota[0] = players / 3;
+        quota[1] = Math.max(0, passenger - quota[0]);
         return quota;
     }
 
@@ -461,7 +394,7 @@ public final class SeatAssignment {
         BaseSeats seats = baseSeats(players);
         int passenger = seats.passengerCount(players);
         if (passenger < 0) return out;
-        int[] quota = passengerQuotas(passenger);
+        int[] quota = passengerQuotas(passenger, players);
         for (int k = 0; k < SEAT_ORDER.size(); k++) {
             out.put(passengerSeatKey(SEAT_ORDER.get(k)), quota[k]);
         }
@@ -482,10 +415,11 @@ public final class SeatAssignment {
 
     private static String passengerSeatKey(Roles.Kind seat) {
         return switch (seat) {
+            case CIVILIAN -> "btt.guide.passengers.平民乘客.title";
             case ENFORCER -> "btt.guide.passengers.执法乘客.title";
-            case ACTION -> "btt.guide.passengers.行动乘客.title";
-            case INFORMATION -> "btt.guide.passengers.信息乘客.title";
-            default -> "btt.guide.passengers.辅助乘客.title";
+
+
+            default -> throw new IllegalArgumentException("Not a passenger seat: " + seat);
         };
     }
 
@@ -493,10 +427,11 @@ public final class SeatAssignment {
         Roles.Kind kind = Roles.kindOf(role);
         if (kind == null) return null;
         return switch (kind) {
+            case CIVILIAN -> "btt.guide.passengers.平民乘客.title";
             case ENFORCER -> "btt.guide.passengers.执法乘客.title";
-            case ACTION -> "btt.guide.passengers.行动乘客.title";
-            case INFORMATION -> "btt.guide.passengers.信息乘客.title";
-            case SUPPORT -> "btt.guide.passengers.辅助乘客.title";
+
+
+
             case PRINCIPAL -> "btt.guide.killers.主犯凶手.title";
             case ACCOMPLICE -> "btt.guide.killers.从犯凶手.title";
             case LONE -> "btt.guide.neutrals.独行中立.title";

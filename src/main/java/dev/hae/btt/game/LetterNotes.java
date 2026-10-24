@@ -31,16 +31,13 @@ public final class LetterNotes {
         if (!GameFunctions.isPlayerAliveAndSurvival(player)) return;
         if (!holdsLetter(player)) return;
 
-        ServerPlayerEntity target = world.getServer().getPlayerManager().getPlayer(payload.target());
-
-        if (target == null) return;
-        if (gwc.getRole(target) == null) return;
+        if (!gwc.getRoles().containsKey(payload.target())) return;
 
         if (payload.status() == -2 && payload.target().equals(player.getUuid()) && payload.value().isEmpty()) {
             dev.hae.btt.advancement.BttAdvancements.fact(player, "tickets"); return;
         }
         LetterState state = LetterState.KEY.get(player);
-        String uuid = target.getUuidAsString();
+        String uuid = payload.target().toString();
 
 
         if (payload.status() >= 0) {

@@ -170,13 +170,22 @@ public class MapVoteScreen extends Screen {
                 ctx.fill(x0, y, x0 + 1, y + ROW_HEIGHT, BAR_GOLD);
                 ctx.fill(x0 + MAX_WIDTH - 1, y, x0 + MAX_WIDTH, y + ROW_HEIGHT, BAR_GOLD);
             }
-            ctx.drawTextWithShadow(this.textRenderer, st.names.get(i), x0 + 6, y + 4, ok ? 0xFFFFFF : 0x666666);
+            int votes = i < st.counts.length ? Math.max(0, st.counts[i]) : 0;
+            Text status = !ok ? Text.translatable("btt.mapvote.ineligible")
+                    : Text.literal(votes + (mine ? "  ✔" : ""));
+            Text range = i < st.minimums.size() && i < st.maximums.size()
+                    ? Text.translatable("btt.mapvote.player_range", st.minimums.get(i), st.maximums.get(i)) : Text.empty();
+            int rangeWidth = this.textRenderer.getWidth(range);
+            int nameWidth = Math.max(0, MAX_WIDTH - 24 - this.textRenderer.getWidth(status) - rangeWidth);
+            String name = this.textRenderer.trimToWidth(st.names.get(i), nameWidth);
+            ctx.drawTextWithShadow(this.textRenderer, name, x0 + 6, y + 4, ok ? 0xFFFFFF : 0x666666);
+            ctx.drawTextWithShadow(this.textRenderer, range,
+                    x0 + 12 + this.textRenderer.getWidth(name), y + 4, ok ? 0xC5AD7D : 0x666666);
             if (i < st.descs.size() && !st.descs.get(i).isEmpty()) {
                 ctx.drawTextWithShadow(this.textRenderer,
-                        Text.literal(st.descs.get(i)).formatted(Formatting.GRAY), x0 + 6, y + 15,
-                        ok ? 0x999999 : 0x4A4A4A);
+                        this.textRenderer.trimToWidth(st.descs.get(i), MAX_WIDTH - 12),
+                        x0 + 6, y + 15, ok ? 0x999999 : 0x4A4A4A);
             }
-            int votes = i < st.counts.length ? Math.max(0, st.counts[i]) : 0;
             if (!ok) {
 
                 Text reason = Text.translatable("btt.mapvote.ineligible").formatted(Formatting.DARK_GRAY);

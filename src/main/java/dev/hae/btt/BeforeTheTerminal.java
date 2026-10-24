@@ -43,6 +43,7 @@ public class BeforeTheTerminal implements ModInitializer {
 
 
         dev.hae.btt.map.BttMaps.register();
+        dev.hae.btt.map.MapEnhancements.register();
         dev.hae.btt.network.MapVoteC2SPacket.register();
         dev.hae.btt.command.BttCommands.register();
 

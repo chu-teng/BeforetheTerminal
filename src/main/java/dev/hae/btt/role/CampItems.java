@@ -26,8 +26,10 @@ public final class CampItems {
     public static void tick(ServerPlayerEntity player) {
         var game = GameWorldComponent.KEY.get(player.getWorld());
         if (game.getGameStatus() != GameWorldComponent.GameStatus.ACTIVE) return;
+        var faction = Roles.campOf(game, player);
+        if (faction == null) return;
         var state = PlayerState.KEY.get(player);
-        String camp = Roles.campOf(game, player).name();
+        String camp = faction.name();
         if (!camp.equals(state.weaponCamp)) {
             boolean passenger = Roles.isPassengerCampFor(game, player);
             if (!state.initialWeapon.isEmpty()) {

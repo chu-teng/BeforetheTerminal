@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:book"
     },
-    "title": "亲爱的日记",
-    "description": "在魔典中标记身份",
+    "title": {
+      "translate": "btt.advancement.diary.title"
+    },
+    "description": {
+      "translate": "btt.advancement.diary.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

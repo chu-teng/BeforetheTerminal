@@ -86,11 +86,7 @@ public final class GuessPool {
 
 
     private static boolean canAppear(Role role, @Nullable Scripts.Script script) {
-        if (script == null) return true;
-
-        if (Roles.kindOf(role) == Roles.Kind.PRINCIPAL) return script.allowsKiller(role);
-        if (Roles.kindOf(role) == Roles.Kind.ENFORCER) return script.allowsEnforcer(role);
-        return true;
+        return script == null || script.allows(role);
     }
 
 

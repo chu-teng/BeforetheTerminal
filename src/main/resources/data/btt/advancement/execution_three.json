@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:spectral_arrow"
     },
-    "title": "三思而后行",
-    "description": "单局内正确进行三次处决",
+    "title": {
+      "translate": "btt.advancement.execution_three.title"
+    },
+    "description": {
+      "translate": "btt.advancement.execution_three.description"
+    },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

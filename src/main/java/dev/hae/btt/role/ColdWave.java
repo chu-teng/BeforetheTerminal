@@ -64,7 +64,7 @@ public final class ColdWave {
             listener.playSoundToPlayer(dev.hae.btt.registry.Sounds.COLD_WAVE_CONTAMINATION,
                     net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
             listener.sendMessage(Text.translatable("btt.action.cold_wave.contamination")
-                    .formatted(net.minecraft.util.Formatting.GRAY), true);
+                    .withColor(Roles.COLD_WAVE.color()), true);
         }
     }
 
@@ -104,62 +104,9 @@ public final class ColdWave {
 
 
     public static void clear(ServerWorld world) {
-        CONTAMINATED.remove(world);
         var state = dev.hae.btt.component.GameState.KEY.get(world);
         state.coldWaveSources = "";
         state.sync();
-    }
-
-
-    public static void forgetTransientState() { CONTAMINATED.clear(); }
-
-
-
-    private static final java.util.Map<net.minecraft.server.world.ServerWorld, java.util.Map<Long, Integer>>
-            CONTAMINATED = new java.util.HashMap<>();
-
-
-    public static void contaminate(ServerPlayerEntity taker, net.minecraft.util.math.BlockPos pos) {
-        GameWorldComponent gwc = GameWorldComponent.KEY.get(taker.getWorld());
-        if (!Roles.hasCurrentRole(gwc, taker, Roles.COLD_WAVE)) return;
-        ServerWorld world = taker.getServerWorld();
-        CONTAMINATED.computeIfAbsent(world, w -> new java.util.HashMap<>())
-                .put(pos.asLong(), GameConstants.getInTicks(1, 0));
-    }
-
-
-    public static void tickContamination(ServerWorld world) {
-        if (!GameWorldComponent.KEY.get(world).isRunning()) return;
-        java.util.Map<Long, Integer> map = CONTAMINATED.get(world);
-        if (map == null || map.isEmpty()) return;
-        java.util.Iterator<java.util.Map.Entry<Long, Integer>> it = map.entrySet().iterator();
-        java.util.List<net.minecraft.util.math.BlockPos> active = new java.util.ArrayList<>();
-        while (it.hasNext()) {
-            var e = it.next();
-            if (e.getValue() <= 1) {
-                it.remove();
-                continue;
-            }
-            e.setValue(e.getValue() - 1);
-            active.add(net.minecraft.util.math.BlockPos.fromLong(e.getKey()));
-        }
-        if (active.isEmpty()) return;
-        for (ServerPlayerEntity other : world.getPlayers()) {
-            if (!GameFunctions.isPlayerAliveAndSurvival(other)) continue;
-            boolean near = false;
-            for (var pos : active) {
-                if (other.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5)
-                        <= AURA_RANGE * AURA_RANGE) {
-                    near = true;
-                    break;
-                }
-            }
-            if (!near) continue;
-            PlayerMoodComponent mood = PlayerMoodComponent.KEY.get(other);
-            int tasks = dev.hae.btt.game.Needs.count(other);
-            if (tasks <= 0) continue;
-            mood.setMood(mood.getMood() - 2f * tasks * GameConstants.MOOD_DRAIN);
-        }
     }
 
 

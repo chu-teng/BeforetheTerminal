@@ -310,6 +310,11 @@ public final class Needs {
     }
 
 
+    public static int drainingCount(ServerPlayerEntity player) {
+        return (int) active(player).stream().filter(kind -> !isRecovery(kind)).count();
+    }
+
+
     private static int generationInterval(ServerPlayerEntity player, int interval) {
         return dev.hae.btt.trait.Traits.has(player, dev.hae.btt.trait.Traits.ANXIOUS)
                 ? Math.max(2, interval * 2 / 3) : interval;

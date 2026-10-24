@@ -53,6 +53,11 @@ public final class SpiritWalk {
     private static void returnToBodyInternal(ServerPlayerEntity user, Text message) {
         PlayerState pc = PlayerState.KEY.get(user);
         pc.stopProjecting();
+        if (GameWorldComponent.KEY.get(user.getWorld()).isRole(user, Roles.ASTRAL)) {
+            AbilityState ability = AbilityState.KEY.get(user);
+            ability.setCooldown(30 * 20);
+            ability.sync();
+        }
         if (message != null) user.sendMessage(message.copy().withColor(Roles.MUYUUBYOU.color()), true);
     }
 

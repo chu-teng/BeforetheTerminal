@@ -3,11 +3,14 @@
     "icon": {
       "id": "wathe:blackout"
     },
-    "title": "天黑请闭眼",
-    "description": "让一次熄灯期间发生至少七起死亡",
+    "title": {
+      "translate": "btt.advancement.blackout_seven.title"
+    },
+    "description": {
+      "translate": "btt.advancement.blackout_seven.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {
@@ -16,5 +19,5 @@
     }
   },
   "sends_telemetry_event": false,
-  "parent": "btt:poison_kill"
+  "parent": "btt:psycho_four"
 }

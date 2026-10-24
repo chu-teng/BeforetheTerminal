@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:iron_boots"
+    },
+    "title": {
+      "translate": "btt.advancement.damsel_found.title"
+    },
+    "description": {
+      "translate": "btt.advancement.damsel_found.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:killer_win"
+}

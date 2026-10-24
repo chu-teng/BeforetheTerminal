@@ -1,13 +1,16 @@
 {
   "display": {
     "icon": {
-      "id": "minecraft:end_rod"
+      "id": "minecraft:bone"
     },
-    "title": "星体投射",
-    "description": "作为星界，杀死两名凶手",
+    "title": {
+      "translate": "btt.advancement.werewolf_survivors.title"
+    },
+    "description": {
+      "translate": "btt.advancement.werewolf_survivors.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

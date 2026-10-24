@@ -36,6 +36,10 @@ public final class BloomEntity extends ZombieEntity {
                 target -> target instanceof ServerPlayerEntity player && !player.getUuid().equals(gardener)
                         && GameFunctions.isPlayerAliveAndSurvival(player)));
     }
+    @Override public boolean canTarget(net.minecraft.entity.LivingEntity target) {
+        return target instanceof ServerPlayerEntity player && !player.getUuid().equals(gardener)
+                && GameFunctions.isPlayerAliveAndSurvival(player) && player.canTakeDamage();
+    }
     @Override public boolean tryAttack(Entity target) {
         if (!(target instanceof ServerPlayerEntity player) || player.getUuid().equals(gardener)
                 || !GameFunctions.isPlayerAliveAndSurvival(player) || !SeatAssignment.isBttMode(getWorld())) return false;
@@ -45,9 +49,10 @@ public final class BloomEntity extends ZombieEntity {
         return true;
     }
     @Override public boolean damage(DamageSource source, float amount) {
-        if (getWorld().isClient || !(source.getAttacker() instanceof PlayerEntity)) return false;
+        if (getWorld().isClient || amount <= 0) return false;
         discard(); return true;
     }
+    @Override protected boolean isDisallowedInPeaceful() { return false; }
     @Override protected boolean burnsInDaylight() { return false; }
     @Override protected boolean canConvertInWater() { return false; }
     @Override protected boolean shouldDropLoot() { return false; }

@@ -58,6 +58,8 @@ public final class Drunk {
 
     public static int fizzleCost(Role role) {
         if (role == null) return 0;
+        var definition = RoleDefs.get(role);
+        if (definition != null && definition.fizzleCooldown() > 0) return definition.fizzleCooldown();
         if (role == Roles.MAGICIAN || role == Roles.RIGGER || role == Roles.JUDGE || role == Roles.PROPHET
                 || role == Roles.PUPPETEER || role == Roles.ARCHITECT || role == Roles.LOCKSMITH
                 || role == Roles.SUCCUBUS || role == Roles.BARTENDER || role == Roles.IMP
@@ -80,6 +82,6 @@ public final class Drunk {
                 || role == Roles.AGENT
                 || role == Roles.DETECTIVE
                 || role == Roles.INVESTIGATOR
-                || role == Roles.TAILOR;
+                || role == Roles.PROPHET;
     }
 }

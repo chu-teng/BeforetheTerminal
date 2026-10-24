@@ -18,15 +18,15 @@ public final class Sounds {
 
     public static final SoundEvent EPILOGUE_MAJO = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_majo"));
     public static final SoundEvent EPILOGUE_MESSIAH = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_messiah"));
-    public static final SoundEvent EPILOGUE_KIDNAPPER = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_kidnapper"));
     public static final SoundEvent EPILOGUE_GARDENER = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_gardener"));
-    public static final SoundEvent EPILOGUE_ASTRAL = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_astral"));
-    public static final SoundEvent EPILOGUE_COLD_WAVE = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_cold_wave"));
+    public static final SoundEvent EPILOGUE_VOODOO = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_voodoo"));
+    public static final SoundEvent EPILOGUE_LEGION = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_legion"));
+    public static final SoundEvent EPILOGUE_WEREWOLF = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_werewolf"));
     public static final SoundEvent EPILOGUE_SURVIVAL = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_survival"));
 
     public static final SoundEvent[] EPILOGUE_ALL = {
-            EPILOGUE_MAJO, EPILOGUE_MESSIAH, EPILOGUE_KIDNAPPER, EPILOGUE_GARDENER, EPILOGUE_SURVIVAL,
-            EPILOGUE_ASTRAL, EPILOGUE_COLD_WAVE
+            EPILOGUE_MAJO, EPILOGUE_MESSIAH, EPILOGUE_GARDENER, EPILOGUE_SURVIVAL,
+            EPILOGUE_VOODOO, EPILOGUE_LEGION, EPILOGUE_WEREWOLF
     };
 
 
@@ -35,6 +35,9 @@ public final class Sounds {
     public static final SoundEvent POUR_GASOLINE = btt("pour_gasoline");
 
     public static final SoundEvent PIPE_HIT = btt("pipe_hit");
+    public static final SoundEvent FIRE_AXE_HIT = btt("fire_axe_hit");
+    public static final SoundEvent MEETING_BELL = btt("meeting_bell");
+    public static final SoundEvent METAL_NOTICE = btt("metal_notice");
 
     public static final SoundEvent BOMB_BEEP = btt("bomb_beep");
 
@@ -52,6 +55,8 @@ public final class Sounds {
 
     public static final SoundEvent JUDGMENT = btt("judgment");
 
+    public static final SoundEvent PUBLIC_NOTICE = btt("public_notice");
+    public static final SoundEvent HARPY_SHROUD = btt("harpy_shroud");
     public static final SoundEvent COLD_WAVE_CONTAMINATION = btt("cold_wave_contamination");
 
     public static final SoundEvent STAR_DEATH = btt("star_death");
@@ -75,10 +80,10 @@ public final class Sounds {
         return switch (type) {
             case "MAJO" -> EPILOGUE_MAJO;
             case "MESSIAH" -> EPILOGUE_MESSIAH;
-            case "KIDNAPPER" -> EPILOGUE_KIDNAPPER;
             case "GARDENER" -> EPILOGUE_GARDENER;
-            case "ASTRAL" -> EPILOGUE_ASTRAL;
-            case "COLD_WAVE" -> EPILOGUE_COLD_WAVE;
+            case "VOODOO" -> EPILOGUE_VOODOO;
+            case "LEGION" -> EPILOGUE_LEGION;
+            case "WEREWOLF" -> EPILOGUE_WEREWOLF;
             default -> EPILOGUE_SURVIVAL;
         };
     }

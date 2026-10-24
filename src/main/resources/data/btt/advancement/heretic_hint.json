@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:recovery_compass"
     },
-    "title": "天知地知",
-    "description": "作为医生或调查员，得知异端分子可能在场",
+    "title": {
+      "translate": "btt.advancement.heretic_hint.title"
+    },
+    "description": {
+      "translate": "btt.advancement.heretic_hint.description"
+    },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

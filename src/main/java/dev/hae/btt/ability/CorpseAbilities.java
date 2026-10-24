@@ -23,6 +23,12 @@ import dev.hae.btt.role.Roles;
 public final class CorpseAbilities {
     private CorpseAbilities() {}
     public static void use(ServerPlayerEntity user, java.util.UUID bodyUuid) {
+        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
+            useBody(user, bodyUuid);
+        }
+    }
+
+    private static void useBody(ServerPlayerEntity user, java.util.UUID bodyUuid) {
         if (!dev.hae.btt.ability.AbilityRules.canAct(user)) return;
         if (!SeatAssignment.isBttMode(user.getWorld())) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
@@ -50,7 +56,7 @@ public final class CorpseAbilities {
         if ((Roles.effectiveRole(gwc, user) == Roles.CANNIBAL)) {
             Role dead = Roles.byId(CorpseState.KEY.get(body).technicalRole.toString());
 
-            if (!Roles.isInfoOrSupportPassenger(dead) || BodyState.KEY.get(body).isAmnesiacUsed()) return;
+            if (!Roles.isCivilianPassenger(dead) || BodyState.KEY.get(body).isAmnesiacUsed()) return;
             AbilityState ability = AbilityState.KEY.get(user);
             if (ability.cooldown > 0) return;
             ability.setCooldown(GameConstants.getInTicks(1, 0));
@@ -76,6 +82,12 @@ public final class CorpseAbilities {
     }
 
     public static void scavenge(ServerPlayerEntity user, java.util.UUID bodyUuid) {
+        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
+            scavengeBody(user, bodyUuid);
+        }
+    }
+
+    private static void scavengeBody(ServerPlayerEntity user, java.util.UUID bodyUuid) {
         if (!dev.hae.btt.ability.AbilityRules.canAct(user)) return;
         if (!SeatAssignment.isBttMode(user.getWorld())) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());

@@ -27,9 +27,18 @@ public final class MultiTargetAbilities {
     public static void prophet(ServerPlayerEntity user, GameWorldComponent gwc, java.util.List<java.util.UUID> picks) {
         AbilityState ability = AbilityState.KEY.get(user);
         if (ability.cooldown > 0) return;
-        java.util.List<java.util.UUID> chosen = picks;
-        if (chosen.size() != 3) return;
+        java.util.List<java.util.UUID> chosen = picks.stream().distinct().toList();
+        if (picks.size() != 3 || chosen.size() < 2) return;
         AbilityRules.setCooldown(ability, RoleDefs.CD_1MIN);
+        if (chosen.size() == 2) {
+            var first = user.getServerWorld().getPlayerByUuid(chosen.get(0));
+            var second = user.getServerWorld().getPlayerByUuid(chosen.get(1));
+            if (!(first instanceof ServerPlayerEntity a) || !(second instanceof ServerPlayerEntity b)) return;
+            boolean same = Drunk.invertIfDrunk(user, Roles.isPassengerCampFor(gwc, a) == Roles.isPassengerCampFor(gwc, b));
+            user.sendMessage(Text.translatable(same ? "btt.action.prophet.same" : "btt.action.prophet.different", targetNames(user, chosen))
+                    .withColor(AbilityRules.roleColor(user)), true);
+            return;
+        }
         boolean found = false;
         for (java.util.UUID uuid : chosen) {
             if (!(user.getServerWorld().getPlayerByUuid(uuid) instanceof ServerPlayerEntity p)) continue;
@@ -39,38 +48,9 @@ public final class MultiTargetAbilities {
                 break;
             }
         }
-        user.sendMessage(Text.translatable(found
+        user.sendMessage(Text.translatable(Drunk.invertIfDrunk(user, found)
                         ? "btt.action.prophet.found"
                         : "btt.action.prophet.none", targetNames(user, chosen))
-                .withColor(AbilityRules.roleColor(user)), true);
-    }
-
-
-
-
-
-
-
-
-
-
-    public static void tailor(ServerPlayerEntity user, GameWorldComponent gwc, java.util.List<java.util.UUID> picks) {
-        AbilityState ability = AbilityState.KEY.get(user);
-        if (ability.cooldown > 0) return;
-        java.util.List<java.util.UUID> chosen = picks;
-        if (chosen.size() != 2) return;
-        AbilityRules.setCooldown(ability, RoleDefs.CD_1MIN);
-        int passengers = 0;
-        for (java.util.UUID uuid : chosen) {
-            if (user.getServerWorld().getPlayerByUuid(uuid) instanceof ServerPlayerEntity p
-                    && Roles.isPassengerCampFor(gwc, p)) {
-                passengers++;
-            }
-        }
-        boolean exactlyOne = Drunk.invertIfDrunk(user, passengers == 1);
-        user.sendMessage(Text.translatable(exactlyOne
-                        ? "btt.action.tailor.one"
-                        : "btt.action.tailor.not_one", targetNames(user, chosen.subList(0, 1)), targetNames(user, chosen.subList(1, 2)))
                 .withColor(AbilityRules.roleColor(user)), true);
     }
 

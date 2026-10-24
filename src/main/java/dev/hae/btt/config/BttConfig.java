@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class BttConfig {
     @SerialEntry(comment = "Server next-round mode: SCRIPT / DRAFT / DEBATE")
-    public String serverMode = "SCRIPT";
+    public String serverMode = "DRAFT";
     @SerialEntry(comment = "Server next-round script: random or a script id")
     public String serverScript = "random";
     @SerialEntry(comment = "Server next-round encounter: random, none or an implemented encounter id")

@@ -6,15 +6,15 @@
 
 终点站抵达之前是 Minecraft 的多人社交推理模组，依赖 Wathe 与 HarpyModLoader。
 
-**当前版本：0.7.0-h1.4**。等待充分的真人多人测试。欢迎提交问题，附上版本、日志与复现步骤。
+**当前开发版本：0.7.1-h1.4（尚未发布）**。欢迎提交问题，附上版本、日志与复现步骤。
 
 ## 玩法
 
-- **角色**：乘客、凶手、中立三个角色类别，执法乘客、行动乘客、信息乘客、辅助乘客、主犯凶手、从犯凶手、独行中立、外人中立、狂人中立九个小类别。乘客与凶手互相对抗，独行中立按各自条件获胜，外人中立自成阵营。共 92 个角色。
+- **角色**：执法乘客、平民乘客、主犯凶手、从犯凶手、狂人中立、独行中立、外人中立七类。乘客与凶手互相对抗，独行按各自条件获胜，外人自成阵营。当前角色目录见[指南](GUIDE.zh-CN.md)。
 
-- **阵营**：分为乘客、凶手、独行、外人等阵营，外人有教团、魔女会、残魂、军团、饕餮、星界、花匠、寒潮等扩张性的阵营。
+- **阵营**：乘客、凶手、独行及各具体外人阵营。外人包括教团、魔女会、残魂、军团、花匠和狼人。
 
-- **模式**：6–24 人一局。剧本、轮抽、对决、辩论、追忆五个模式，每局随机产生的特殊规则——奇遇。
+- **模式**：6–22 人一局。轮抽、剧本、辩论、追忆四个模式，每局随机产生的特殊规则——奇遇。
 
 - **系统**：理智、狂气、处决、误杀、醉酒、天赋、技能、尾声、机关等系统。
 
@@ -22,7 +22,7 @@
 
 - **地图**：数据包驱动的多地图存档，兼容 Spark 格式。
 
-- **进度**：结局结算授予花环。月桂、彼岸、鸢尾、百合、剑兰、洋蓟。五个进度页，近百个自定义进度：终点站前、有缘再会、无人生还、不速之客、徘徊歧路。
+- **进度**：结局结算授予花环。月桂、彼岸、鸢尾、百合、剑兰、洋蓟。五个自定义进度页：终点站前、有缘再会、无人生还、不速之客、徘徊歧路。
 
 ## 游玩
 
@@ -35,11 +35,13 @@ Minecraft **1.21.1**、Java **21**、Fabric Loader **0.17.2+**。客户端与服
 | [HarpyModLoader](https://modrinth.com/mod/harpymodloader) | 1.2.5-h1.4                       |
 | Ratatouille                                               | 1.4.3-1.21.1                     |
 | YetAnotherConfigLib                                       | 3.8.0+1.21.1-fabric 或兼容更新版本      |
-| Simple Voice Chat                                         | 必须，用于语音                          |
+| Simple Voice Chat                                         | 推荐；语音交流及依赖声音的能力需要                |
 
 **不包含地图。** 需要自行准备地图及相应数据包，如使用哈比快车地图需要向数据包录入房间和出生点，推荐使用社区地图。你必须在车头和车尾分别放置操纵台和瞭望椅，在走廊各放置一到两组吊灯机关和电线机关，否则无法正常游玩。
 
-右键指南针选择模式、剧本和奇遇。使用 `/maps` 选择已注册地图。拉响汽笛开始对局，或由管理员使用 `/wathe:start btt:before_the_terminal <地图标识符>`。
+右键指南针选择模式、剧本和奇遇。使用 `/maps vote` 发起地图投票，或 `/maps vote <id>` 直接选择已注册地图。拉响汽笛开始对局，或由管理员使用 `/maps start`（采用已选的下一局模式），也可用 `/wathe:start btt:before_the_terminal wathe:harpy_express_night` 指定模式与特效。
+
+回放命令为 `/btt replay [play|stop]`，地图设置位于 `/maps`。MidnightLib 已由 Wathe 内嵌，正常游玩无需单独下载。
 
 默认按 **G** 使用技能、**E** 打开背包及可用商店、**K** 阅读指南。可用 `/forceRole` 与 `/forceModifier` 指定下一局角色和特质。
 
@@ -61,7 +63,7 @@ Minecraft **1.21.1**、Java **21**、Fabric Loader **0.17.2+**。客户端与服
 .\gradlew.bat runServer
 ```
 
-Linux/macOS 使用 `./gradlew`。专用服首次运行需接受 Minecraft EULA。产物位于 `build/libs/BeforetheTerminal-0.7.0-h1.4.jar`；`-sources.jar` 为对应源码。
+Linux/macOS 使用 `./gradlew`。专用服首次运行需接受 Minecraft EULA。产物位于 `build/libs/BeforetheTerminal-0.7.1-h1.4.jar`；`-sources.jar` 为对应源码。
 
 ## 反馈
 
@@ -73,9 +75,9 @@ BTT 的代码和文档采用 [GNU LGPL v3 或更新版本](LICENSE.txt)。Copyri
 
 玩法灵感来自《Town of Salem》《Blood on the Clocktower》《Goose Goose Duck》等作品。
 
-音效采用 CC0-1.0。可以使用社区的可选尾声音乐资源包。许可证全文随 jar 以 `LICENSE_btt` 附带，CREDIT.md 及双语 README 也随 jar 分发。
+音效采用 CC0-1.0。尾声音乐已内置于模组。许可证全文随 jar 以 `LICENSE_btt` 附带，CREDITS.md 及双语 README 也随 jar 分发。
 
-部分工具类改编自 [NoellesRoles](https://github.com/agmass/NoellesRoles)（agmass，LGPL-3.0），继续以 LGPL-3.0 授权。修改包括包名与 modid 调整、删除不适用分支、重命名及 BTT 机制修订，见[CREDIT.md](CREDIT.md)。
+部分工具类改编自 [NoellesRoles](https://github.com/agmass/NoellesRoles)（agmass，LGPL-3.0），继续以 LGPL-3.0 授权。修改包括包名与 modid 调整、删除不适用分支、重命名及 BTT 机制修订，见[CREDITS.md](CREDITS.md)。
 
 | 项目                      | 作者                  | 许可与用途                         |
 | ----------------------- | ------------------- | ----------------------------- |

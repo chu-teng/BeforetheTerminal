@@ -3,11 +3,14 @@
     "icon": {
       "id": "btt:master_key"
     },
-    "title": "独善其身",
-    "description": "获得独行胜利",
+    "title": {
+      "translate": "btt.advancement.solo_win.title"
+    },
+    "description": {
+      "translate": "btt.advancement.solo_win.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

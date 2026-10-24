@@ -34,6 +34,31 @@ import java.util.UUID;
 public final class Debate {
     private Debate() {}
 
+    public static boolean isVoting(net.minecraft.world.World world) {
+        return GameModes.isDebate(world) && GameWorldComponent.KEY.get(world).isRunning()
+                && DebateState.KEY.get(world).phase == DebateState.PHASE_VOTING;
+    }
+
+
+    public static String votersFor(ServerWorld world, UUID target) {
+        if (!isVoting(world)) return "";
+        List<String> names = new ArrayList<>();
+        for (var ballot : parseVotes(DebateState.KEY.get(world).votes).entrySet()) {
+            if (!target.toString().equals(ballot.getValue())) continue;
+            ServerPlayerEntity voter = playerByUuid(world, ballot.getKey());
+            String name = voter == null ? "" : voter.getGameProfile().getName();
+            if (name.isEmpty()) {
+                var saved = dev.hae.btt.component.GameState.KEY.get(world).letterProfiles.get(ballot.getKey());
+                if (saved != null) name = net.minecraft.component.type.ProfileComponent.CODEC
+                        .parse(net.minecraft.nbt.NbtOps.INSTANCE, saved).result()
+                        .map(profile -> profile.gameProfile().getName()).orElse("");
+            }
+            names.add(name.isEmpty() ? ballot.getKey() : name);
+        }
+        names.sort(String.CASE_INSENSITIVE_ORDER);
+        return String.join("、", names);
+    }
+
 
 
 
@@ -155,8 +180,7 @@ public final class Debate {
         DebateState st = DebateState.KEY.get(world);
         if (st.phase == DebateState.PHASE_IDLE) return false;
         if (reason == null) return true;
-        return !reason.equals(dev.doctor4t.wathe.game.GameConstants.DeathReasons.FELL_OUT_OF_TRAIN)
-                && !reason.equals(DeathReasons.ESCAPE);
+        return dev.hae.btt.trait.TraitRules.harmfulDeath(reason);
     }
 
 
@@ -288,7 +312,11 @@ public final class Debate {
     }
 
     private static void broadcast(ServerWorld world, Text text) {
-        for (ServerPlayerEntity p : world.getPlayers()) p.sendMessage(text, true);
+        for (ServerPlayerEntity p : world.getPlayers()) {
+            p.sendMessage(text, true);
+            p.playSoundToPlayer(dev.hae.btt.registry.Sounds.MEETING_BELL,
+                    net.minecraft.sound.SoundCategory.PLAYERS, 1.0f, 1.0f);
+        }
     }
 
     private static Map<String, String> parseVotes(String csv) {

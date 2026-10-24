@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:iron_chestplate"
     },
-    "title": "百鬼夜行",
-    "description": "作为外人，通过自身能力使至少五人加入自己的阵营，并获胜",
+    "title": {
+      "translate": "btt.advancement.recruit_five.title"
+    },
+    "description": {
+      "translate": "btt.advancement.recruit_five.description"
+    },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

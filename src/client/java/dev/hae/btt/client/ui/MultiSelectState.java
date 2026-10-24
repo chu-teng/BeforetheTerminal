@@ -42,8 +42,9 @@ public final class MultiSelectState {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return 0;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(client.world);
+        var definition = dev.hae.btt.role.RoleDefs.get(Roles.effectiveRole(gwc, self));
+        if (definition != null && definition.fixedPicks() > 0) return definition.fixedPicks();
         if (Roles.isPlayingAs(gwc, self, Roles.PROPHET)) return 3;
-        if (Roles.isPlayingAs(gwc, self, Roles.TAILOR)) return 2;
         if (Roles.isPlayingAs(gwc, self, Roles.PUPPETEER)) return 2;
         if (Roles.isPlayingAs(gwc, self, Roles.RIGGER)) return 2;
         if (Roles.isPlayingAs(gwc, self, Roles.MAGICIAN) || Roles.isPlayingAs(gwc, self, Roles.ACTOR)) return 2;

@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:lily_of_the_valley"
     },
-    "title": "诱捕幻灯",
-    "description": "作为花匠，用成花完成一次击杀",
+    "title": {
+      "translate": "btt.advancement.bloom_kill.title"
+    },
+    "description": {
+      "translate": "btt.advancement.bloom_kill.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

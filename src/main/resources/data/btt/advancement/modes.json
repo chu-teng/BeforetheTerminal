@@ -3,11 +3,14 @@
     "icon": {
       "id": "btt:slip"
     },
-    "title": "徘徊歧路",
-    "description": "完成一场非剧本模式的对局",
+    "title": {
+      "translate": "btt.advancement.modes.title"
+    },
+    "description": {
+      "translate": "btt.advancement.modes.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false,
     "background": "wathe:textures/block/marble_tiles.png"
   },

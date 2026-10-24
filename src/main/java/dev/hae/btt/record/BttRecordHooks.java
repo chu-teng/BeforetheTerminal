@@ -52,7 +52,7 @@ public final class BttRecordHooks {
         BttEvents.SkillUsed.EVENT.register((user, target, skill) -> {
             net.minecraft.nbt.NbtCompound extra = new net.minecraft.nbt.NbtCompound();
             extra.putBoolean("drunk", dev.hae.btt.component.PlayerState.KEY.get(user).isDrunk());
-            GameRecordManager.recordSkillUse(user, skill, target, extra);
+            SkillUseRecording.capture(user, () -> GameRecordManager.recordSkillUse(user, skill, target, extra));
         });
     }
 }

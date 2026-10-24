@@ -169,6 +169,7 @@ public final class DraftManager {
         resultReady = false;
 
         DraftState state = DraftState.KEY.get(world);
+        state.knownRoles = "";
         state.active = true;
         state.totalTurns = order.size();
         state.ordinal = 0;
@@ -272,6 +273,7 @@ public final class DraftManager {
         clearSlips(player);
         currentHand = null;
         DraftState state = DraftState.KEY.get(world);
+        if (!hidden) state.knownRoles += (state.knownRoles.isEmpty() ? "" : ",") + role.identifier();
         state.pendingCount = pool.size();
         state.sync();
         BttEvents.DraftPick.EVENT.invoker().onDraftPick(world, player.getUuid(), index + 1, role, hidden);
@@ -282,7 +284,11 @@ public final class DraftManager {
         lastAnnouncement = announce;
         lastPicker = player.getUuid();
         personalAnnouncements.put(player.getUuid(), Text.translatable("btt.draft.mine", visibleRole).withColor(0xFFFFFF));
-        for (ServerPlayerEntity p : world.getPlayers()) p.sendMessage(p == player ? personalAnnouncements.get(player.getUuid()) : announce, false);
+        for (ServerPlayerEntity p : world.getPlayers()) {
+            p.sendMessage(p == player ? personalAnnouncements.get(player.getUuid()) : announce, false);
+            p.playSoundToPlayer(dev.hae.btt.registry.Sounds.PUBLIC_NOTICE,
+                    net.minecraft.sound.SoundCategory.PLAYERS, 0.6f, 1.0f);
+        }
         nextTurn(world);
     }
 
@@ -349,10 +355,11 @@ public final class DraftManager {
             Role role = hand.at(slot);
             boolean hidden = hand.isHiddenSlot(slot);
             ItemStack stack = new ItemStack(BttItems.SLIP);
-            stack.set(DataComponentTypes.CUSTOM_NAME, hidden
+            stack.set(DataComponentTypes.CUSTOM_NAME, (hidden
                     ? Text.translatable("btt.draft.slip.hidden", slot + 1)
                     : Text.translatable("btt.draft.slip", slot + 1,
-                    SeatAssignment.displayName(role).getString()).withColor(role.color()));
+                    SeatAssignment.displayName(role).getString()).withColor(role.color()))
+                    .styled(style -> style.withItalic(false)));
             if (hidden) {
                 stack.set(DataComponentTypes.LORE, new LoreComponent(List.of(
                         Text.translatable("btt.draft.slip.hidden.lore"))));

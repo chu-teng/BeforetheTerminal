@@ -91,7 +91,7 @@ public final class Arsonist {
         if (!GameFunctions.isPlayerAliveAndSurvival(player)) return;
 
         player.sendMessage(Text.translatable("btt.action.arsonist.smell")
-                .formatted(net.minecraft.util.Formatting.GRAY), true);
+                .withColor(Roles.ARSONIST.color()), true);
     }
 
 

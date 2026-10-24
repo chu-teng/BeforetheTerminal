@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:player_head"
     },
-    "title": "真假美猴王",
-    "description": "在因缘奇遇中，与另一名相同角色的玩家同时存活至结算并共同获胜",
+    "title": {
+      "translate": "btt.advancement.twins_role.title"
+    },
+    "description": {
+      "translate": "btt.advancement.twins_role.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

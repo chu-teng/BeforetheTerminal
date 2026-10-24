@@ -54,7 +54,7 @@ public final class Executioner {
         if (!Roles.hasCurrentOrPriorRole(game, caster, Roles.EXECUTIONER)
                 || !target.getUuidAsString().equals(PlayerState.KEY.get(caster).executionerTarget)) return;
         target.sendMessage(Text.translatable("btt.action.executioner.targeted")
-                .formatted(net.minecraft.util.Formatting.GRAY), true);
+                .withColor(Roles.EXECUTIONER.color()), true);
     }
 
     public static void onTargetDeath(PlayerEntity victim, PlayerEntity killer, Identifier reason) {

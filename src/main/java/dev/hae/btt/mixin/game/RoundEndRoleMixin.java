@@ -38,7 +38,11 @@ public abstract class RoundEndRoleMixin {
 
     @Inject(method = "setRoundEndData", at = @At("TAIL"))
     private void bttPerRoleData(List<ServerPlayerEntity> playersArg, GameFunctions.WinStatus winStatus, CallbackInfo ci) {
-        if (!SeatAssignment.isBttMode(world)) return;
+        if (!SeatAssignment.isBttMode(world)) {
+            dev.hae.btt.component.GameState.KEY.get(world).roundResultBtt = false;
+            dev.hae.btt.component.GameState.KEY.get(world).sync();
+            return;
+        }
         List<GameRoundEndComponent.RoundEndData> rebuilt = new ArrayList<>();
         boolean changed = false;
         for (GameRoundEndComponent.RoundEndData d : this.players) {
@@ -76,7 +80,7 @@ public abstract class RoundEndRoleMixin {
 
     @Inject(method = "didWin(Ljava/util/UUID;)Z", at = @At("HEAD"), cancellable = true)
     private void bttDidWin(UUID uuid, CallbackInfoReturnable<Boolean> cir) {
-        if (!SeatAssignment.isBttMode(world)) return;
+        if (!SeatAssignment.isBttMode(world) && !dev.hae.btt.component.GameState.KEY.get(world).roundResultBtt) return;
         String winners = dev.hae.btt.component.GameState.KEY.get(world).winners;
         cir.setReturnValue(Arrays.stream(winners.split(",")).anyMatch(uuid.toString()::equals));
     }

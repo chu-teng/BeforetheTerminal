@@ -28,8 +28,7 @@ public final class RoleAnnouncements {
     public static RoleAnnouncementTexts.RoleAnnouncementText MEMORY;
 
     public static void init() {
-
-        for (Role role : Roles.allRoles()) {
+        for (Role role : Roles.registeredRoles()) {
             String path = role.identifier().getPath();
             RoleAnnouncementTexts.RoleAnnouncementText entry = RoleAnnouncementTexts.registerRoleAnnouncementText(
                     new RoleAnnouncementTexts.RoleAnnouncementText("btt." + path, role.color()));

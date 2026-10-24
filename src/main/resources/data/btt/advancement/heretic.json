@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:candle"
     },
-    "title": "颠倒黑白",
-    "description": "作为异端分子带领乘客阵营获胜",
+    "title": {
+      "translate": "btt.advancement.heretic.title"
+    },
+    "description": {
+      "translate": "btt.advancement.heretic.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

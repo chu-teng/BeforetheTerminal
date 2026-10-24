@@ -32,8 +32,8 @@ public final class SoloWin {
                     && dev.hae.btt.role.Roles.campOf(dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world), actor)
                     == dev.hae.btt.role.Roles.Faction.OUTSIDER) return;
             if (dev.hae.btt.game.GameModes.modeOf(dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world))
-                    == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.DUEL) {
-                dev.hae.btt.game.Duel.complete(actor);
+                    == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.SCRIPT) {
+                dev.hae.btt.game.ScriptObjectives.complete(actor);
                 return;
             }
             if (Backgrounds.isActive(world, Backgrounds.LIFE)) {

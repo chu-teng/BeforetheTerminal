@@ -19,15 +19,11 @@ public enum DraftCategory {
 
     ENFORCER(4),
 
-    DECISIVE(5),
-
     SOLO(6),
-
-    SUPPORT(7),
 
     MAD(8),
 
-    INVESTIGATIVE(9);
+    CIVILIAN(9);
 
     private final int funRank;
 
@@ -55,11 +51,12 @@ public enum DraftCategory {
             case OUTSIDER -> OUTSIDER;
             case ACCOMPLICE -> ACCOMPLICE;
             case ENFORCER -> ENFORCER;
-            case ACTION -> DECISIVE;
+
             case LONE -> SOLO;
-            case SUPPORT -> SUPPORT;
+
+            case CIVILIAN -> CIVILIAN;
             case MAD -> MAD;
-            case INFORMATION -> INVESTIGATIVE;
+
         };
     }
 }

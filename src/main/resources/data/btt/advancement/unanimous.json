@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:lectern"
     },
-    "title": "十二怒汉",
-    "description": "在辩论模式中，进行一次正确的全票（被处决者除外）处决",
+    "title": {
+      "translate": "btt.advancement.unanimous.title"
+    },
+    "description": {
+      "translate": "btt.advancement.unanimous.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

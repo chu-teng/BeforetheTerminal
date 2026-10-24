@@ -20,7 +20,6 @@ public final class GameModes {
     public static final BeforeTheTerminalGameMode DEBATE =
             new BeforeTheTerminalGameMode(BeforeTheTerminalGameMode.DEBATE_ID, BeforeTheTerminalGameMode.Mode.DEBATE);
 
-    public static final BeforeTheTerminalGameMode DUEL = new BeforeTheTerminalGameMode(BeforeTheTerminalGameMode.DUEL_ID, BeforeTheTerminalGameMode.Mode.DUEL);
     public static final BeforeTheTerminalGameMode MEMORY = new BeforeTheTerminalGameMode(BeforeTheTerminalGameMode.MEMORY_ID, BeforeTheTerminalGameMode.Mode.MEMORY);
 
 
@@ -33,7 +32,6 @@ public final class GameModes {
     public static BeforeTheTerminalGameMode of(BeforeTheTerminalGameMode.Mode mode) {
         if (mode == BeforeTheTerminalGameMode.Mode.DRAFT) return DRAFT;
         if (mode == BeforeTheTerminalGameMode.Mode.DEBATE) return DEBATE;
-        if (mode == BeforeTheTerminalGameMode.Mode.DUEL) return DUEL;
         if (mode == BeforeTheTerminalGameMode.Mode.MEMORY) return MEMORY;
         return BEFORE_THE_TERMINAL;
     }
@@ -57,18 +55,18 @@ public final class GameModes {
         RoleDefs.init();
         RoleAnnouncements.init();
         dev.hae.btt.role.Engineer.register();
-        WatheGameModes.registerGameMode(BeforeTheTerminalGameMode.ID, BEFORE_THE_TERMINAL);
         WatheGameModes.registerGameMode(BeforeTheTerminalGameMode.DRAFT_ID, DRAFT);
+        WatheGameModes.registerGameMode(BeforeTheTerminalGameMode.ID, BEFORE_THE_TERMINAL);
         WatheGameModes.registerGameMode(BeforeTheTerminalGameMode.DEBATE_ID, DEBATE);
-        WatheGameModes.registerGameMode(BeforeTheTerminalGameMode.DUEL_ID, DUEL);
         WatheGameModes.registerGameMode(BeforeTheTerminalGameMode.MEMORY_ID, MEMORY);
         GameEvents.init();
+        RoundResults.register();
         GameTicker.register();
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             RoundCleanup.clearServerSessions();
         });
-        BeforeTheTerminalGameMode.LOGGER.info("[BTT] game modes registered: {} + {} + {} + {} + {} ({} roles, {} defs)",
-                BeforeTheTerminalGameMode.ID, BeforeTheTerminalGameMode.DRAFT_ID, BeforeTheTerminalGameMode.DEBATE_ID, BeforeTheTerminalGameMode.DUEL_ID, BeforeTheTerminalGameMode.MEMORY_ID,
+        BeforeTheTerminalGameMode.LOGGER.info("[BTT] game modes registered: {} + {} + {} + {} ({} roles, {} defs)",
+                BeforeTheTerminalGameMode.DRAFT_ID, BeforeTheTerminalGameMode.ID, BeforeTheTerminalGameMode.DEBATE_ID, BeforeTheTerminalGameMode.MEMORY_ID,
                 Roles.newRoleIds().size(), dev.hae.btt.role.RoleDefs.defCount());
     }
 }

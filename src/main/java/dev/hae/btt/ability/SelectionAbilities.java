@@ -28,6 +28,12 @@ public final class SelectionAbilities {
     }
 
     public static void select(ServerPlayerEntity user, java.util.UUID selectedTarget, String guess) {
+        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
+            selectBody(user, selectedTarget, guess);
+        }
+    }
+
+    private static void selectBody(ServerPlayerEntity user, java.util.UUID selectedTarget, String guess) {
         if (!SeatAssignment.isBttMode(user.getWorld())) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
         if (!gwc.isRunning()) return;
@@ -97,6 +103,12 @@ public final class SelectionAbilities {
     }
 
     public static void multi(ServerPlayerEntity user, java.util.List<java.util.UUID> picks) {
+        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
+            multiBody(user, picks);
+        }
+    }
+
+    private static void multiBody(ServerPlayerEntity user, java.util.List<java.util.UUID> picks) {
         if (!SeatAssignment.isBttMode(user.getWorld())) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
         if (!gwc.isRunning()) return;
@@ -139,7 +151,10 @@ public final class SelectionAbilities {
 
         dev.hae.btt.api.event.BttEvents.SkillUsed.EVENT.invoker().onSkillUsed(
                 user, null, Roles.effectiveRole(gwc, user).identifier());
-        if (btt$drunk && !(Roles.effectiveRole(gwc, user) == Roles.CANNIBAL)) return;
+        if (btt$drunk && !(Roles.effectiveRole(gwc, user) == Roles.CANNIBAL)) {
+            AbilityRules.consumeDrunkCooldown(user, gwc);
+            return;
+        }
         Folklorist.onAnyoneAbility(user, gwc);
 
         var definition = RoleDefs.get(Roles.effectiveRole(gwc, user));

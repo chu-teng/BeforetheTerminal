@@ -49,7 +49,7 @@ public final class TraitEffects {
         var pool = same.isEmpty() ? candidates : same;
         if (!pool.isEmpty()) {
             var recipient = pool.get(player.getRandom().nextInt(pool.size()));
-            recipient.sendMessage(Text.translatable("btt.trait.trust.notice", GameState.KEY.get(player.getWorld()).numberOf(player.getUuid())), true);
+            recipient.sendMessage(Text.translatable("btt.trait.trust.notice", GameState.KEY.get(player.getWorld()).numberOf(player.getUuid())).withColor(Traits.TRUST.color()), true);
         }
         pc.sync();
     }

@@ -70,7 +70,7 @@ public final class RoleSelectionAbilities {
         if (Drunk.isDrunk(user)) {
             dev.hae.btt.advancement.BttAdvancements.guess(user, false);
             target.sendMessage(Text.translatable("btt.action.messiah.reveal", user.getName().getString())
-                    .formatted(net.minecraft.util.Formatting.GRAY), true);
+                    .withColor(Roles.MESSIAH.color()), true);
             return;
         }
         Role guessed = gwc.getRole(target);
@@ -82,11 +82,11 @@ public final class RoleSelectionAbilities {
             dev.hae.btt.record.GameRecordManager.recordCampChange(target, "MESSIAH", user);
 
             target.sendMessage(Text.translatable("btt.action.messiah.joined")
-                    .formatted(net.minecraft.util.Formatting.GRAY), true);
+                    .withColor(Roles.MESSIAH.color()), true);
         } else {
 
             target.sendMessage(Text.translatable("btt.action.messiah.reveal", user.getName().getString())
-                    .formatted(net.minecraft.util.Formatting.GRAY), true);
+                    .withColor(Roles.MESSIAH.color()), true);
         }
     }
 
@@ -110,7 +110,7 @@ public final class RoleSelectionAbilities {
             dev.hae.btt.advancement.BttAdvancements.guess(user, false);
             user.sendMessage(Text.translatable("btt.action.assassin.fail", target.getName()).withColor(AbilityRules.roleColor(user)), true);
             target.sendMessage(Text.translatable("btt.action.assassin.miss", user.getName().getString())
-                    .formatted(net.minecraft.util.Formatting.GRAY), true);
+                    .withColor(Roles.ASSASSIN.color()), true);
             return;
         }
 
@@ -123,7 +123,7 @@ public final class RoleSelectionAbilities {
             user.sendMessage(Text.translatable("btt.action.assassin.fail", target.getName())
                     .withColor(AbilityRules.roleColor(user)), true);
             target.sendMessage(Text.translatable("btt.action.assassin.miss", user.getName().getString())
-                    .formatted(net.minecraft.util.Formatting.GRAY), true);
+                    .withColor(Roles.ASSASSIN.color()), true);
         }
     }
 

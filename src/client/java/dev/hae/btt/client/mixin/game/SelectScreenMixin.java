@@ -64,7 +64,6 @@ public abstract class SelectScreenMixin extends LimitedHandledScreen<PlayerScree
         if (multiPick || morph) dev.hae.btt.client.ui.MultiSelectState.reset();
 
         List<UUID> entries = new ArrayList<>(player.networkHandler.getPlayerUuids());
-        if (def.role == Roles.TAILOR) entries.remove(player.getUuid());
         entries.sort(java.util.Comparator.comparingInt(dev.hae.btt.component.GameState.KEY.get(player.getWorld())::numberOf));
         if (morph) entries.removeIf(uuid -> gwc.getRole(uuid) == null);
         entries.removeIf(uuid -> {

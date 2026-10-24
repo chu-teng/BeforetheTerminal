@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:clock"
     },
-    "title": "海猫鸣泣之时",
-    "description": "本局初始主犯包含暴乱、利维坦、雕塑家或涡流，作为凶手获胜",
-    "frame": "task",
+    "title": {
+      "translate": "btt.advancement.unarmed_principal.title"
+    },
+    "description": {
+      "translate": "btt.advancement.unarmed_principal.description"
+    },
+    "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

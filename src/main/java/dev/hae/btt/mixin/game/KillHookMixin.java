@@ -32,6 +32,11 @@ public abstract class KillHookMixin {
     @com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V")
     private static void bttResolveDeath(PlayerEntity victim, boolean body, PlayerEntity killer, Identifier reason,
                                        com.llamalad7.mixinextras.injector.wrapoperation.Operation<Void> original) {
+        if (dev.hae.btt.role.Priest.protects(victim, killer, reason)) {
+            if (victim instanceof ServerPlayerEntity player)
+                dev.hae.btt.combat.DeathResolution.shieldBreak(player, killer);
+            return;
+        }
         try (var context = dev.hae.btt.combat.DeathResolution.open(victim, body, killer, reason)) {
             original.call(victim, body, killer, reason);
             context.finish();

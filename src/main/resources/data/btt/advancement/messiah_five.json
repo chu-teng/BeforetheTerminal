@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:salmon"
     },
-    "title": "启示录",
-    "description": "作为救世主，传道至少三个信徒并不失手",
-    "frame": "challenge",
+    "title": {
+      "translate": "btt.advancement.messiah_five.title"
+    },
+    "description": {
+      "translate": "btt.advancement.messiah_five.description"
+    },
+    "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

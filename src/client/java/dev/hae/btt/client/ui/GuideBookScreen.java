@@ -29,13 +29,13 @@ public class GuideBookScreen extends Screen {
     private static final int GAP_PARAGRAPH = 4;
 
 
-    private static final int PAPER = 0xFFFFF0C9;
-    private static final int PAPER_EDGE = 0xFFC5A36C;
-    private static final int INK = 0xFF392B1B;
-    private static final int MUTED = 0xFF8A765D;
-    private static final int ROW_HOVER = 0x334C2E25;
-    private static final int ROW_SELECTED = 0x553C211C;
-    private static final int ACCENT = 0xFFA57228;
+    private static final int PAPER = 0xFF24201B;
+    private static final int PAPER_EDGE = 0xFF6F5B40;
+    private static final int INK = GuideContent.INK;
+    private static final int MUTED = 0xFFB3A58D;
+    private static final int ROW_HOVER = 0x335E4B34;
+    private static final int ROW_SELECTED = 0x555E4B34;
+    private static final int ACCENT = 0xFFD0A35F;
     private static final int TAB_TEXT = 0xFFF1D9B0;
     private static final int TAB_SELECTED_BG = 0xFF745329;
     private static final int TAB_BG = 0xFF49351F;

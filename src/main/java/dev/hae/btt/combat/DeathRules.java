@@ -201,7 +201,7 @@ public final class DeathRules {
 
         if ("ARCHENEMY".equals(dev.hae.btt.trait.relationship.Relationships.typeOf(victim))
 
-                && dev.hae.btt.role.Roles.isInfoOrSupportPassenger(dev.hae.btt.role.Roles.realRole(gwc, victim))
+                && dev.hae.btt.role.Roles.isCivilianPassenger(dev.hae.btt.role.Roles.realRole(gwc, victim))
                 && identifier == GameConstants.DeathReasons.GUN
                 && dev.hae.btt.role.Colonel.executionUser(shooter, identifier)) {
             java.util.UUID archenemy = dev.hae.btt.trait.relationship.Relationships.partnerOf(victim);
@@ -265,6 +265,8 @@ public final class DeathRules {
             shooter.getItemCooldownManager().set(net.minecraft.item.Items.BOW, GameConstants.getInTicks(1, 0));
         }
         if (misfire) {
+            var definition = dev.hae.btt.role.RoleDefs.get(gwc.getRole(shooter));
+            if (definition != null) definition.onMisexecution(shooter);
 
             if (!ranger && (riotAlive || bowKill || judgment)) {
                 GameFunctions.killPlayer(shooter, true, shooter, DeathReasons.SELF_EXECUTION);

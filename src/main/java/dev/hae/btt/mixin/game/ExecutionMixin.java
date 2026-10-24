@@ -35,6 +35,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GunShootPayload.Receiver.class)
 public abstract class ExecutionMixin {
 
+    @Inject(method = "receive", at = @At("HEAD"), cancellable = true)
+    private static void bttInflatedShot(GunShootPayload payload, ServerPlayNetworking.Context context, CallbackInfo ci) {
+        var player = context.player();
+        var stack = player.getMainHandStack();
+        if (!stack.isIn(dev.doctor4t.wathe.index.tag.WatheItemTags.GUNS)
+                || player.getItemCooldownManager().isCoolingDown(stack.getItem())
+                || stack.isOf(dev.doctor4t.wathe.index.WatheItems.DERRINGER)
+                && Boolean.TRUE.equals(stack.get(dev.doctor4t.wathe.index.WatheDataComponentTypes.USED))) return;
+        if (dev.hae.btt.role.Comedian.executionAttempt(player, dev.doctor4t.wathe.game.GameConstants.DeathReasons.GUN))
+            ci.cancel();
+    }
+
     @WrapOperation(method = "receive", at = @At(value = "INVOKE",
             target = "Ldev/doctor4t/wathe/cca/GameWorldComponent;isInnocent(Lnet/minecraft/entity/player/PlayerEntity;)Z"))
     private static boolean bttShooterBased(GameWorldComponent instance, PlayerEntity arg, Operation<Boolean> op,
@@ -126,4 +138,29 @@ public abstract class ExecutionMixin {
             player.getItemCooldownManager().set(dev.doctor4t.wathe.index.WatheItems.DERRINGER, 300);
         }
     }
+    @WrapOperation(method = "receive", at = @At(value = "INVOKE",
+            target = "Ldev/doctor4t/wathe/game/GameFunctions;killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V"))
+    private static void bttDamselGun(PlayerEntity victim, boolean spawnBody, PlayerEntity killer,
+                                     net.minecraft.util.Identifier reason, Operation<Void> original) {
+        if (!SeatAssignment.isBttMode(victim.getWorld())) {
+            original.call(victim, spawnBody, killer, reason);
+            return;
+        }
+        dev.hae.btt.role.Damsel.fire(victim, killer,
+                () -> original.call(victim, spawnBody, killer, reason));
+    }
+
+    @Inject(method = "receive", at = @At("TAIL"))
+    private static void bttConsumeDamselGun(GunShootPayload payload, ServerPlayNetworking.Context context, CallbackInfo ci) {
+        var player = context.player();
+        if (!SeatAssignment.isBttMode(player.getWorld())) return;
+        var stack = player.getMainHandStack();
+        if (dev.hae.btt.role.Damsel.specialGun(stack)
+                && (Boolean.TRUE.equals(stack.get(dev.doctor4t.wathe.index.WatheDataComponentTypes.USED))
+                || player.getItemCooldownManager().isCoolingDown(stack.getItem()))) {
+            stack.decrement(1);
+            player.currentScreenHandler.syncState();
+        }
+    }
+
 }

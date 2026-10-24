@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:ender_eye"
     },
-    "title": "六道轮回",
-    "description": "在六道奇遇中，作为独行中立复活并胜利",
+    "title": {
+      "translate": "btt.advancement.rebirth.title"
+    },
+    "description": {
+      "translate": "btt.advancement.rebirth.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

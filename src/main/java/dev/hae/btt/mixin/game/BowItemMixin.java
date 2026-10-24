@@ -66,6 +66,7 @@ public abstract class BowItemMixin {
                 SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F / (world.getRandom().nextFloat() * 0.4F + 1.2F) + power * 0.5F);
 
         if (!world.isClient && player instanceof ServerPlayerEntity shooter) {
+            if (dev.hae.btt.role.Comedian.executionAttempt(shooter, dev.hae.btt.combat.DeathReasons.ARROW)) { ci.cancel(); return; }
 
             ArrowEntity arrow = new ArrowEntity(world, shooter, new ItemStack(Items.ARROW), stack);
             arrow.setVelocity(shooter, shooter.getPitch(), shooter.getYaw(), 0.0F, power * 3.0F, 1.0F);

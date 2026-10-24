@@ -78,6 +78,7 @@ public abstract class CrossbowItemMixin {
     private static void btt$fire(World world, PlayerEntity user, ItemStack stack) {
         stack.remove(DataComponentTypes.CHARGED_PROJECTILES);
         if (world.isClient || !(user instanceof ServerPlayerEntity shooter)) return;
+        if (dev.hae.btt.role.Comedian.executionAttempt(shooter, dev.hae.btt.combat.DeathReasons.ARROW)) return;
         world.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(),
                 SoundEvents.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F);
         for (int i = 0; i < MULTISHOT; i++) {

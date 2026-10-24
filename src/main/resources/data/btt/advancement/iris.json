@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:cornflower"
     },
-    "title": "鸢尾",
-    "description": "作为独行、外人或因为关系特质获胜，获得鸢尾花环",
+    "title": {
+      "translate": "btt.advancement.iris.title"
+    },
+    "description": {
+      "translate": "btt.advancement.iris.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

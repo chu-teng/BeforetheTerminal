@@ -28,9 +28,11 @@ public final class PlayerObservation {
         boolean chair = viewer.getVehicle() instanceof dev.doctor4t.wathe.block.entity.SeatEntity seat
                 && viewer.getWorld().getBlockState(seat.getBlockPos()).getBlock() == dev.hae.btt.registry.BttBlocks.LOOKOUT_CHAIR;
         var role = game.getRole(target);
-        boolean immune = (role == Roles.SHOUJO || role == Roles.SAINT) && !Drunk.isDrunk(target);
+        boolean immune = (role == Roles.SHOUJO || role == Roles.AVIATEUR) && !Drunk.isDrunk(target);
         view.putBoolean("observedLookout", chair && game.isRunning() && !Voodoo.isRemnant(viewer)
                 && GameFunctions.isPlayerAliveAndSurvival(target) && viewer.canSee(target) && !immune);
+        view.putString("observedVoters", dev.hae.btt.game.Debate.isVoting(viewer.getWorld())
+                && isLookingAt(target, viewer) ? dev.hae.btt.game.Debate.votersFor(viewer.getServerWorld(), target.getUuid()) : "");
         boolean looking = canInspect(target, viewer);
         view.putString("observedGroup", looking ? group(game, target, viewer) : "");
         view.putString("observedCohort", looking ? cohort(game, target, viewer) : "");
@@ -60,6 +62,11 @@ public final class PlayerObservation {
             Role role = Roles.realRole(game, target);
             return GameFunctions.isPlayerAliveAndSurvival(target) && role != null ? role.color() : -1;
         }
+        if (game.isRole(viewer, Roles.WEREWOLF)) return -1;
+        if (dev.hae.btt.role.Werewolf.member(viewer)) {
+            return GameFunctions.isPlayerAliveAndSurvival(target) && !game.isRole(target, Roles.WEREWOLF)
+                    && dev.hae.btt.role.Werewolf.samePack(viewer, target) ? Roles.WEREWOLF.color() : -1;
+        }
         if (game.isRole(viewer, Roles.VOODOO) && PlayerState.KEY.get(target).voodooPhase == 1)
             return Roles.VOODOO.color();
         if (!GameFunctions.isPlayerAliveAndSurvival(target)
@@ -79,7 +86,7 @@ public final class PlayerObservation {
                 || !Roles.isKillerCampFor(game, viewer) && !Roles.hasCurrentOrPriorRole(game, viewer, Roles.LUNATIC)) return -1;
         Role role = game.getRole(target);
         if (role == null) return -1;
-        if ((role == Roles.SHOUJO || role == Roles.SAINT) && !Drunk.isDrunk(target)) return -1;
+        if ((role == Roles.SHOUJO || role == Roles.AVIATEUR) && !Drunk.isDrunk(target)) return -1;
         if (Roles.hasCurrentOrPriorRole(game, viewer, Roles.LUNATIC)
                 && Roles.kindOfReal(game, target) == Roles.Kind.PRINCIPAL) return GREEN;
         if (Roles.hasCurrentOrPriorRole(game, target, Roles.MARIONETTE) && Roles.isKillerCampFor(game, viewer))
@@ -114,6 +121,11 @@ public final class PlayerObservation {
         if (viewer == target || Voodoo.isRemnant(viewer) || Memory.isBlind(viewer)) return false;
         var game = GameWorldComponent.KEY.get(viewer.getWorld());
         if (!game.isRunning() || target.getWorld() != viewer.getWorld() || PlayerState.KEY.get(target).isFakeDead()) return false;
+        return isLookingAt(target, viewer);
+    }
+
+    private static boolean isLookingAt(ServerPlayerEntity target, ServerPlayerEntity viewer) {
+        if (target == viewer || target.getWorld() != viewer.getWorld()) return false;
         double range = GameFunctions.isPlayerSpectatingOrCreative(viewer) ? 8 : 2;
         if (viewer.squaredDistanceTo(target) > (range + 1) * (range + 1)) return false;
         var hit = ProjectileUtil.getCollision(viewer, entity -> entity instanceof PlayerEntity, range);
@@ -141,32 +153,18 @@ public final class PlayerObservation {
 
     private static String group(GameWorldComponent game, ServerPlayerEntity target, ServerPlayerEntity viewer) {
         var own = PlayerState.KEY.get(viewer);
-        boolean noble = game.isRole(viewer, Roles.NOBLE);
-        boolean balloonist = game.isRole(viewer, Roles.BALLOONIST);
-        if (!noble && !balloonist) return "";
-        boolean member = dev.hae.btt.role.RoleGroups.inGroup(noble ? own.kins : own.balloonReps, target.getUuid());
-        if (!member && Drunk.isDrunk(viewer)) {
-            var pool = viewer.getServerWorld().getPlayers().stream().filter(p -> p != viewer)
-                    .map(PlayerEntity::getUuid)
-                    .filter(id -> !dev.hae.btt.role.RoleGroups.inGroup(own.kins, id)
-                            && !dev.hae.btt.role.RoleGroups.inGroup(own.balloonReps, id))
-                    .sorted().toList();
-            if (!pool.isEmpty()) {
-                var random = new java.util.Random(viewer.getUuid().getMostSignificantBits()
-                        ^ viewer.getUuid().getLeastSignificantBits());
-                var fakes = new java.util.HashSet<java.util.UUID>();
-                while (fakes.size() < Math.min(4, pool.size())) fakes.add(pool.get(random.nextInt(pool.size())));
-                member = fakes.contains(target.getUuid());
-            }
-        }
-        return member ? noble ? "btt.hud.kins" : "btt.hud.balloon_rep" : "";
+        if (!game.isRole(viewer, Roles.NOBLE)) return "";
+        boolean drunk = Drunk.isDrunk(viewer);
+        if (dev.hae.btt.role.RoleGroups.inGroup(drunk ? own.drunkKins : own.kins, target.getUuid())) return "btt.hud.kins";
+        if (dev.hae.btt.role.RoleGroups.inGroup(drunk ? own.drunkBranchKins : own.branchKins, target.getUuid())) return "btt.hud.branch_kins";
+        return "";
     }
 
     private static Role inspectRole(GameWorldComponent game, ServerPlayerEntity target, ServerPlayerEntity viewer) {
         Role role = game.getRole(target);
         if (role == null) return null;
         if (role == Roles.HERETIC) {
-            var passengers = WatheRoles.ROLES.stream().filter(r -> Roles.kindOf(r) != null && Roles.kindOf(r).isInfoOrSupport()).toList();
+            var passengers = WatheRoles.ROLES.stream().filter(r -> Roles.kindOf(r) != null && Roles.kindOf(r).isCivilian()).toList();
             role = passengers.isEmpty() ? Roles.DETECTIVE : passengers.get(Math.floorMod(target.getUuid().hashCode(), passengers.size()));
         }
         if (Drunk.isDrunk(viewer) && !WatheRoles.ROLES.isEmpty()) {

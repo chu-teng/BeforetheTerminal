@@ -1,13 +1,16 @@
 {
   "display": {
     "icon": {
-      "id": "wathe:hull_glass"
+      "id": "minecraft:writable_book"
     },
-    "title": "剧本之外",
-    "description": "在轮抽模式中，选择暗牌并完成对局",
+    "title": {
+      "translate": "btt.advancement.script.title"
+    },
+    "description": {
+      "translate": "btt.advancement.script.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

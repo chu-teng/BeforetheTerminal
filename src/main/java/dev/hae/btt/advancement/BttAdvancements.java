@@ -27,7 +27,6 @@ import java.util.*;
 
 public final class BttAdvancements {
     private BttAdvancements() {}
-    private static final Map<UUID, ServerWorld> HIDDEN_PICKS = new HashMap<>();
     private record Explosion(ServerPlayerEntity owner, Set<UUID> deaths) {}
     private static final ThreadLocal<Explosion> EXPLOSION = new ThreadLocal<>();
     private record Trap(ServerPlayerEntity victim, PlayerEntity owner, String kind) {}
@@ -41,11 +40,8 @@ public final class BttAdvancements {
             fact(player, "need");
             if (distinct(round(player), "needs", task) >= 8) fact(player, "all_needs");
         });
-        BttEvents.DraftPick.EVENT.register((world, player, ordinal, role, hidden) -> {
-            if (hidden) HIDDEN_PICKS.put(player, world);
-        });
         BttEvents.SkillUsed.EVENT.register((user, target, skill) -> {
-            if (target != null && Roles.kindOf(game(user).getRole(user)) == Roles.Kind.INFORMATION
+            if (target != null && Set.of(Roles.DETECTIVE, Roles.INVESTIGATOR, Roles.PROPHET, Roles.JOURNALIST).contains(game(user).getRole(user))
                     && !Roles.isPassengerCampFor(game(user), target)) fact(user, "information");
         });
         BttEvents.ShopPurchase.EVENT.register((player, entry, index, price) -> {
@@ -58,7 +54,6 @@ public final class BttAdvancements {
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             for (var world : server.getWorlds()) tick(world);
         });
-        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> HIDDEN_PICKS.clear());
     }
 
     private static GameWorldComponent game(PlayerEntity player) { return GameWorldComponent.KEY.get(player.getWorld()); }
@@ -75,7 +70,24 @@ public final class BttAdvancements {
         var values = new HashSet<>(Arrays.asList(data.getString(key).split(",")));
         values.remove(""); values.add(value); data.putString(key, String.join(",", values)); return values.size();
     }
-    public static void award(ServerPlayerEntity player, String id) { criterion(player, id, "done"); }
+    private static final Set<String> END_ONLY = Set.of("drunk", "memory_change", "unanimous",
+            "execution_two", "execution_three", "passenger_trap", "magic_kill",
+            "marionette_execution", "lunatic_principal", "parity", "kill_one", "kill_three", "kill_five");
+    public static void award(ServerPlayerEntity player, String id) {
+        var status = game(player).getGameStatus();
+        if (END_ONLY.contains(id) && status != GameWorldComponent.GameStatus.INACTIVE) {
+            var pending = round(player).getCompound("deferred");
+            pending.putBoolean(id, true);
+            round(player).put("deferred", pending);
+            return;
+        }
+        criterion(player, id, "done");
+    }
+    private static void deliverDeferred(ServerPlayerEntity player) {
+        var pending = round(player).getCompound("deferred");
+        for (String id : END_ONLY) if (pending.getBoolean(id)) criterion(player, id, "done");
+        round(player).remove("deferred");
+    }
     private static void criterion(ServerPlayerEntity player, String id, String criterion) {
         var entry = player.getServer().getAdvancementLoader().get(Identifier.of("btt", id));
         if (entry != null && entry.value().criteria().containsKey(criterion)) player.getAdvancementTracker().grantCriterion(entry, criterion);
@@ -107,12 +119,15 @@ public final class BttAdvancements {
             state.putString("camp", Roles.campOf(game, player).name());
             state.putString("startCamp", Roles.campOf(game, player).name());
             state.putString("role", game.getRole(player).identifier().toString());
-            state.putBoolean("hiddenPick", HIDDEN_PICKS.remove(player.getUuid()) == world);
             state.putBoolean("guesser", guessesRoles(game.getRole(player)));
-            if (GameModes.modeOf(game) == BeforeTheTerminalGameMode.Mode.DUEL
-                    && (Roles.kindOfReal(game, player) == Roles.Kind.LONE || Roles.kindOfReal(game, player) == Roles.Kind.OUTSIDER)) award(player, "duel");
+            if (game.getRole(player) == Roles.WEREWOLF) {
+                state.putString("wolfAllies", world.getPlayers().stream()
+                        .filter(p -> PlayerState.KEY.get(p).werewolfOwner.equals(player.getUuidAsString()))
+                        .map(p -> p.getUuidAsString()).collect(java.util.stream.Collectors.joining(",")));
+            }
+            if (GameModes.modeOf(game) == BeforeTheTerminalGameMode.Mode.SCRIPT
+                    && (Roles.kindOfReal(game, player) == Roles.Kind.LONE || Roles.kindOfReal(game, player) == Roles.Kind.OUTSIDER)) award(player, "script");
         }
-        HIDDEN_PICKS.entrySet().removeIf(entry -> entry.getValue() == world);
     }
     private static boolean guessesRoles(Role role) {
         return role == Roles.NOVELIST || role == Roles.ASSASSIN || role == Roles.MESSIAH || role == Roles.GAMBLER;
@@ -184,13 +199,10 @@ public final class BttAdvancements {
         if (!active(victim)) return;
         var world = victim.getServerWorld(); var game = game(victim); var state = round(victim);
         state.putBoolean("dead", true);
+        for (var owner : world.getPlayers())
+            if (Arrays.asList(round(owner).getString("wolfAllies").split(",")).contains(victim.getUuidAsString()))
+                distinct(round(owner), "wolfLosses", victim.getUuidAsString());
         if (DeathReasons.SELF_EXECUTION.equals(reason) && state.contains("misfireAt") && state.getLong("misfireAt") == world.getTime()) award(victim, "self_execution");
-        if (DeathReasons.COLLAPSE.equals(reason) && state.contains("executionCollapseUntil") && state.getLong("executionCollapseUntil") >= world.getTime()
-                && world.getPlayers().stream().anyMatch(p -> game.getRole(p) == Roles.COLD_WAVE)) {
-            if (distinct(worldRound(world), "coldVictims", victim.getUuidAsString()) >= 3)
-                for (var owner : world.getPlayers()) if (GameState.KEY.get(world).openingRoles.getOrDefault(owner.getUuid(), "").equals(Roles.COLD_WAVE.identifier().toString())
-                        || game.getRole(owner) == Roles.COLD_WAVE) award(owner, "cold_three");
-        }
         if (WorldBlackoutComponent.KEY.get(world).isBlackoutActive()) {
             int deaths = increment(worldRound(world), "blackoutDeaths");
             var owner = player(world, worldRound(world).getString("blackoutOwner"));
@@ -204,8 +216,6 @@ public final class BttAdvancements {
         }
         if (GameConstants.DeathReasons.POISON.equals(reason)) award(killer, "poison_kill");
         if (DeathReasons.MAGIC.equals(reason) && !Roles.isPassengerCampFor(game, victim)) award(killer, "magic_kill");
-        if (game.getRole(killer) == Roles.ASTRAL && Roles.isKillerCampFor(game, victim)
-                && distinct(actor, "astralVictims", victim.getUuidAsString()) >= 2) award(killer, "astral_two");
         if (DeathReasons.BLOOM.equals(reason)) award(killer, "bloom_kill");
         if (Roles.hasCurrentOrPriorRole(game, killer, Roles.LUNATIC) && Roles.kindOfReal(game, victim) == Roles.Kind.PRINCIPAL) award(killer, "lunatic_principal");
         if (PlayerPsychoComponent.KEY.get(killer).getPsychoTicks() > 0 && increment(actor, "psychoKills") >= 4) award(killer, "psycho_four");
@@ -219,12 +229,13 @@ public final class BttAdvancements {
             if (distinct(actor, "traps", trap.kind) >= 2) award(killer, "double_trap");
             if (Roles.isPassengerCampFor(game, killer) && !Roles.isPassengerCampFor(game, victim)) award(killer, "passenger_trap");
         }
+        if (Roles.hasCurrentOrPriorRole(game, killer, Roles.MARIONETTE) && Roles.isPassengerCampFor(game, victim)) award(killer, "marionette_execution");
         if (dev.hae.btt.trait.TraitRules.execution(victim, killer, reason)) {
-            if (Roles.hasCurrentOrPriorRole(game, killer, Roles.MARIONETTE) && Roles.isPassengerCampFor(game, victim)) award(killer, "marionette_execution");
             if (Roles.isPassengerCampFor(game, killer)) {
-                if (Roles.isPassengerCampFor(game, victim)) { award(killer, "misfire"); actor.putLong("misfireAt", world.getTime()); }
+                award(killer, "execution");
+                if (Roles.isPassengerCampFor(game, victim)) { actor.putLong("misfireAt", world.getTime()); }
                 else {
-                    int executions = increment(actor, "executions"); award(killer, "execution");
+                    int executions = increment(actor, "executions");
                     if (executions >= 2) award(killer, "execution_two"); if (executions >= 3) award(killer, "execution_three");
                 }
             }
@@ -269,8 +280,6 @@ public final class BttAdvancements {
             if (PlayerPsychoComponent.KEY.get(player).getPsychoTicks() <= 0) state.putInt("psychoKills", 0);
             if (game.getRole(player) == Roles.MAJO && world.getPlayers().stream().filter(p -> p != player && game.getRole(p) != null)
                     .filter(p -> dev.hae.btt.faction.Camps.sharesRoleCamp(game, p, Roles.MAJO)).count() >= 2) award(player, "majo_two");
-            if (game.getRole(player) == Roles.KIDNAPPER && world.getPlayers().stream()
-                    .filter(p -> PlayerState.KEY.get(p).swallowedBy.equals(player.getUuidAsString())).count() >= 4) award(player, "stomach_four");
         }
     }
 
@@ -283,11 +292,14 @@ public final class BttAdvancements {
         for (var player : world.getPlayers()) {
             if (game.getRole(player) == null) continue;
             var state = round(player); var pc = PlayerState.KEY.get(player);
+            deliverDeferred(player);
             boolean alive = GameFunctions.isPlayerAliveAndSurvival(player), won = winners.contains(player.getUuidAsString());
             if (alive) award(player, "last_stop"); nextCriterion(player, "ten_rounds");
-            if (GameModes.modeOf(game) != BeforeTheTerminalGameMode.Mode.SCRIPT) award(player, "modes");
-            if (state.getBoolean("hiddenPick")) award(player, "hidden_draft");
+            if (GameModes.modeOf(game) != BeforeTheTerminalGameMode.Mode.DRAFT) award(player, "modes");
             if (!won) continue;
+            if (game.getRole(player) == Roles.WEREWOLF
+                    && Arrays.stream(state.getString("wolfLosses").split(",")).filter(x -> !x.isEmpty()).count() <= 2)
+                award(player, "werewolf_survivors");
             var camp = Roles.campOf(game, player); var kind = Roles.kindOfReal(game, player);
             var initialKind = Roles.kindOf(Roles.byId(btt.openingRoles.getOrDefault(player.getUuid(), "")));
             criterion(player, "all_camps", camp.name());
@@ -311,9 +323,8 @@ public final class BttAdvancements {
             if (ending.equals("BLACKDEATH_KILLER") && Roles.hasCurrentOrPriorRole(game, player, Roles.BLACKDEATH)) award(player, "black_death");
             if (ending.equals("HERETIC_PASSENGER") && Roles.hasCurrentOrPriorRole(game, player, Roles.HERETIC)) award(player, "heretic");
             var partner = player(world, pc.partner);
-            if ("LOVER".equals(pc.relType) && ending.equals("LOVERS_WIN") && alive && partner != null
-                    && GameFunctions.isPlayerAliveAndSurvival(partner) && winners.contains(partner.getUuidAsString())) award(player, "lovers");
-            if ("ARCHENEMY".equals(pc.relType) && ending.equals("ARCHENEMY_WIN") && Roles.kindOfReal(game, player) == Roles.Kind.ACCOMPLICE) award(player, "archenemy");
+            if ("LOVER".equals(pc.relType) && ending.equals("LOVERS_WIN")) award(player, "lovers");
+            if ("ARCHENEMY".equals(pc.relType) && ending.equals("ARCHENEMY_WIN")) award(player, "archenemy");
             if ("FATED".equals(pc.relType) && state.getBoolean("roleChanged")) award(player, "rivals");
             if (Backgrounds.isActive(world, Backgrounds.DUPLICATES) && alive && world.getPlayers().stream().anyMatch(p -> p != player
                     && GameFunctions.isPlayerAliveAndSurvival(p) && winners.contains(p.getUuidAsString())

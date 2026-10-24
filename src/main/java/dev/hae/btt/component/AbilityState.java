@@ -51,6 +51,7 @@ public class AbilityState implements AutoSyncedComponent, ServerTickingComponent
     }
 
     public void setCooldown(int ticks) {
+        if (ticks > this.cooldown) dev.hae.btt.record.SkillUseRecording.cooldownSpent(player);
         this.cooldown = ticks;
         this.sync();
     }

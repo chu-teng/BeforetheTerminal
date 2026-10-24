@@ -275,6 +275,12 @@ public final class TargetedAbilities {
     }
 
     public static void witch(ServerPlayerEntity user, java.util.UUID selectedTarget) {
+        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
+            witchBody(user, selectedTarget);
+        }
+    }
+
+    private static void witchBody(ServerPlayerEntity user, java.util.UUID selectedTarget) {
         if (!AbilityRules.canAct(user)) return;
         var world = user.getWorld();
         GameWorldComponent gwc = GameWorldComponent.KEY.get(world);

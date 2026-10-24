@@ -26,12 +26,19 @@ public class VoiceChatPlugin implements VoicechatPlugin {
 
 
     private static VoicechatServerApi serverApi;
+    private static boolean loudnessCleanupRegistered;
 
     private static final java.util.Map<java.util.UUID, de.maxhenkel.voicechat.api.Group> STOMACH_GROUPS = new java.util.HashMap<>();
 
     @Override
     public void initialize(VoicechatApi api) {
         if (api instanceof VoicechatServerApi server) serverApi = server;
+        if (!loudnessCleanupRegistered) {
+            loudnessCleanupRegistered = true;
+            net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> VoiceLoudness.clear());
+            net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+                    VoiceLoudness.disconnect(handler.getPlayer().getUuid()));
+        }
         VoicechatPlugin.super.initialize(api);
     }
 
@@ -187,6 +194,23 @@ public class VoiceChatPlugin implements VoicechatPlugin {
                     .position(api.createPosition(listener.getX(), listener.getY(), listener.getZ())).distance(8f).build());
         }
         if (remnant) event.cancel();
+        if (!event.isCancelled() && dev.hae.btt.role.Smuggler.hiddenAlive(speaker)) {
+            var host = dev.hae.btt.mechanic.Attachment.hostOf(speaker, speaker.getServerWorld());
+            if (host == null) { event.cancel(); return; }
+            double distance = event.getPacket().isWhispering()
+                    ? api.getServerConfig().getDouble("whisper_distance", 24.0) : api.getVoiceChatDistance();
+            for (var listener : speaker.getServerWorld().getPlayers()) {
+                if (listener == speaker || !(GameFunctions.isPlayerAliveAndSurvival(listener)
+                        || PlayerState.KEY.get(listener).isSwallowed())) continue;
+                if (host.squaredDistanceTo(listener) > distance * distance) continue;
+                var connection = api.getConnectionOf(listener.getUuid());
+                if (connection != null) api.sendLocationalSoundPacketTo(connection,
+                        event.getPacket().locationalSoundPacketBuilder()
+                                .position(api.createPosition(host.getX(), host.getY(), host.getZ()))
+                                .distance((float)distance).build());
+            }
+            event.cancel();
+        }
     }
 
 
@@ -195,7 +219,6 @@ public class VoiceChatPlugin implements VoicechatPlugin {
         if (recipient == null) return;
         if (PlayerState.KEY.get(recipient).cageDeadline > recipient.getWorld().getTime()) { event.cancel(); return; }
         if (!SeatAssignment.isBttMode(recipient.getWorld())) return;
-        if (PlayerState.KEY.get(recipient).isMuted()) { event.cancel(); return; }
         if (event.getPacket() instanceof de.maxhenkel.voicechat.api.packets.SoundPacket sound) {
             var sender = recipient.getServerWorld().getPlayerByUuid(sound.getSender());
             if (sender instanceof ServerPlayerEntity speaker) {
@@ -205,7 +228,9 @@ public class VoiceChatPlugin implements VoicechatPlugin {
                         && !dev.hae.btt.role.Voodoo.hearsLiving(recipient, speaker)
                         && !dev.hae.btt.role.Voodoo.isRemnant(speaker)) event.cancel();
             } else if (dev.hae.btt.role.Voodoo.isRemnant(recipient)) event.cancel();
+            if (!event.isCancelled()) VoiceLoudness.heard(event.getVoicechat(), recipient, sound);
         }
+        if (PlayerState.KEY.get(recipient).isMuted()) event.cancel();
     }
 
     private static ServerPlayerEntity serverPlayerOf(VoicechatConnection connection) {

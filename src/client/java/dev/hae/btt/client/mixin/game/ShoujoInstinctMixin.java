@@ -42,7 +42,7 @@ public abstract class ShoujoInstinctMixin {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
 
 
-        if (Roles.isPlayingAs(gwc, viewer, Roles.TRAITOR)) {
+        if (Roles.isPlayingAs(gwc, viewer, Roles.TRAITOR) && !dev.hae.btt.component.PlayerState.KEY.get(viewer).werewolfAlly) {
             cir.setReturnValue(-1);
             cir.cancel();
             return;
@@ -89,7 +89,9 @@ public abstract class ShoujoInstinctMixin {
         if (GameFunctions.isPlayerSpectatingOrCreative(viewer)) {
             return;
         }
-        if (Roles.isPlayingAs(GameWorldComponent.KEY.get(viewer.getWorld()), viewer, Roles.TRAITOR)) {
+        if (Roles.isPlayingAs(GameWorldComponent.KEY.get(viewer.getWorld()), viewer, Roles.WEREWOLF)
+                || Roles.isPlayingAs(GameWorldComponent.KEY.get(viewer.getWorld()), viewer, Roles.TRAITOR)
+                    && !dev.hae.btt.component.PlayerState.KEY.get(viewer).werewolfAlly) {
             cir.setReturnValue(false);
         }
     }

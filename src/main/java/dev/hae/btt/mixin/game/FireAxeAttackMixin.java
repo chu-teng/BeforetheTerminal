@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
-import dev.doctor4t.wathe.index.WatheSounds;
+import dev.hae.btt.registry.Sounds;
 import dev.hae.btt.registry.BttItems;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -49,6 +49,6 @@ public abstract class FireAxeAttackMixin {
         }
         GameFunctions.killPlayer(victim, true, self, dev.hae.btt.combat.DeathReasons.AXE);
         self.getEntityWorld().playSound(self, victim.getX(), victim.getEyeY(), victim.getZ(),
-                WatheSounds.ITEM_BAT_HIT, SoundCategory.PLAYERS, 3f, 1f);
+                Sounds.FIRE_AXE_HIT, SoundCategory.PLAYERS, 3f, 1f);
     }
 }

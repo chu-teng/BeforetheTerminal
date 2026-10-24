@@ -22,7 +22,7 @@ public abstract class SpiritNameMixin {
     @WrapOperation(method = "renderHud",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerEntity;getDisplayName()Lnet/minecraft/text/Text;"))
     private static Text btt$spiritHideName(PlayerEntity instance, Operation<Text> original) {
-        if (SpiritCameraHandler.isActive() && instance != MinecraftClient.getInstance().player) {
+        if (SpiritCameraHandler.isAnonymous() && instance != MinecraftClient.getInstance().player) {
             return Text.literal("");
         }
 

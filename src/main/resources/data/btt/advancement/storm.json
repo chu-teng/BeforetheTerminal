@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:lightning_rod"
     },
-    "title": "风暴捕手",
-    "description": "在风暴奇遇中，成为风暴眼",
+    "title": {
+      "translate": "btt.advancement.storm.title"
+    },
+    "description": {
+      "translate": "btt.advancement.storm.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

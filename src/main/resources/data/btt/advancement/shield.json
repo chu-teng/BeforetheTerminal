@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:shield"
     },
-    "title": "命不该绝",
-    "description": "消耗一次护盾",
+    "title": {
+      "translate": "btt.advancement.shield.title"
+    },
+    "description": {
+      "translate": "btt.advancement.shield.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

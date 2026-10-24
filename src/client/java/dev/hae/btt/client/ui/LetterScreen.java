@@ -139,7 +139,13 @@ public class LetterScreen extends Screen {
         for (Map.Entry<UUID, Integer> numbered : numbers.entrySet()) {
             PlayerListEntry ple = client.getNetworkHandler() == null
                     ? null : client.getNetworkHandler().getPlayerListEntry(numbered.getKey());
-            if (ple == null) continue;
+            if (ple == null) {
+                var saved = game.letterProfiles.get(numbered.getKey().toString());
+                var profile = saved == null ? java.util.Optional.<net.minecraft.component.type.ProfileComponent>empty()
+                        : net.minecraft.component.type.ProfileComponent.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, saved).result();
+                ple = new PlayerListEntry(profile.map(net.minecraft.component.type.ProfileComponent::gameProfile)
+                        .orElseGet(() -> new com.mojang.authlib.GameProfile(numbered.getKey(), "#" + numbered.getValue())), false);
+            }
             String uuid = numbered.getKey().toString();
 
             int status = state == null ? LetterState.STATUS_ALIVE

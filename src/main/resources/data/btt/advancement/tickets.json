@@ -3,11 +3,14 @@
     "icon": {
       "id": "wathe:letter"
     },
-    "title": "请出示车票",
-    "description": "打开魔典界面",
+    "title": {
+      "translate": "btt.advancement.tickets.title"
+    },
+    "description": {
+      "translate": "btt.advancement.tickets.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

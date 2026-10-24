@@ -36,7 +36,7 @@ public final class Memory {
         NbtCompound data = new NbtCompound();
         data.putBoolean("btt_memory", true);
         stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(data));
-        stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable("btt.memory.slip"));
+        stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable("btt.memory.slip").styled(style -> style.withItalic(false)));
         stack.set(DataComponentTypes.LORE, new LoreComponent(List.of(Text.translatable("btt.memory.goal"))));
         player.getInventory().insertStack(stack);
     }

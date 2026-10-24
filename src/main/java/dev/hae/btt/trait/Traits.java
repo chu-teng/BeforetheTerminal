@@ -236,7 +236,7 @@ public final class Traits {
                     if (!Relationships.canReceiveModifier(world, p.getUuid())) continue;
                     switch (type) {
                         case "ARCHENEMY" -> {
-                            if (Roles.isInfoOrSupportPassenger(gw.getRole(p))) partners.add(p);
+                            if (Roles.isCivilianPassenger(gw.getRole(p))) partners.add(p);
                         }
                         case "FATED" -> {
                             if (Roles.isPassengerCampFor(gw, p) != drawerPassenger) partners.add(p);
@@ -389,7 +389,7 @@ public final class Traits {
 
     public static final int TENACIOUS_DOWN_TICKS = 100;
 
-    public static final int ELDER_DOWN_TICKS = 100;
+    public static final int NIGHT_WATCHMAN_DOWN_TICKS = 100;
 
 
 
@@ -407,14 +407,11 @@ public final class Traits {
     public static boolean vetoDeath(ServerPlayerEntity victim, net.minecraft.entity.player.PlayerEntity killer, Identifier reason) {
         PlayerState pc = PlayerState.KEY.get(victim);
         if (pc.tenaciousTicks > 0) return false;
-
-
-        boolean elder = !pc.tenaciousUsed
-                && dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(victim.getWorld()).isRole(victim, Roles.ELDER);
-        if (pc.tenaciousUsed || (!has(victim, TENACIOUS) && !elder)) return false;
+        boolean watchman = !pc.tenaciousUsed && !dev.hae.btt.role.Drunk.isDrunk(victim)
+                && dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(victim.getWorld()).isRole(victim, Roles.NIGHT_WATCHMAN);
+        if (pc.tenaciousUsed || (!has(victim, TENACIOUS) && !watchman)) return false;
         pc.tenaciousUsed = true;
-        if (elder) victim.giveItemStack(new net.minecraft.item.ItemStack(dev.doctor4t.wathe.index.WatheItems.REVOLVER));
-        int downTicks = elder ? ELDER_DOWN_TICKS : TENACIOUS_DOWN_TICKS;
+        int downTicks = watchman ? NIGHT_WATCHMAN_DOWN_TICKS : TENACIOUS_DOWN_TICKS;
         pc.tenaciousTicks = downTicks;
         pc.tenaciousReason = reason == null ? "" : reason.toString();
         pc.tenaciousKiller = killer == null ? "" : killer.getUuidAsString();
@@ -457,24 +454,11 @@ public final class Traits {
         if (!has(victim, TEASE)) return;
         String type = pickAbsentEpilogue(world);
         if (type == null) return;
-        String key = switch (type) {
-            case "MAJO" -> "majo";
-            case "MESSIAH" -> "messiah";
-            case "KIDNAPPER" -> "kidnapper";
-            case "GARDENER" -> "gardener";
-            case "ASTRAL" -> "astral";
-            case "COLD_WAVE" -> "cold_wave";
-            default -> "cold_wave";
-        };
-        int color = switch (type) {
-            case "MAJO" -> Roles.MAJO.color();
-            case "MESSIAH" -> Roles.MESSIAH.color();
-            case "KIDNAPPER" -> Roles.KIDNAPPER.color();
-            case "GARDENER" -> Roles.GARDENER.color();
-            case "ASTRAL" -> Roles.ASTRAL.color();
-            default -> Roles.COLD_WAVE.color();
-        };
-        net.minecraft.sound.SoundEvent track = dev.hae.btt.registry.Sounds.forEpilogue(type);
+        var host = dev.hae.btt.role.RoleDefs.host(type);
+        if (host == null) return;
+        String key = type.toLowerCase(java.util.Locale.ROOT);
+        int color = host.role.color();
+        net.minecraft.sound.SoundEvent track = host.outsiderHost().music();
 
         for (ServerPlayerEntity p : world.getPlayers()) {
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleS2CPacket(
@@ -483,7 +467,7 @@ public final class Traits {
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.SubtitleS2CPacket(
                     Text.translatable("btt.epilogue." + key + ".line").withColor(color)));
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket(10, 70, 10));
-            p.playSoundToPlayer(track, net.minecraft.sound.SoundCategory.MASTER, 1.0f, 1.0f);
+            if (track != null) p.playSoundToPlayer(track, net.minecraft.sound.SoundCategory.MASTER, 1.0f, 1.0f);
             TEASE_LEFT.put(p.getUuid(), TEASE_TICKS);
         }
     }
@@ -491,13 +475,9 @@ public final class Traits {
 
     private static String pickAbsentEpilogue(ServerWorld world) {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
-        java.util.List<String> pool = new ArrayList<>();
-        if (!anyRoleInPlay(gwc, Roles.MAJO)) pool.add("MAJO");
-        if (!anyRoleInPlay(gwc, Roles.MESSIAH)) pool.add("MESSIAH");
-        if (!anyRoleInPlay(gwc, Roles.KIDNAPPER)) pool.add("KIDNAPPER");
-        if (!anyRoleInPlay(gwc, Roles.GARDENER)) pool.add("GARDENER");
-        if (!anyRoleInPlay(gwc, Roles.ASTRAL)) pool.add("ASTRAL");
-        if (!anyRoleInPlay(gwc, Roles.COLD_WAVE)) pool.add("COLD_WAVE");
+        java.util.List<String> pool = Roles.allRoles().stream()
+                .filter(role -> Roles.kindOf(role) == Roles.Kind.OUTSIDER && !anyRoleInPlay(gwc, role))
+                .map(dev.hae.btt.role.RoleDefs::hostFor).filter(type -> !type.isEmpty()).toList();
         if (pool.isEmpty()) return null;
         return pool.get(world.getRandom().nextInt(pool.size()));
     }

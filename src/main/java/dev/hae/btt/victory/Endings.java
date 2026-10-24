@@ -57,7 +57,7 @@ public final class Endings {
         HERETIC_KILLER,
 
         HERETIC_PASSENGER,
-        ANGEL_WIN, LEGION_WIN, VOODOO_WIN
+        ANGEL_WIN, LEGION_WIN, VOODOO_WIN, WEREWOLF_WIN
     }
 
 
@@ -164,6 +164,7 @@ public final class Endings {
             case "ANGEL_WIN" -> "angel";
             case "LEGION_WIN" -> "legion";
             case "VOODOO_WIN" -> "voodoo";
+            case "WEREWOLF_WIN" -> "werewolf";
             case "EXECUTIONER_WIN" -> "executioner";
             case "ASTRAL_WIN" -> "astral";
             case "COLD_WAVE_WIN" -> "cold_wave";
@@ -198,6 +199,7 @@ public final class Endings {
             case "legion" -> 0xFF000000 | Roles.LEGION.color();
             case "voodoo" -> 0xFF000000 | Roles.VOODOO.color();
             case "executioner" -> 0xFF000000 | Roles.EXECUTIONER.color();
+            case "werewolf" -> 0xFF000000 | Roles.WEREWOLF.color();
             case "astral" -> 0xFF000000 | Roles.ASTRAL.color();
             case "cold_wave" -> 0xFF000000 | Roles.COLD_WAVE.color();
             case "lovers" -> 0xFF000000 | dev.hae.btt.trait.relationship.Relationships.COLOR_LOVERS;

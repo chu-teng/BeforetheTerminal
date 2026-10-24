@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:glass"
     },
-    "title": "我思故我在",
-    "description": "在追忆模式中，第一次达成完美",
+    "title": {
+      "translate": "btt.advancement.memory_perfect.title"
+    },
+    "description": {
+      "translate": "btt.advancement.memory_perfect.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

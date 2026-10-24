@@ -41,8 +41,6 @@ public final class DeathReasons {
 
     public static final Identifier BLOOM = Identifier.of("btt", "bloom");
 
-    public static final Identifier JUDGMENT = Identifier.of("btt", "judgment");
-
     public static final Identifier COLLAPSE = Identifier.of("btt", "collapse");
 
     public static final Identifier FLYING_SWORD = Identifier.of("btt", "flying_sword");

@@ -21,6 +21,10 @@ public class GameState implements AutoSyncedComponent {
             ComponentRegistry.getOrCreate(Identifier.of(BeforeTheTerminal.MOD_ID, "game"), GameState.class);
 
     private final World world;
+
+    public NbtCompound serverLastRound = new NbtCompound();
+    public boolean roundResultBtt = false;
+    public NbtCompound roleEffects = new NbtCompound();
     public NbtCompound advancementRound = new NbtCompound();
 
     public String lastEnding = "NONE";
@@ -43,10 +47,13 @@ public class GameState implements AutoSyncedComponent {
 
 
     public String pendingEnding = "";
+    public boolean killerObjectiveMet = false;
     public final java.util.List<dev.hae.btt.victory.VictoryRequest> pendingVictories = new java.util.ArrayList<>();
 
     public void clearVictoryRequests() {
+        roleEffects = new NbtCompound();
         pendingEnding = "";
+        killerObjectiveMet = false;
         pendingVictories.clear();
     }
 
@@ -84,6 +91,7 @@ public class GameState implements AutoSyncedComponent {
 
 
     public String letterNumbers = "";
+    public NbtCompound letterProfiles = new NbtCompound();
     public int numberOf(java.util.UUID uuid) {
         String prefix = uuid.toString() + ":";
         for (String entry : letterNumbers.split(",")) {
@@ -110,10 +118,14 @@ public class GameState implements AutoSyncedComponent {
 
     @Override
     public void writeToNbt(@NotNull NbtCompound tag, @NotNull RegistryWrapper.WrapperLookup registryLookup) {
+        tag.put("serverLastRound", serverLastRound.copy());
+        tag.putBoolean("roundResultBtt", roundResultBtt);
+        tag.put("roleEffects", roleEffects.copy());
         tag.put("advancementRound", advancementRound.copy());
         tag.putString("lastEnding", this.lastEnding);
         tag.putString("winners", this.winners);
         tag.putString("pendingEnding", this.pendingEnding);
+        tag.putBoolean("killerObjectiveMet", killerObjectiveMet);
         var requests = new net.minecraft.nbt.NbtList();
         for (var request : pendingVictories) {
             requests.add(request.toNbt());
@@ -141,6 +153,7 @@ public class GameState implements AutoSyncedComponent {
         tag.putString("dreamVoters", dreamVoters);
         tag.putString("dreamNo", dreamNo);
         tag.putString("letterNumbers", this.letterNumbers);
+        tag.put("letterProfiles", letterProfiles.copy());
     }
 
     @Override
@@ -153,6 +166,10 @@ public class GameState implements AutoSyncedComponent {
 
     @Override
     public void readFromNbt(@NotNull NbtCompound tag, @NotNull RegistryWrapper.WrapperLookup registryLookup) {
+        serverLastRound = tag.getCompound("serverLastRound").copy();
+        roundResultBtt = tag.getBoolean("roundResultBtt");
+        roleEffects = tag.getCompound("roleEffects").copy();
+        killerObjectiveMet = tag.getBoolean("killerObjectiveMet");
         advancementRound = tag.getCompound("advancementRound").copy();
         if (tag.contains("lastEnding")) this.lastEnding = tag.getString("lastEnding");
         if (tag.contains("winners")) this.winners = tag.getString("winners");
@@ -187,5 +204,6 @@ public class GameState implements AutoSyncedComponent {
         dreamVoters = tag.getString("dreamVoters");
         dreamNo = tag.getString("dreamNo");
         this.letterNumbers = tag.contains("letterNumbers") ? tag.getString("letterNumbers") : "";
+        letterProfiles = tag.getCompound("letterProfiles").copy();
     }
 }

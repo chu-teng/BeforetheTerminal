@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:turtle_helmet"
     },
-    "title": "最后一站",
-    "description": "活到结局",
+    "title": {
+      "translate": "btt.advancement.last_stop.title"
+    },
+    "description": {
+      "translate": "btt.advancement.last_stop.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

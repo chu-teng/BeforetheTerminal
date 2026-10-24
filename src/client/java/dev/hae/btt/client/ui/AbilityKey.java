@@ -175,10 +175,8 @@ public final class AbilityKey {
 
 
     public static boolean isMultiPick(dev.doctor4t.wathe.api.Role role) {
-        return role == Roles.ACTOR || role == Roles.JUDGE || role == Roles.RIGGER || role == Roles.MAGICIAN
-                || role == Roles.PUPPETEER
-                || role == Roles.PROPHET
-                || role == Roles.TAILOR;
+        var definition = RoleDefs.get(role);
+        return role == Roles.ACTOR || definition != null && definition.hasMultiTargeted();
     }
 
 

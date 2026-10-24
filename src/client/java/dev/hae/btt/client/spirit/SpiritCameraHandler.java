@@ -28,6 +28,12 @@ public final class SpiritCameraHandler {
 
     private static boolean inputFrozen = false;
 
+    public static boolean isAnonymous() {
+        var player = MinecraftClient.getInstance().player;
+        return isActive() && player != null && !dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(player.getWorld())
+                .isRole(player, dev.hae.btt.role.Roles.ASTRAL);
+    }
+
     public static boolean isActive() {
         return active;
     }

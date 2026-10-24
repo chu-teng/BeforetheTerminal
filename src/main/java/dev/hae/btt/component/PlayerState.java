@@ -38,6 +38,7 @@ public class PlayerState implements AutoSyncedComponent {
     public transient int observedPassiveColor = -1;
     public transient String observedCohort = "";
     public transient String observedGroup = "";
+    public transient String observedVoters = "";
     public transient String observedGuideRole = "";
     public transient String observedInspectRole = "";
     public transient boolean observedLookout;
@@ -64,7 +65,7 @@ public class PlayerState implements AutoSyncedComponent {
 
 
 
-    public int veteranUses = 0;
+    public int priestKnifeUses = 0;
 
     public int witchUses = 0;
 
@@ -272,7 +273,13 @@ public class PlayerState implements AutoSyncedComponent {
 
     public String kins = "";
 
-    public String balloonReps = "";
+    public String werewolfOwner = "";
+    public boolean werewolfAlly = false;
+    public String objectiveVictims = "";
+    public String branchKins = "";
+    public boolean holdingFireAxe = false;
+    public String drunkKins = "";
+    public String drunkBranchKins = "";
 
     public String campOverride = "";
 
@@ -364,7 +371,9 @@ public class PlayerState implements AutoSyncedComponent {
     public double roomY = 0;
     public double roomZ = 0;
 
-    public boolean saintUsed = false;
+    public boolean aviateurUsed = false;
+    public String smugglerHost = "";
+    public long smugglerReleaseAt = 0;
     public long traitTrustAt = 0;
     public long openingNoticeAt = 0;
     public String openingNoticeRole = "";
@@ -677,6 +686,7 @@ public class PlayerState implements AutoSyncedComponent {
         observedPassiveColor = -1;
         observedCohort = "";
         observedGroup = "";
+        observedVoters = "";
         observedGuideRole = "";
         observedInspectRole = "";
         observedLookout = false;
@@ -692,14 +702,15 @@ public class PlayerState implements AutoSyncedComponent {
         roomX = 0;
         roomY = 0;
         roomZ = 0;
-        saintUsed = false;
+        aviateurUsed = false;
+        smugglerHost = ""; smugglerReleaseAt = 0;
         traitTrustAt = 0;
         openingNoticeAt = 0; openingNoticeRole = ""; openingNoticeLabel = "";
         monkShields = 0; coldWaveSanity = false;
         afterlifeShieldUsed = false;
         speakingUntil = 0;
         doused = false;
-        veteranUses = 0;
+        priestKnifeUses = 0;
         witchUses = 0;
         hasKilled = 0;
         novelistHits = 0;
@@ -770,8 +781,10 @@ public class PlayerState implements AutoSyncedComponent {
         guardedBy = "";
         guardedTicks = 0;
         parasiteHost = "";
+        holdingFireAxe = false;
         kins = "";
-        balloonReps = "";
+        werewolfOwner = ""; werewolfAlly = false; objectiveVictims = "";
+        branchKins = ""; drunkKins = ""; drunkBranchKins = "";
         campOverride = "";
         deified = false;
         soloObjectiveComplete = false;
@@ -813,6 +826,9 @@ public class PlayerState implements AutoSyncedComponent {
 
     @Override
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
+        tag.putBoolean("aviateurUsed", aviateurUsed);
+        tag.putString("smugglerHost", smugglerHost);
+        tag.putLong("smugglerReleaseAt", smugglerReleaseAt);
         tag.putBoolean("bttSlowFalling", bttSlowFalling);
         tag.putBoolean("bttNightVision", bttNightVision);
         tag.putInt("voodooPhase", voodooPhase); tag.putString("voodooOwner", voodooOwner); tag.putLong("voodooUntil", voodooUntil);
@@ -827,7 +843,7 @@ public class PlayerState implements AutoSyncedComponent {
         tag.putBoolean("cageForfeit", cageForfeit);
         tag.putBoolean("messiahFollower", messiahFollower);
         tag.putBoolean("doused", doused);
-        tag.putInt("veteranUses", veteranUses);
+        tag.putInt("priestKnifeUses", priestKnifeUses);
         tag.putInt("witchUses", witchUses);
         tag.putInt("hasKilled", hasKilled);
         tag.putInt("novelistHits", novelistHits);
@@ -896,7 +912,11 @@ public class PlayerState implements AutoSyncedComponent {
         tag.putInt("guardedTicks", guardedTicks);
         tag.putString("parasiteHost", parasiteHost);
         tag.putString("kins", kins);
-        tag.putString("balloonReps", balloonReps);
+        tag.putString("werewolfOwner", werewolfOwner);
+        tag.putString("objectiveVictims", objectiveVictims);
+        tag.putString("branchKins", branchKins);
+        tag.putString("drunkKins", drunkKins);
+        tag.putString("drunkBranchKins", drunkBranchKins);
         tag.putString("campOverride", campOverride);
         tag.putBoolean("deified", deified);
         tag.putBoolean("soloObjectiveComplete", soloObjectiveComplete);
@@ -950,10 +970,14 @@ public class PlayerState implements AutoSyncedComponent {
 
     @Override
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
+        aviateurUsed = tag.getBoolean("aviateurUsed");
+        smugglerHost = tag.getString("smugglerHost");
+        smugglerReleaseAt = tag.getLong("smugglerReleaseAt");
         observedInstinctColor = tag.contains("observedInstinctColor") ? tag.getInt("observedInstinctColor") : -1;
         observedPassiveColor = tag.contains("observedPassiveColor") ? tag.getInt("observedPassiveColor") : -1;
         observedCohort = tag.getString("observedCohort");
         observedGroup = tag.getString("observedGroup");
+        observedVoters = tag.getString("observedVoters");
         observedGuideRole = tag.getString("observedGuideRole");
         observedInspectRole = tag.getString("observedInspectRole");
         observedLookout = tag.getBoolean("observedLookout");
@@ -965,7 +989,7 @@ public class PlayerState implements AutoSyncedComponent {
         cageOwner = tag.getString("cageOwner"); cageDeadline = tag.getLong("cageDeadline"); cageChooseDeath = tag.getBoolean("cageChooseDeath"); cageForfeit = tag.getBoolean("cageForfeit");
         this.messiahFollower = tag.contains("messiahFollower") && tag.getBoolean("messiahFollower");
         this.doused = tag.contains("doused") && tag.getBoolean("doused");
-        this.veteranUses = tag.getInt("veteranUses");
+        this.priestKnifeUses = tag.getInt("priestKnifeUses");
         this.witchUses = tag.getInt("witchUses");
         this.hasKilled = tag.getInt("hasKilled");
         this.novelistHits = tag.getInt("novelistHits");
@@ -1036,7 +1060,12 @@ public class PlayerState implements AutoSyncedComponent {
         this.guardedTicks = tag.getInt("guardedTicks");
         this.parasiteHost = tag.contains("parasiteHost") ? tag.getString("parasiteHost") : "";
         this.kins = tag.contains("kins") ? tag.getString("kins") : "";
-        this.balloonReps = tag.contains("balloonReps") ? tag.getString("balloonReps") : "";
+        this.werewolfOwner = tag.getString("werewolfOwner");
+        this.werewolfAlly = tag.getBoolean("werewolfAlly");
+        this.objectiveVictims = tag.getString("objectiveVictims");
+        this.branchKins = tag.getString("branchKins");
+        this.drunkKins = tag.getString("drunkKins");
+        this.drunkBranchKins = tag.getString("drunkBranchKins");
         this.campOverride = tag.contains("campOverride") ? tag.getString("campOverride") : "";
         this.deified = tag.contains("deified") && tag.getBoolean("deified");
         this.soloObjectiveComplete = tag.getBoolean("soloObjectiveComplete");

@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:sweet_berries"
     },
-    "title": "冤家路窄",
-    "description": "具有冤家特质，经历角色转变并获胜",
+    "title": {
+      "translate": "btt.advancement.rivals.title"
+    },
+    "description": {
+      "translate": "btt.advancement.rivals.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

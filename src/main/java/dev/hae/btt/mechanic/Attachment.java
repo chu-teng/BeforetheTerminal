@@ -82,7 +82,7 @@ public final class Attachment {
 
 
         if (attached.getServerWorld() != host.getServerWorld()
-                || attached.squaredDistanceTo(host) > 16.0) {
+                || attached.squaredDistanceTo(host) > (PlayerState.KEY.get(attached).smugglerHost.isEmpty() ? 16.0 : 0.0001)) {
             attached.teleport(host.getServerWorld(), host.getX(), host.getY(), host.getZ(),
                     attached.getYaw(), attached.getPitch());
         }

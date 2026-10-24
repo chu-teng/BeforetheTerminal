@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:golden_apple"
     },
-    "title": "救人一命",
-    "description": "为其他人施加保护",
+    "title": {
+      "translate": "btt.advancement.protection.title"
+    },
+    "description": {
+      "translate": "btt.advancement.protection.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

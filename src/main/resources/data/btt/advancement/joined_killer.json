@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:ink_sac"
     },
-    "title": "罗杰疑案",
-    "description": "加入凶手阵营并获胜",
+    "title": {
+      "translate": "btt.advancement.joined_killer.title"
+    },
+    "description": {
+      "translate": "btt.advancement.joined_killer.description"
+    },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

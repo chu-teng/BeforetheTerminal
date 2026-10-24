@@ -8,8 +8,8 @@ import dev.hae.btt.role.Roles;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 
-public final class Duel {
-    private Duel() {}
+public final class ScriptObjectives {
+    private ScriptObjectives() {}
     public static void complete(ServerPlayerEntity actor) {
         var state = PlayerState.KEY.get(actor);
         if (state.soloObjectiveComplete) return;

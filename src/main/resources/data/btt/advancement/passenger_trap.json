@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:anvil"
     },
-    "title": "天网恢恢",
-    "description": "作为乘客，使用机关杀死一名非乘客",
+    "title": {
+      "translate": "btt.advancement.passenger_trap.title"
+    },
+    "description": {
+      "translate": "btt.advancement.passenger_trap.description"
+    },
     "frame": "goal",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

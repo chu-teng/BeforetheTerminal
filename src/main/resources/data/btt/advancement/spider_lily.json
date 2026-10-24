@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:poppy"
     },
-    "title": "彼岸",
-    "description": "作为凶手获胜，获得彼岸花环",
+    "title": {
+      "translate": "btt.advancement.spider_lily.title"
+    },
+    "description": {
+      "translate": "btt.advancement.spider_lily.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

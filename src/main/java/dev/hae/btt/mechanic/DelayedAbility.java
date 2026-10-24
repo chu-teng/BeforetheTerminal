@@ -123,6 +123,8 @@ public final class DelayedAbility {
 
     private static void applyIsolation(ServerPlayerEntity caster, ServerPlayerEntity target) {
         PlayerState.KEY.get(target).applyMute(GameConstants.getInTicks(0, 30));
+        dev.hae.btt.component.GameState.KEY.get(target.getWorld()).roleEffects
+                .putLong("isolated:" + target.getUuidAsString(), target.getWorld().getTime() + 600);
     }
 
     private static void clear(PlayerState pc) {

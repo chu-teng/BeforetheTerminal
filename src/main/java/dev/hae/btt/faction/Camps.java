@@ -15,6 +15,7 @@ public final class Camps {
         return net.minecraft.text.Text.translatable("btt.campgroup." + path);
     }
     public static Role campRole(GameWorldComponent game, ServerPlayerEntity player) {
+        if (dev.hae.btt.role.Werewolf.member(player)) return Roles.WEREWOLF;
         Role role = game.getRole(player);
         var state = PlayerState.KEY.get(player);
         if (Roles.campOf(game, player) == Roles.Faction.OUTSIDER) {
@@ -36,6 +37,7 @@ public final class Camps {
 
     public static void joinCamp(ServerPlayerEntity player, ServerPlayerEntity sourcePlayer) {
         var game = GameWorldComponent.KEY.get(player.getWorld());
+        if (game.getRole(player) == Roles.BLACKDEATH) return;
         var source = PlayerState.KEY.get(sourcePlayer);
         var state = PlayerState.KEY.get(player);
         Role role = campRole(game, sourcePlayer);

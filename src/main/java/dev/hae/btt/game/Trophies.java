@@ -35,6 +35,7 @@ public final class Trophies {
         Set<String> winners = new HashSet<>(Arrays.asList(GameState.KEY.get(world).winners.split(",")));
         for (ServerPlayerEntity player : world.getPlayers()) {
             PENDING.remove(player.getUuid());
+            if (gwc.getRole(player) == null || Roles.campOf(gwc, player) == null) continue;
             List<String> ids = new ArrayList<>();
             PlayerState state = PlayerState.KEY.get(player);
 

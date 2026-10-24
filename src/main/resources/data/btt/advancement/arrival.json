@@ -3,11 +3,14 @@
     "icon": {
       "id": "wathe:key"
     },
-    "title": "终点站抵达之前",
-    "description": "进入游戏",
+    "title": {
+      "translate": "btt.advancement.arrival.title"
+    },
+    "description": {
+      "translate": "btt.advancement.arrival.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false,
     "background": "wathe:textures/block/ebony_planks.png"
   },

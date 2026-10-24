@@ -30,7 +30,7 @@ public abstract class SpiritSkinMixin {
 
     @Inject(method = "getSkinTextures", at = @At("HEAD"), cancellable = true)
     private void btt$spiritAnonymousSkin(CallbackInfoReturnable<SkinTextures> cir) {
-        if (!SpiritCameraHandler.isActive()) return;
+        if (!SpiritCameraHandler.isAnonymous()) return;
         if ((Object) this == MinecraftClient.getInstance().player) return;
         cir.setReturnValue(BTT_STEVE_SKIN);
     }

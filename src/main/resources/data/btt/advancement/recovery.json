@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:chest"
     },
-    "title": "秘密武器",
-    "description": "完成一次回收任务",
+    "title": {
+      "translate": "btt.advancement.recovery.title"
+    },
+    "description": {
+      "translate": "btt.advancement.recovery.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {

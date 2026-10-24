@@ -3,11 +3,14 @@
     "icon": {
       "id": "minecraft:diamond_sword"
     },
-    "title": "巴斯克维尔的猎犬",
-    "description": "作为凶手单局内杀死至少三个人",
+    "title": {
+      "translate": "btt.advancement.kill_three.title"
+    },
+    "description": {
+      "translate": "btt.advancement.kill_three.description"
+    },
     "frame": "task",
     "show_toast": true,
-    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {
