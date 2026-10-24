@@ -6,7 +6,7 @@ A social deduction game on an express train heading to the terminal.
 
 Before the Terminal is a multiplayer social deduction mod for Minecraft, requiring Wathe and HarpyModLoader.
 
-**Development version: 0.7.1-h1.4 (unreleased).** Issue reports are welcome; please include versions, logs and reproduction steps.
+**Development version: 0.7.1-h1.4.** Issue reports are welcome; please include versions, logs and reproduction steps.
 
 ## Gameplay
 
