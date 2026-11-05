@@ -151,7 +151,7 @@ public final class DraftManager {
         List<UUID> ids = new ArrayList<>(participants.stream().map(ServerPlayerEntity::getUuid).toList());
         var mode = dev.hae.btt.game.GameModes.modeOf(GameWorldComponent.KEY.get(world));
         int limit = mode == null ? SeatAssignment.MAX_PLAYERS : dev.hae.btt.game.GameModes.of(mode).maxPlayers();
-        SeatAssignment.Roster built = ids.size() > limit ? null : SeatAssignment.buildRoster(ids);
+        SeatAssignment.Roster built = ids.size() > limit ? null : SeatAssignment.buildRoster(ids, null, false, mode == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.CUSTOM);
         if (built == null) {
             BeforeTheTerminalGameMode.LOGGER.warn("[BTT] draft: roster not buildable for {} players, falling back to random", ids.size());
             resultReady = true;
@@ -159,7 +159,7 @@ public final class DraftManager {
             return false;
         }
         roster = built;
-        pool = new DraftPool(roster.seats(), roster.forced().values(), RANDOM);
+        pool = new DraftPool(roster.seats(), roster.forced().values(), RANDOM, mode == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.CUSTOM);
 
         List<UUID> draftable = new ArrayList<>();
         for (UUID id : ids) {

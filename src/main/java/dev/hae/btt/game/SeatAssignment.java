@@ -68,6 +68,10 @@ public final class SeatAssignment {
     }
 
     public static Roster buildRoster(List<UUID> players, dev.hae.btt.game.Scripts.Script script, boolean leads) {
+        return buildRoster(players, script, leads, false);
+    }
+
+    public static Roster buildRoster(List<UUID> players, dev.hae.btt.game.Scripts.Script script, boolean leads, boolean repeatWhenExhausted) {
         boolean allowDuplicates = duplicates;
         duplicates = false;
         int n = players.size();
@@ -124,6 +128,7 @@ public final class SeatAssignment {
             kindPools.replaceAll((k, pool) ->
                     filterAllowed(pool, r -> !opposed.contains(r.identifier().getPath())));
         }
+        var eligible = kindPools.values().stream().flatMap(List::stream).distinct().toList();
         kindPools.replaceAll((kind, pool) -> filterAllowed(pool, role -> !forced.containsValue(role)));
         List<Role> seats = new ArrayList<>();
         takeKind(seats, kindPools, Roles.Kind.PRINCIPAL, principal);
@@ -138,6 +143,14 @@ public final class SeatAssignment {
         for (Roles.Kind s : SEAT_ORDER) {
             if (seats.size() >= remaining) break;
             takeFrom(seats, kindPools.getOrDefault(s, List.of()), remaining - seats.size());
+        }
+        if (repeatWhenExhausted && seats.size() < remaining) {
+            for (Roles.Kind kind : Roles.Kind.values()) {
+                if (seats.size() >= remaining) break;
+                takeFrom(seats, kindPools.getOrDefault(kind, List.of()), remaining - seats.size());
+            }
+            if (eligible.isEmpty() && seats.size() < remaining) return null;
+            while (seats.size() < remaining) seats.add(dev.hae.btt.role.RoleWeights.pick(eligible, 1).getFirst());
         }
         Collections.shuffle(seats);
         while (seats.size() > remaining) seats.removeLast();
@@ -183,7 +196,9 @@ public final class SeatAssignment {
 
         Roster roster = buildRoster(players, world == null ? null
                 : dev.hae.btt.game.Scripts.byId(dev.hae.btt.component.GameState.KEY.get(world).script),
-                world != null && Backgrounds.isActive(world, Backgrounds.LEADS));
+                world != null && Backgrounds.isActive(world, Backgrounds.LEADS),
+                world != null && (GameModes.modeOf(dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world)) == BeforeTheTerminalGameMode.Mode.MEMORY
+                        || GameModes.modeOf(dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world)) == BeforeTheTerminalGameMode.Mode.CUSTOM));
         if (roster == null) return null;
         List<Role> seats = new ArrayList<>(roster.seats());
         Map<UUID, Role> forced = roster.forced();

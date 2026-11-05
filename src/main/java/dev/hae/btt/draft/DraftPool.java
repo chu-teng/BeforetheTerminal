@@ -17,9 +17,12 @@ public final class DraftPool {
     private final java.util.Set<Role> appeared = new java.util.HashSet<>();
     private final java.util.Map<Role, Role> shown = new java.util.HashMap<>();
     private final Random random;
+    private final boolean repeatWhenExhausted;
 
     public DraftPool(List<Role> roster, Random random) { this(roster, List.of(), random); }
-    public DraftPool(List<Role> roster, java.util.Collection<Role> forced, Random random) {
+    public DraftPool(List<Role> roster, java.util.Collection<Role> forced, Random random) { this(roster, forced, random, false); }
+    public DraftPool(List<Role> roster, java.util.Collection<Role> forced, Random random, boolean repeatWhenExhausted) {
+        this.repeatWhenExhausted = repeatWhenExhausted;
         for (Role role : roster) remaining.add(dev.hae.btt.role.Roles.kindOf(role));
         used.addAll(forced);
         appeared.addAll(forced);
@@ -52,6 +55,7 @@ public final class DraftPool {
                 candidates.addAll(pools.getOrDefault(kind, List.of()));
                 candidates.removeIf(used::contains);
             }
+            if (candidates.isEmpty() && repeatWhenExhausted) candidates.addAll(pools.getOrDefault(kind, List.of()));
             Role chosen = null;
             while (!candidates.isEmpty()) {
                 Role candidate = dev.hae.btt.role.RoleWeights.pick(candidates, 1).getFirst();
@@ -60,6 +64,7 @@ public final class DraftPool {
                     if (!shown.containsKey(candidate)) {
                         var facades = dev.hae.btt.role.Decoy.cognitivePool(candidate).stream()
                                 .filter(r -> !reserved.contains(r) && !appeared.contains(r)).toList();
+                        if (facades.isEmpty() && repeatWhenExhausted) facades = dev.hae.btt.role.Decoy.cognitivePool(candidate);
                         if (facades.isEmpty()) continue;
                         shown.put(candidate, facades.get(random.nextInt(facades.size())));
                     }
@@ -75,7 +80,7 @@ public final class DraftPool {
         return new Hand(List.copyOf(offered.subList(0, FACE_UP)), offered.get(FACE_UP));
     }
     public boolean take(Role role) {
-        if (role == null || used.contains(role) || !remaining.remove(dev.hae.btt.role.Roles.kindOf(role))) return false;
+        if (role == null || (!repeatWhenExhausted && used.contains(role)) || !remaining.remove(dev.hae.btt.role.Roles.kindOf(role))) return false;
         used.add(role);
         appeared.add(role);
         Role facade = shown.get(role);
