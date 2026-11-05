@@ -11,22 +11,6 @@ import dev.hae.btt.game.GameEvents;
 import dev.hae.btt.network.ActionReceiver;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 public final class Folklorist {
     private Folklorist() {}
 
@@ -34,16 +18,9 @@ public final class Folklorist {
     private static final int REVEAL_TICKS = 200;
 
 
-    private static final Set<Role> ANYONE_USERS = Set.of(
-            Roles.DETECTIVE, Roles.HUNTER, Roles.MESSIAH, Roles.NOVELIST,
-            Roles.JOURNALIST, Roles.MAGICIAN, Roles.RIGGER,
-
-            Roles.WITCH);
-
-
     public static void onAnyoneAbility(ServerPlayerEntity user, GameWorldComponent gwc) {
         Role role = Roles.effectiveRole(gwc, user);
-        if (role == null || !ANYONE_USERS.contains(role)) return;
+        if (role == null || !(RoleDefs.isAnyTarget(role) || role == Roles.WITCH)) return;
         for (ServerPlayerEntity p : user.getServerWorld().getPlayers()) {
             if (p == user) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
@@ -55,6 +32,19 @@ public final class Folklorist {
             pc.folkTarget = user.getUuid().toString();
             pc.folkTicks = REVEAL_TICKS;
             pc.sync();
+        }
+    }
+
+    public static void targeted(ServerPlayerEntity user, java.util.List<ServerPlayerEntity> targets) {
+        var game = GameWorldComponent.KEY.get(user.getWorld());
+        var role = Roles.effectiveRole(game, user);
+        if (!(RoleDefs.isAnyTarget(role) || role == Roles.WITCH)) return;
+        String names = targets.stream().distinct().map(p -> p.getName().getString()).collect(java.util.stream.Collectors.joining("、"));
+        if (names.isEmpty()) return;
+        for (var watcher : user.getServerWorld().getPlayers()) {
+            if (game.isRole(watcher, Roles.FOLKLORIST) && GameFunctions.isPlayerAliveAndSurvival(watcher)
+                    && !PlayerState.KEY.get(watcher).isDrunk()) watcher.sendMessage(
+                    net.minecraft.text.Text.translatable("btt.action.folklorist.target", names).withColor(Roles.FOLKLORIST.color()), true);
         }
     }
 

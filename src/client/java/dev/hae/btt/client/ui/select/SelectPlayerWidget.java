@@ -15,11 +15,6 @@ import java.awt.Color;
 import java.util.UUID;
 import dev.hae.btt.client.ui.ActionPlayerWidget;
 
-
-
-
-
-
 public abstract class SelectPlayerWidget extends ButtonWidget {
     public final LimitedInventoryScreen screen;
     public final UUID targetUUID;

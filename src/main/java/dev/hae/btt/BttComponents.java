@@ -7,7 +7,6 @@ import dev.hae.btt.component.ConfigState;
 import dev.hae.btt.component.CorpseState;
 import dev.hae.btt.component.CurseState;
 import dev.hae.btt.component.DisguiseState;
-import dev.hae.btt.component.ExecutionerState;
 import dev.hae.btt.component.GameState;
 import dev.hae.btt.component.MapVoteState;
 import dev.hae.btt.component.RotationState;
@@ -38,7 +37,6 @@ public class BttComponents implements EntityComponentInitializer, WorldComponent
         registry.beginRegistration(PlayerEntity.class, DisguiseState.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(DisguiseState::new);
         registry.beginRegistration(PlayerEntity.class, CurseState.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(CurseState::new);
         registry.beginRegistration(PlayerBodyEntity.class, CorpseState.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(CorpseState::new);
-        registry.beginRegistration(PlayerEntity.class, ExecutionerState.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(ExecutionerState::new);
         registry.beginRegistration(PlayerEntity.class, ScavengerState.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(ScavengerState::new);
         registry.beginRegistration(PlayerEntity.class, PlayerState.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(PlayerState::new);
         registry.beginRegistration(PlayerBodyEntity.class, BodyState.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(BodyState::new);
@@ -54,7 +52,6 @@ public class BttComponents implements EntityComponentInitializer, WorldComponent
         registry.register(MapVoteState.KEY, MapVoteState::new);
         registry.register(RotationState.KEY, RotationState::new);
         registry.register(DraftState.KEY, DraftState::new);
-        registry.register(dev.hae.btt.component.ShopState.KEY, dev.hae.btt.component.ShopState::new);
 
         registry.register(dev.hae.btt.component.DebateState.KEY, dev.hae.btt.component.DebateState::new);
     }

@@ -4,6 +4,10 @@
   "package": "dev.hae.btt.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "game.PotionBottleMixin",
+    "game.DreamWakeMixin",
+    "game.CooldownSnapshotAccessor",
+    "game.CooldownEntryAccessor",
     "game.GameWorldObservationMixin",
     "game.TraitEffectOwnershipMixin",
     "game.MemoryActionBarMixin",
@@ -29,7 +33,6 @@
     "game.BttArrowMixin",
     "game.FireAxeAttackMixin",
     "game.FakeRevolverMixin",
-    "game.PipeAttackMixin",
     "game.PickupGateMixin",
     "game.LunaticFeaturesMixin",
     "game.ExecutionMixin",
@@ -40,7 +43,6 @@
     "game.AutoStartMixin",
     "game.ShopBuyMixin",
     "game.MaidPlatterMixin",
-    "game.DoorStateMixin",
     "game.SpiritDamageMixin",
     "game.WorldBlackoutMixin",
     "game.DropOnDeathMixin",
@@ -82,7 +84,9 @@
     "game.AdvancementGrenadeMixin",
     "game.AdvancementBodyBagMixin",
     "game.AdvancementGunMixin",
-    "game.AdvancementLockpickMixin"
+    "game.AdvancementLockpickMixin",
+    "game.PistolBloomTargetMixin",
+    "game.KnifeBloomTargetMixin"
   ],
   "injectors": {
     "defaultRequire": 1

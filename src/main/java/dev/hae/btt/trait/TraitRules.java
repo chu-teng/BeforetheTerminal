@@ -12,6 +12,14 @@ import net.minecraft.util.Identifier;
 
 
 public final class TraitRules {
+    public static boolean weaponAttempt(net.minecraft.entity.player.PlayerEntity actor) {
+        if (!(actor instanceof net.minecraft.server.network.ServerPlayerEntity player)
+                || !dev.hae.btt.game.SeatAssignment.isBttMode(player.getWorld())
+                || !dev.doctor4t.wathe.game.GameFunctions.isPlayerAliveAndSurvival(player)
+                || !Traits.has(player, Traits.RECKLESS)) return false;
+        dev.doctor4t.wathe.game.GameFunctions.killPlayer(player, true, player, dev.doctor4t.wathe.game.GameConstants.DeathReasons.GRENADE);
+        return true;
+    }
     private TraitRules() {}
 
     public static int halfCooldown(int ticks) {
@@ -52,9 +60,9 @@ public final class TraitRules {
         if (reason == null || DeathReasons.isSuicide(reason)) return false;
         return java.util.Set.of(GameConstants.DeathReasons.KNIFE, GameConstants.DeathReasons.GUN,
                 GameConstants.DeathReasons.BAT, GameConstants.DeathReasons.GRENADE, GameConstants.DeathReasons.POISON,
-                DeathReasons.MAGIC, DeathReasons.FAILURE, DeathReasons.AXE, DeathReasons.BOMB, DeathReasons.BLOOM,
-                DeathReasons.FLYING_SWORD, DeathReasons.PIPE, DeathReasons.ARROW, DeathReasons.DAGGER,
-                DeathReasons.REVENGE, DeathReasons.DIGESTED, DeathReasons.EXECUTION).contains(reason);
+                DeathReasons.MAGIC, DeathReasons.FAILURE, DeathReasons.BREACH, DeathReasons.AXE, DeathReasons.BOMB, DeathReasons.BLOOM,
+                DeathReasons.FLYING_SWORD, DeathReasons.ARROW, DeathReasons.DAGGER,
+                DeathReasons.DIGESTED, DeathReasons.EXECUTION).contains(reason);
     }
 
     public static boolean allowDeath(ServerPlayerEntity victim, PlayerEntity killer, Identifier reason) {
@@ -69,6 +77,15 @@ public final class TraitRules {
             dev.hae.btt.combat.DeathResolution.shieldBreak(victim, killer);
             state.sync();
             return false;
+        }
+        if (Traits.has(victim, Traits.DESPERATION) && harmfulDeath(reason)) {
+            var mood = dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(victim);
+            float current = mood.getMood();
+            if (victim.getRandom().nextFloat() < Math.clamp(1.0f - current, 0.0f, 1.0f)) {
+                mood.setMood(current + 0.4f);
+                dev.hae.btt.combat.DeathResolution.shieldBreak(victim, killer);
+                return false;
+            }
         }
         boolean blocked = Traits.has(victim, Traits.CATCHER) && !execution(victim, killer, reason)
                 || Traits.has(victim, Traits.LUCKY) && harmfulDeath(reason) && victim.getRandom().nextBoolean();

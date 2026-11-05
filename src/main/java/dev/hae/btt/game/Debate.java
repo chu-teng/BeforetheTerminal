@@ -46,7 +46,8 @@ public final class Debate {
         for (var ballot : parseVotes(DebateState.KEY.get(world).votes).entrySet()) {
             if (!target.toString().equals(ballot.getValue())) continue;
             ServerPlayerEntity voter = playerByUuid(world, ballot.getKey());
-            String name = voter == null ? "" : voter.getGameProfile().getName();
+            if (voter == null || !GameFunctions.isPlayerAliveAndSurvival(voter)) continue;
+            String name = voter.getGameProfile().getName();
             if (name.isEmpty()) {
                 var saved = dev.hae.btt.component.GameState.KEY.get(world).letterProfiles.get(ballot.getKey());
                 if (saved != null) name = net.minecraft.component.type.ProfileComponent.CODEC
@@ -134,6 +135,7 @@ public final class Debate {
         DebateState st = DebateState.KEY.get(world);
         if (st.phase != DebateState.PHASE_VOTING) return;
         Map<String, String> votes = parseVotes(st.votes);
+        if (!target.toString().equals(votes.get(voter.getUuidAsString()))) votes.remove(voter.getUuidAsString());
         votes.put(voter.getUuidAsString(), target.toString());
         st.votes = joinVotes(votes);
         st.sync();
@@ -202,6 +204,10 @@ public final class Debate {
 
     private static void settle(ServerWorld world, DebateState st) {
         Map<String, String> votes = parseVotes(st.votes);
+        votes.entrySet().removeIf(entry -> {
+            var voter = playerByUuid(world, entry.getKey());
+            return voter == null || !GameFunctions.isPlayerAliveAndSurvival(voter);
+        });
         Map<String, Integer> tally = new HashMap<>();
         for (String target : votes.values()) {
             if (target == null || target.isEmpty()) continue;
@@ -222,7 +228,10 @@ public final class Debate {
                 ServerPlayerEntity victim = playerByUuid(world, tied.get(0));
                 if (victim != null && GameFunctions.isPlayerAliveAndSurvival(victim)) {
 
-                    GameFunctions.killPlayer(victim, true, null, DeathReasons.EXECUTION);
+                    ServerPlayerEntity firstVoter = votes.entrySet().stream().filter(e -> e.getValue().equals(victim.getUuidAsString()))
+                            .map(e -> playerByUuid(world, e.getKey())).filter(java.util.Objects::nonNull).findFirst().orElse(null);
+                    if (!dev.hae.btt.role.Jester.begin(victim, firstVoter))
+                        GameFunctions.killPlayer(victim, true, null, DeathReasons.EXECUTION);
                     if (!GameFunctions.isPlayerAliveAndSurvival(victim)) {
                         dev.hae.btt.advancement.BttAdvancements.debate(world, victim, votes, alive);
                         broadcast(world, Text.translatable("btt.debate.result.executed",

@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 
 @Mixin(RoleNameRenderer.class)
-public abstract class AgentHudMixin {
+public abstract class DuceHudMixin {
 
 
     @Shadow private static PlayerEntity target;

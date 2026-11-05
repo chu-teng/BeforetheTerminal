@@ -8,11 +8,6 @@ import org.spongepowered.asm.mixin.Mixin;
 
 import dev.hae.btt.component.PlayerState;
 
-
-
-
-
-
 @Mixin(Entity.class)
 public abstract class FakeDeathCollisionMixin {
 

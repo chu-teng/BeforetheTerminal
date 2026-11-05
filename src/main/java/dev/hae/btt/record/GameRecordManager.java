@@ -274,7 +274,9 @@ public final class GameRecordManager {
 
     public static void recordTalentUse(ServerPlayerEntity actor, String talent,
                                        @Nullable ServerPlayerEntity target) {
-        if (!hasActiveMatch() || actor == null) return;
+        if (actor == null) return;
+        dev.hae.btt.role.Scribe.observe(actor, "btt.talent." + talent);
+        if (!hasActiveMatch()) return;
         NbtCompound payload = new NbtCompound();
         payload.putString("talent", talent);
 

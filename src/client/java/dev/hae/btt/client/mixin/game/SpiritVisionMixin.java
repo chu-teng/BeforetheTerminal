@@ -12,21 +12,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @Mixin(GameRenderer.class)
 public abstract class SpiritVisionMixin {
 
@@ -47,7 +32,7 @@ public abstract class SpiritVisionMixin {
     private void btt$spiritGrayscale(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
 
         Identifier want = null;
-        if (SpiritCameraHandler.isActive() || btt$confusedMood()) {
+        if (SpiritCameraHandler.isActive() || (MinecraftClient.getInstance().player != null && dev.hae.btt.component.PlayerState.KEY.get(MinecraftClient.getInstance().player).lucidActive) || btt$confusedMood()) {
             want = BTT_SPIRIT_GRAYSCALE;
         }
         if (want == null) {

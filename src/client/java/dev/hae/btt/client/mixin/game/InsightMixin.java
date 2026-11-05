@@ -22,7 +22,8 @@ public abstract class InsightMixin {
     @ModifyReturnValue(method = "isKiller", at = @At("RETURN"))
     private static boolean btt$insightIsKiller(boolean original) {
         if (original) return true;
-        return btt$insightViewer();
+        return btt$insightViewer() && dev.hae.btt.trait.Traits.has(
+                MinecraftClient.getInstance().player, dev.hae.btt.trait.Traits.INSIGHT);
     }
 
     @Inject(method = "getInstinctHighlight", at = @At("HEAD"), cancellable = true)
@@ -55,7 +56,7 @@ public abstract class InsightMixin {
     private static boolean btt$insightViewer() {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.player == null || client.world == null) return false;
-        if (!dev.hae.btt.trait.Traits.has(client.player, dev.hae.btt.trait.Traits.INSIGHT)) return false;
+        if (!dev.hae.btt.trait.Traits.greenInstinct(client.player)) return false;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(client.world);
         if (!dev.hae.btt.game.SeatAssignment.isBttMode(client.world) || !gwc.isRunning()) return false;
         return dev.doctor4t.wathe.game.GameFunctions.isPlayerAliveAndSurvival(client.player);

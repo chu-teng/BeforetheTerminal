@@ -37,6 +37,6 @@ public abstract class DebateHudMixin {
                 : Text.translatable("btt.debate.hud.voting", seconds);
         int width = client.getWindow().getScaledWidth();
         context.drawTextWithShadow(client.textRenderer, line,
-                (width - client.textRenderer.getWidth(line)) / 2, 6, 0xFFFFFF);
+                (width - client.textRenderer.getWidth(line)) / 2, 6 + client.textRenderer.fontHeight + 1, 0xFFFFFF);
     }
 }

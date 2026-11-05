@@ -40,7 +40,11 @@ public final class GameTicker {
 
     static void tickWorld(ServerWorld serverWorld) {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(serverWorld);
-        for (ServerPlayerEntity player : serverWorld.getPlayers()) {
+        for (ServerPlayerEntity player : java.util.List.copyOf(serverWorld.getPlayers())) {
+            var joined = PlayerState.KEY.get(player);
+            if (joined.lateJoinTicks > 0 && --joined.lateJoinTicks == 0) LateJoin.placeSpectator(player);
+            if (SeatAssignment.isBttMode(serverWorld) && gwc.isRunning() && !gwc.getRoles().isEmpty()
+                    && gwc.getRole(player) == null && !player.isSpectator() && !player.isCreative()) LateJoin.placeSpectator(player);
             if (gwc.getGameStatus() != GameWorldComponent.GameStatus.ACTIVE)
                 dev.hae.btt.map.MapEnhancements.tickJump(player, null);
             dev.hae.btt.role.Warden.tick(player);
@@ -51,64 +55,70 @@ public final class GameTicker {
                 state.closeConsole();
             }
         }
+        dev.hae.btt.role.Guru.refresh(serverWorld);
         if (!(gwc.getGameMode() instanceof BeforeTheTerminalGameMode)) return;
+        dev.hae.btt.role.LucidDream.tick(serverWorld);
         dev.hae.btt.role.Smuggler.tickWorld(serverWorld);
 
         Debate.tick(serverWorld);
+        dev.hae.btt.trait.TraitEffects.tickWorld(serverWorld);
+        if (gwc.getGameStatus() != GameWorldComponent.GameStatus.ACTIVE)
+            for (var player : serverWorld.getPlayers()) Traits.clearPhysicalEffects(player);
         if (!gwc.isRunning()) {
 
             SpiritWalk.abortAll(serverWorld.getPlayers());
             return;
         }
 
-        dev.hae.btt.trait.TraitEffects.tickWorld(serverWorld);
         dev.hae.btt.role.Librarian.refreshListeners(serverWorld);
         dev.hae.btt.role.Harpy.tick(serverWorld);
         ColdWave.updateSanity(serverWorld);
-        ColdWave.tickCorpseSources(serverWorld);
+        ColdWave.tickSources(serverWorld);
         for (var player : serverWorld.getPlayers()) {
             tickPlayer(player, serverWorld, gwc);
         }
 
 
         Bomb.tickWorld(serverWorld);
-
-
-        for (var p : serverWorld.getPlayers()) {
-            PlayerState c = PlayerState.KEY.get(p);
-            if (c.engineerScanTicks <= 0) continue;
-            if (!GameFunctions.isPlayerAliveAndSurvival(p)) {
-                c.engineerScanTicks = 0;
-                c.sync();
-                continue;
-            }
-            c.engineerScanTicks--;
-            c.sync();
-        }
-
+        dev.hae.btt.mechanic.Mines.tick(serverWorld);
+        dev.hae.btt.role.Toymaker.tick(serverWorld);
 
         for (var p : serverWorld.getPlayers()) {
             PlayerState c = PlayerState.KEY.get(p);
-            if (c.thiefRevealTicks <= 0) continue;
-            if (!GameFunctions.isPlayerAliveAndSurvival(p)) {
-                c.thiefRevealTicks = 0;
-                c.sync();
-                continue;
+            boolean changed = false;
+            boolean alive = GameFunctions.isPlayerAliveAndSurvival(p);
+            if (c.engineerScanTicks > 0) {
+                c.engineerScanTicks = alive ? c.engineerScanTicks - 1 : 0;
+                changed |= c.engineerScanTicks % 20 == 0;
             }
-            c.thiefRevealTicks--;
-            c.sync();
+            if (c.thiefRevealTicks > 0) {
+                c.thiefRevealTicks = alive ? c.thiefRevealTicks - 1 : 0;
+                changed |= c.thiefRevealTicks % 20 == 0;
+            }
+            if (changed) c.syncDisplayTimers();
         }
     }
 
     private static void tickPlayer(ServerPlayerEntity player, ServerWorld serverWorld, GameWorldComponent gwc) {
         PlayerState pc = PlayerState.KEY.get(player);
+        boolean mobMode = GameModes.modeOf(gwc) == BeforeTheTerminalGameMode.Mode.MOB;
+        if (mobMode && GameFunctions.isPlayerAliveAndSurvival(player)) {
+
+            dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(player).setMood(1f);
+        }
+        if (dev.hae.btt.role.LucidDream.dreamDead(player)) {
+            if (!dev.hae.btt.role.LucidDream.captive(player)) dev.hae.btt.role.LucidDream.afterDeath(player);
+            dev.hae.btt.mechanic.Attachment.tick(player, serverWorld);
+            return;
+        }
         dev.hae.btt.role.CampItems.tick(player);
+        OpeningNotices.tick(player);
         if (pc.openingNoticeAt > 0 && serverWorld.getTime() >= pc.openingNoticeAt) {
             pc.openingNoticeAt = 0;
             var inherited = Roles.byId(pc.openingNoticeRole);
             if (inherited != null && GameFunctions.isPlayerAliveAndSurvival(player) && !dev.hae.btt.encounter.Memory.isBlind(player))
-                player.sendMessage(net.minecraft.text.Text.translatable("btt.action.inherit.kit",
-                        SeatAssignment.displayName(inherited).getString(), pc.openingNoticeLabel).withColor(inherited.color()), true);
+                OpeningNotices.enqueue(player, net.minecraft.text.Text.translatable("btt.action.inherit.kit",
+                        SeatAssignment.displayName(inherited).getString(), pc.openingNoticeLabel).withColor(inherited.color()));
             pc.openingNoticeRole = ""; pc.openingNoticeLabel = "";
         }
         pc.decrementDrunk();
@@ -147,18 +157,23 @@ public final class GameTicker {
         if (pc.starGlowTicks > 0 && --pc.starGlowTicks % 20 == 0) pc.sync();
         dev.hae.btt.role.Architect.tick(player);
         dev.hae.btt.role.Librarian.tickSpeaker(player);
-        dev.hae.btt.game.Needs.tick(player);
+        if (!mobMode) dev.hae.btt.game.Needs.tick(player);
         Traits.tickMood(player);
-        Traits.tickTease(player);
         Arsonist.tickGasoline(player, pc);
-        dev.hae.btt.item.PipeItem.tick(player, pc);
+        dev.hae.btt.item.FireAxeItem.tick(player, pc);
 
-        if (GameFunctions.isPlayerAliveAndSurvival(player) && gwc.canUseKillerFeatures(player)) {
+        if (GameFunctions.isPlayerAliveAndSurvival(player) && (gwc.canUseKillerFeatures(player) || dev.hae.btt.ability.shop.ShopGate.canAccess(gwc, player))) {
             int passive = dev.doctor4t.wathe.game.GameConstants.PASSIVE_MONEY_TICKER.apply(serverWorld.getTime());
             if (passive > 0) {
                 var shop = dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(player);
-                if (shop.balance < MONEY_PASSIVE_CAP) shop.addToBalance(passive);
+                if (shop.balance <= MONEY_PASSIVE_CAP) shop.addToBalance(passive);
             }
+        }
+        if (player.getVehicle() instanceof dev.doctor4t.wathe.block.entity.SeatEntity seat
+                && player.getWorld().getBlockState(seat.getBlockPos()).isOf(dev.hae.btt.registry.BttBlocks.LOOKOUT_CHAIR)) {
+            var mood = dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(player);
+            int needs = dev.hae.btt.game.Needs.drainingCount(player);
+            if (needs > 0) mood.setMood(mood.getMood() - 7f * needs * dev.doctor4t.wathe.game.GameConstants.MOOD_DRAIN);
         }
         DelayedAbility.tick(player, pc);
         Actor.tick(player, pc);

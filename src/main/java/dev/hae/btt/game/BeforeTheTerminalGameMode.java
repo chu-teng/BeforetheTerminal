@@ -43,7 +43,6 @@ import dev.hae.btt.role.BlackDeath;
 import dev.hae.btt.role.Decoy;
 import dev.hae.btt.role.Flowers;
 import dev.hae.btt.role.Kidnapper;
-import dev.hae.btt.role.Locksmith;
 import dev.hae.btt.role.RoleDefs;
 import dev.hae.btt.role.RoleGroups;
 import dev.hae.btt.role.Roles;
@@ -63,14 +62,18 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
     public static final Identifier DRAFT_ID = Identifier.of("btt", "draft");
 
-    public static final Identifier DEBATE_ID = Identifier.of("btt", "debate");
-
-
-
-
-
-
     public static final Identifier MEMORY_ID = Identifier.of("btt", "memory");
+
+    public static final Identifier CUSTOM_ID = Identifier.of("btt", "custom");
+
+    public static final Identifier MOB_ID = Identifier.of("btt", "mob");
+
+
+
+
+
+
+
 
     public enum Mode {
 
@@ -78,12 +81,27 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
         DRAFT,
 
-        DEBATE,
-        MEMORY;
+        MEMORY,
 
-        public static java.util.List<Mode> displayOrder() { return java.util.List.of(DRAFT, SCRIPT, DEBATE, MEMORY); }
-        public boolean usesDebate() { return this == DEBATE || this == MEMORY; }
-        public boolean usesScript() { return this == SCRIPT; }
+        MOB,
+
+        CUSTOM;
+
+
+        public static java.util.List<Mode> displayOrder() { return java.util.List.of(SCRIPT, DRAFT, MEMORY, MOB, CUSTOM); }
+
+
+        public java.util.Set<Rule> rules() {
+            return switch (this) {
+                case SCRIPT -> java.util.Set.of(Rule.SCRIPT, Rule.DEBATE);
+                case DRAFT -> java.util.Set.of(Rule.DRAFT, Rule.DUEL);
+                case MEMORY -> java.util.Set.of(Rule.MEMORY, Rule.JUDGMENT);
+                case MOB -> java.util.Set.of();
+                case CUSTOM -> ServerSettings.customRules();
+            };
+        }
+
+        public boolean hasRule(Rule rule) { return rules().contains(rule); }
     }
 
     public static final int DEFAULT_START_MINUTES = 8;
@@ -92,7 +110,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
 
     public int maxPlayers() {
-        return mode.usesDebate() ? 14 : SeatAssignment.MAX_PLAYERS;
+        return mode == Mode.SCRIPT ? 14 : mode == Mode.DRAFT ? SeatAssignment.MAX_PLAYERS : Integer.MAX_VALUE;
     }
 
     public BeforeTheTerminalGameMode() {
@@ -120,7 +138,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         if (players.size() < SeatAssignment.MIN_PLAYERS || players.size() > maxPlayers()) {
             for (ServerPlayerEntity player : players) {
                 player.sendMessage(Text.translatable("btt.start_error.player_range",
-                        SeatAssignment.MIN_PLAYERS, maxPlayers(), players.size()).formatted(Formatting.RED), true);
+                        SeatAssignment.MIN_PLAYERS, maxPlayers() == Integer.MAX_VALUE ? "∞" : maxPlayers(), players.size()).formatted(Formatting.RED), true);
             }
             LOGGER.warn("[BTT] start refused: {} ready players, requires {}-{} ({}).",
                     players.size(), SeatAssignment.MIN_PLAYERS, maxPlayers(), mode);
@@ -141,14 +159,18 @@ public class BeforeTheTerminalGameMode extends GameMode {
             dev.hae.btt.component.LetterState.KEY.get(p).reset();
         }
 
-
-
-
         ServerSettings.RoundSettings settings = ServerSettings.consume(world);
-        dev.hae.btt.game.Scripts.Script script = settings == null
-                ? (mode.usesScript() ? Scripts.draw(world.getRandom()) : null)
-                : Scripts.byId(settings.script());
         dev.hae.btt.component.GameState roundState = dev.hae.btt.component.GameState.KEY.get(world);
+        java.util.Set<Rule> rules = settings == null || settings.rules().isEmpty()
+                ? mode.rules() : Rule.normalize(settings.rules());
+        roundState.rules = Rule.toCsv(rules);
+        roundState.sync();
+        LOGGER.info("[BTT] rules this round: {} (mode={})", roundState.rules, mode);
+
+
+        dev.hae.btt.game.Scripts.Script script = settings == null
+                ? (rules.contains(Rule.SCRIPT) ? Scripts.draw(world.getRandom()) : null)
+                : Scripts.byId(settings.script());
         roundState.script = script == null ? "" : script.id();
         roundState.sync();
         if (script != null) {
@@ -164,14 +186,21 @@ public class BeforeTheTerminalGameMode extends GameMode {
             fixedRoles.addAll(draft.picks().values());
             fixedRoles.addAll(draft.roster().forced().values());
         }
-        dev.hae.btt.encounter.Backgrounds.set(world, settings == null ? Backgrounds.draw(world, fixedRoles) : settings.encounter());
+        dev.hae.btt.encounter.Backgrounds.set(world, mode == Mode.MOB ? ""
+                : settings == null ? Backgrounds.draw(world, fixedRoles) : settings.encounter());
         LOGGER.info("[BTT] background this round: {}", roundState.background);
 
         dev.hae.btt.game.SeatAssignment.setOpposed(
                 dev.hae.btt.encounter.Backgrounds.opposedRoles(roundState.background));
         SeatAssignment.setDuplicates(Backgrounds.DUPLICATES.equals(roundState.background));
         Map<UUID, Role> seats;
-        if (draft != null) {
+        java.util.Map<UUID, Integer> mobTeams = null;
+        if (mode == Mode.MOB) {
+            var mob = SeatAssignment.assignMobSeats(players.stream().map(ServerPlayerEntity::getUuid).toList());
+            if (mob != null) { seats = mob.roles(); mobTeams = mob.teams(); }
+            else seats = null;
+            LOGGER.info("[BTT] mob result applied: {} players", players.size());
+        } else if (draft != null) {
             seats = SeatAssignment.assignFromDraft(draft.roster(), draft.picks());
             LOGGER.info("[BTT] draft result applied: {} picked, {} forced",
                     draft.picks().size(), draft.roster().forced().size());
@@ -181,6 +210,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     players.stream().map(ServerPlayerEntity::getUuid).toList(), world);
         }
         if (seats == null) {
+            for (var player : players) player.sendMessage(Text.translatable("btt.start_error.role_pool"), true);
             GameFunctions.stopGame(world);
             return;
         }
@@ -213,6 +243,16 @@ public class BeforeTheTerminalGameMode extends GameMode {
             gameWorld.addRole(player, role);
         }
         gameWorld.sync();
+        if (mobTeams != null) {
+            for (ServerPlayerEntity player : players) {
+                var st = dev.hae.btt.component.PlayerState.KEY.get(player);
+                st.mobTeam = mobTeams.getOrDefault(player.getUuid(), 0);
+                st.campOverride = st.mobTeam == dev.hae.btt.role.Mob.PINK ? Roles.CAMP_MOB_PINK
+                        : st.mobTeam == dev.hae.btt.role.Mob.AZURE ? Roles.CAMP_MOB_AZURE : "";
+                st.moodOverride = "NONE";
+                st.sync();
+            }
+        }
         Relationships.apply(world, seats, relPairs, null);
         dev.hae.btt.trait.Traits.assign(world, players);
 
@@ -234,7 +274,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         java.util.List<Role> assignedRoles = players.stream().map(gameWorld::getRole).toList();
         for (ServerPlayerEntity p : players) {
             Role r = gameWorld.getRole(p);
-            if (r == Roles.EX_UNDERCOVER) {
+            if (r == Roles.MERCENARY) {
 
 
                 giveInheritedKit(world, p, assignedRoles, cand -> Roles.kindOf(cand) == Roles.Kind.ACCOMPLICE, "从犯",
@@ -242,7 +282,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
                 PlayerState.KEY.get(p).moodOverride = "REAL";
                 PlayerState.KEY.get(p).sync();
-            } else if (r == Roles.EX_TRAITOR) {
+            } else if (r == Roles.TRAITOR) {
 
                 giveInheritedKit(world, p, assignedRoles, Roles::isCivilianPassenger, "无道具乘客",
                         Roles.CAMP_KILLER, false);
@@ -257,6 +297,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         btt.lastEnding = "NONE";
         btt.winners = "";
         btt.clearVictoryRequests();
+        btt.roleEffects.putLong("openingUntil", world.getTime() + 200 + dev.doctor4t.wathe.game.GameConstants.FADE_TIME * 2);
         for (var player : world.getPlayers()) player.removeStatusEffect(net.minecraft.entity.effect.StatusEffects.GLOWING);
         btt.epilogueType = "";
         btt.traitResonance = false;
@@ -266,15 +307,13 @@ public class BeforeTheTerminalGameMode extends GameMode {
         btt.sync();
 
         RoundCleanup.prepareWorld(world, players);
-
-        var shopState = dev.hae.btt.component.ShopState.KEY.get(world);
-        shopState.exclusive = dev.hae.btt.ability.shop.ShopGate.drawExclusive(world);
-        shopState.sync();
-        LOGGER.info("[BTT] exclusive shop entry this round: {}", shopState.exclusive);
-
         Backgrounds.apply(world, players);
         dev.hae.btt.trait.TraitEffects.initialize(world, players);
         RoleGroups.assignAll(world, gameWorld, players);
+        if (draft != null) for (var player : players) {
+            Role facade = draft.facades().get(player.getUuid());
+            if (facade != null) PlayerState.KEY.get(player).decoyRole = facade.identifier().toString();
+        }
         Decoy.assignAll(world, gameWorld);
 
 
@@ -294,7 +333,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
             }
         }
 
-        if (mode.usesDebate()) dev.hae.btt.game.Debate.onRoundStart(world, players);
+        if (rules.contains(Rule.DEBATE)) dev.hae.btt.game.Debate.onRoundStart(world, players);
         LOGGER.info("[BTT] opening state: time={}, camps={}", GameTimeComponent.KEY.get(world).getTime(),
                 players.stream().map(p -> btt.numberOf(p.getUuid()) + ":" + gameWorld.getRole(p).identifier() + "/"
                         + Roles.campOf(gameWorld, p) + "/messiahFollower=" + PlayerState.KEY.get(p).isMessiahFollower()
@@ -326,7 +365,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
             if (r == null) continue;
 
 
-            if (r == Roles.EX_TRAITOR || r == Roles.TRAITOR || r == Roles.MARIONETTE) continue;
+            if (r == Roles.TRAITOR || r == Roles.DELINQUENT || r == Roles.MARIONETTE) continue;
             if (Roles.isKillerCampFor(gameWorld, p) || r == Roles.UNDERCOVER) {
                 p.giveItemStack(new net.minecraft.item.ItemStack(dev.hae.btt.registry.BttItems.WALKIE_TALKIE));
             }
@@ -347,6 +386,9 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
             PlayerState firstState = PlayerState.KEY.get(player);
             firstState.initialRole = role == null ? "" : role.identifier().toString();
+            GameState.KEY.get(world).roleEffects.putString("initialRole:" + player.getUuidAsString(), firstState.initialRole);
+            for (var item : java.util.List.of(dev.doctor4t.wathe.index.WatheItems.LOCKPICK, dev.doctor4t.wathe.index.WatheItems.CROWBAR, dev.hae.btt.registry.BttItems.REMOTE, dev.hae.btt.registry.BttItems.WALKIE_TALKIE))
+                if (player.getInventory().contains(new net.minecraft.item.ItemStack(item))) GameState.KEY.get(world).roleEffects.putBoolean("initialItem:" + player.getUuidAsString() + ":" + net.minecraft.registry.Registries.ITEM.getId(item), true);
             dev.hae.btt.role.CampItems.captureInitialWeapon(player);
             firstState.sync();
             int index = Memory.isBlind(player) ? RoleAnnouncementTexts.ROLE_ANNOUNCEMENT_TEXTS.indexOf(dev.hae.btt.role.RoleAnnouncements.MEMORY) : announcementIndex(shown);
@@ -379,7 +421,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
         for (var mod : comp.getModifiers(player.getUuid())) {
             if (mod == null || !dev.hae.btt.BeforeTheTerminal.MOD_ID.equals(mod.identifier().getNamespace())) continue;
             if (java.util.Set.of("lovers", "archenemy", "twins", "fated").contains(mod.identifier().getPath())) continue;
-            traits.add(mod.getName().getString());
+            traits.add(Text.translatable("announcement.modifier." + mod.identifier().getNamespace() + "."
+                    + mod.identifier().getPath()).getString());
         }
         return new dev.hae.btt.network.WelcomeLineS2CPacket(6, String.join("、", traits), relation);
     }
@@ -448,7 +491,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
             case "KIDNAPPER" -> { key = "kidnapper"; color = Roles.KIDNAPPER.color(); }
             case "GARDENER" -> { key = "gardener"; color = Roles.GARDENER.color(); }
             case "ASTRAL" -> { key = "astral"; color = Roles.ASTRAL.color(); }
-            case "COLD_WAVE" -> { key = "cold_wave"; color = Roles.COLD_WAVE.color(); }
+            case "COLD_WAVE" -> { key = "cold_wave"; color = Roles.MESSENGER.color(); }
 
             default -> { key = "survival"; color = FACTION_PASSENGER_COLOR; }
         }
@@ -459,18 +502,14 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
         net.minecraft.sound.SoundEvent track = hostDef == null ? Sounds.forEpilogue(type) : hostDef.outsiderHost().music();
         for (ServerPlayerEntity p : players) {
-            stopEpilogueSounds(p);
 
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleS2CPacket(
                     Text.translatable("btt.epilogue." + key + ".title").withColor(color).formatted(Formatting.BOLD)));
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.SubtitleS2CPacket(
                     Text.translatable("btt.epilogue." + key + ".line").withColor(color)));
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket(10, 70, 10));
-
-
-
-            if (track != null) p.playSoundToPlayer(track, net.minecraft.sound.SoundCategory.MASTER, 1.0f, 1.0f);
         }
+        if (!players.isEmpty()) Sounds.requestEpilogue(players.get(0).getServerWorld(), track, 2 * 60 * 20);
     }
 
 
@@ -480,10 +519,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
 
     private static void stopEpilogueSounds(ServerPlayerEntity p) {
-        for (net.minecraft.sound.SoundEvent s : Sounds.EPILOGUE_ALL) {
-            p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.StopSoundS2CPacket(
-                    s.getId(), net.minecraft.sound.SoundCategory.MASTER));
-        }
+        Sounds.stopEpilogue(p);
     }
 
     private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByKiller(GameWorldComponent gwc) {
@@ -508,6 +544,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
     @Override
     public void tickServerGameLoop(ServerWorld world, GameWorldComponent gameWorld) {
 
+        dev.hae.btt.role.Godfather.tick(world);
         Flowers.tick(world);
         BlackDeath.tick(world);
 
@@ -583,12 +620,6 @@ public class BeforeTheTerminalGameMode extends GameMode {
             }
             if (GameFunctions.isPlayerAliveAndSurvival(player) || dev.hae.btt.role.Smuggler.hiddenAlive(player)) {
                 aliveTotal++;
-                if (mode.usesScript()) {
-                    if (Roles.isPassengerCampFor(gameWorld, player)) alivePassengers++;
-                    else if (Roles.kindOf(role) == Roles.Kind.PRINCIPAL) alivePrincipals++;
-                    else aliveAccomplices++;
-                    continue;
-                }
                 if (Roles.campOf(gameWorld, player) == Roles.Faction.OUTSIDER) {
                     role = dev.hae.btt.faction.Camps.campRole(gameWorld, player);
                     if (role != Roles.MESSIAH && !PlayerState.KEY.get(player).isMessiahFollower()
@@ -675,8 +706,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
         int outsidersTotal = aliveOutsiderNeutrals + aliveMessiahCamp;
 
         final int epilogueTicks = dev.doctor4t.wathe.game.GameConstants.getInTicks(2, 0);
-        if (gameTime.getTime() > epilogueTicks && murderers + outsidersTotal > 0
-                && murderers + outsidersTotal >= alivePassengers) {
+        if (mode != Mode.MOB && gameTime.getTime() > epilogueTicks && murderers + outsidersTotal > 0
+                && murderers + outsidersTotal > alivePassengers) {
             LOGGER.info("[BTT] epilogue compressed: time {} -> {} (killers={} outsiders={} > passengers={})",
                     gameTime.getTime(), epilogueTicks, murderers, outsidersTotal, alivePassengers);
             gameTime.setTime(epilogueTicks);
@@ -698,10 +729,12 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
         var conductor = players.stream().filter(p -> gameWorld.getRole(p) == Roles.CONDUCTOR)
                 .filter(GameFunctions::isPlayerAliveAndSurvival).filter(p -> !Drunk.isDrunk(p)).findFirst().orElse(null);
-        boolean conductorLastThree = conductor != null && aliveTotal <= 3;
+        boolean conductorAlive = conductor != null;
         var conductorEnding = conductor == null ? Endings.Ending.NONE : EndingPipeline.factionWin(conductor);
 
         Endings.Ending ending = Endings.Ending.NONE;
+        boolean mobMode = mode == Mode.MOB;
+        Endings.Ending mobEnding = mobMode ? mobEnding(world, players) : Endings.Ending.NONE;
 
 
 
@@ -714,15 +747,16 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
 
 
-        if (conductorLastThree && gameTime.getTime() > 0) {
-            ending = conductorEnding;
-        } else if (blackdeathLastThree && gameTime.getTime() > 0) {
+        if (mobMode) { ending = mobEnding; } else if (blackdeathLastThree && gameTime.getTime() > 0) {
 
 
 
 
             ending = Endings.Ending.BLACKDEATH_KILLER;
 
+        } else if (GameModes.hasRule(world, Rule.DUEL) && killerSeatsExist && alivePrincipals == 0) {
+
+            ending = Endings.Ending.TRIAL_COMPLETE;
         } else if (majoWin) {
             ending = Endings.Ending.MAJO_WIN;
         } else if (gardenerWin) {
@@ -777,8 +811,6 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     case "MAJO" -> Endings.Ending.MAJO_WIN;
                     case "MESSIAH" -> Endings.Ending.MESSIAH_WIN;
 
-
-
                     case "GARDENER" -> Endings.Ending.GARDENER_WIN;
                     default -> {
                         var host = RoleDefs.host(desired);
@@ -818,16 +850,13 @@ public class BeforeTheTerminalGameMode extends GameMode {
             ending = Endings.Ending.BLOOD_EXPRESS;
         }
 
+        var factionObjective = Endings.byName(bttState.roleEffects.getString("factionObjective"));
+        ending = EndingPipeline.preferFactionEnding(ending, factionObjective);
         var factionLoss = Endings.byName(bttState.roleEffects.getString("factionLoss"));
         if (factionLoss != Endings.Ending.NONE) ending = factionLoss;
 
 
-
-
-
-
-
-        if (ending != Endings.Ending.NONE && conductorLastThree) {
+        if (ending != Endings.Ending.NONE && conductorAlive) {
             LOGGER.info("[BTT] conductor alive with {} left: {} -> {}",
                     aliveTotal, ending, conductorEnding);
             ending = conductorEnding;
@@ -845,10 +874,11 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
 
 
-        var pendingRequest = dev.hae.btt.victory.VictoryRequest.choose(bttState.pendingVictories);
-        Endings.Ending pending = pendingRequest == null ? Endings.byName(bttState.pendingEnding) : pendingRequest.ending();
+        var pendingRequest = dev.hae.btt.victory.VictoryRequest.choose(bttState.pendingVictories.stream()
+                .filter(request -> dev.hae.btt.victory.SoloWin.eligible(world, request)).toList());
+        Endings.Ending pending = pendingRequest == null ? Endings.Ending.NONE : pendingRequest.ending();
         if (pending != Endings.Ending.NONE) {
-            if (conductorLastThree) {
+            if (conductorAlive) {
                 ending = conductorEnding;
             } else if (blackdeathLastThree) {
                 ending = Endings.Ending.BLACKDEATH_KILLER;
@@ -863,6 +893,13 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
 
         ending = EndingPipeline.rewrite(world, ending);
+        if (ending != Endings.Ending.NONE && conductorAlive) ending = conductorEnding;
+
+
+        final dev.doctor4t.wathe.api.Role complicityHost =
+                dev.hae.btt.encounter.Backgrounds.isActive(world, dev.hae.btt.encounter.Backgrounds.COMPLICITY)
+                        ? RoleDefs.hostRoleForEnding(ending) : null;
+        if (complicityHost != null) ending = Endings.Ending.BLOOD_EXPRESS;
         final java.util.UUID objectiveWinner = ending == pending && pendingRequest != null
                 && (isSoloEnding(ending) || ending == Endings.Ending.ARCHENEMY_WIN) ? pendingRequest.actor() : null;
 
@@ -871,10 +908,14 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
         java.util.function.Predicate<ServerPlayerEntity> isWinner = switch (ending) {
             case TRIAL_COMPLETE, JOURNEY_END -> p -> Roles.isPassengerCampFor(gameWorld, p);
-            case BLOOD_EXPRESS, NAKU_KORO -> p -> Roles.isKillerCampFor(gameWorld, p);
+            case MOB_PINK_WIN -> p -> dev.hae.btt.component.PlayerState.KEY.get(p).mobTeam == dev.hae.btt.role.Mob.PINK;
+            case MOB_AZURE_WIN -> p -> dev.hae.btt.component.PlayerState.KEY.get(p).mobTeam == dev.hae.btt.role.Mob.AZURE;
+            case MOB_DRAW -> p -> false;
+            case BLOOD_EXPRESS, NAKU_KORO -> p -> Roles.isKillerCampFor(gameWorld, p)
+                    || complicityHost != null && dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, complicityHost);
 
 
-            case WEREWOLF_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.WEREWOLF);
+            case GODFATHER_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.GODFATHER);
             case MAJO_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.MAJO);
             case MESSIAH_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.MESSIAH);
             case KIDNAPPER_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.KIDNAPPER);
@@ -882,7 +923,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
             case LEGION_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.LEGION);
             case GARDENER_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.GARDENER);
             case ASTRAL_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.ASTRAL);
-            case COLD_WAVE_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.COLD_WAVE);
+            case MESSENGER_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.MESSENGER);
             case ARSONIST_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.ARSONIST);
             case ANGEL_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.ANGEL);
             case EXECUTIONER_WIN -> p -> dev.hae.btt.faction.Camps.sharesRoleCamp(gameWorld, p, Roles.EXECUTIONER);
@@ -935,13 +976,6 @@ public class BeforeTheTerminalGameMode extends GameMode {
             if (!loverWinners.contains(p.getUuid())) loverWinners.add(p.getUuid());
             if (!loverWinners.contains(partnerPlayer.getUuid())) loverWinners.add(partnerPlayer.getUuid());
         }
-
-
-
-        if (conductorLastThree || blackdeathLastThree) loverWinners.clear();
-        if (!loverWinners.isEmpty() && ending != Endings.Ending.NONE) {
-            ending = Endings.Ending.LOVERS_WIN;
-        }
         java.util.function.Predicate<ServerPlayerEntity> flipWinner = ws == GameFunctions.WinStatus.KILLERS
                 ? (java.util.function.Predicate<ServerPlayerEntity>) isWinnerByKiller(gameWorld)
                 : isWinnerByInnocent(gameWorld);
@@ -951,11 +985,6 @@ public class BeforeTheTerminalGameMode extends GameMode {
                         .filter(p -> gameWorld.getRole(p) != null)
                         .filter(flipWinner)
                         .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
-
-        if (!loverWinners.isEmpty()) {
-            finalWinners = finalWinners.isEmpty() ? loverWinners.stream().map(UUID::toString).collect(java.util.stream.Collectors.joining(","))
-                    : finalWinners + "," + loverWinners.stream().map(UUID::toString).collect(java.util.stream.Collectors.joining(","));
-        }
 
         boolean passengerWin = ws == GameFunctions.WinStatus.PASSENGERS || ws == GameFunctions.WinStatus.TIME;
         for (ServerPlayerEntity p : players) {
@@ -976,21 +1005,17 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
 
 
-
-
-
         String joinSide = joinableSide(ending);
         if (joinSide != null) {
             for (ServerPlayerEntity p : players) {
                 if (gameWorld.getRole(p) == null) continue;
-                boolean deified = PlayerState.KEY.get(p).deified;
 
 
                 boolean hermitJoin = gameWorld.getRole(p) == Roles.HERMIT
                         && GameFunctions.isPlayerAliveAndSurvival(p)
                         && !PlayerState.KEY.get(p).isDrunk()
                         && !"PASSENGER".equals(joinSide);
-                if (!deified && !hermitJoin) continue;
+                if (!hermitJoin) continue;
                 String uuid = p.getUuid().toString();
                 if (!finalWinners.contains(uuid)) {
                     finalWinners = finalWinners.isEmpty() ? uuid : finalWinners + "," + uuid;
@@ -999,25 +1024,13 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
 
         if (!EndingPipeline.allow(world, ending)) return;
-
-        if (isSoloEnding(ending)) {
-            for (ServerPlayerEntity p : players) {
-                if (gameWorld.getRole(p) == null) continue;
-                if (!PlayerState.KEY.get(p).deified) continue;
-                if (!finalWinners.contains(p.getUuid().toString())) continue;
-                if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
-                GameFunctions.killPlayer(p, true, null, dev.hae.btt.combat.DeathReasons.MONK_DEIFY);
-            }
-        }
-
         if (ending != Endings.Ending.NONE && gameWorld.getGameStatus() == GameWorldComponent.GameStatus.ACTIVE) {
-            if (Backgrounds.isActive(world, Backgrounds.LIFE)) {
-                java.util.Set<String> combined = new java.util.LinkedHashSet<>(java.util.Arrays.asList(finalWinners.split(",")));
-                combined.remove("");
-                for (ServerPlayerEntity player : players)
-                    if (PlayerState.KEY.get(player).soloObjectiveComplete) combined.add(player.getUuidAsString());
-                finalWinners = String.join(",", combined);
-            }
+            java.util.Set<String> combined = new java.util.LinkedHashSet<>(java.util.Arrays.asList(finalWinners.split(",")));
+            combined.remove("");
+            for (UUID lover : loverWinners) combined.add(lover.toString());
+            for (ServerPlayerEntity player : players)
+                if (dev.hae.btt.victory.SoloWin.deferredWinner(player)) combined.add(player.getUuidAsString());
+            finalWinners = String.join(",", combined);
             LOGGER.info("[BTT] ending decided: {} (aliveP={} alivePr={} aliveAc={} aliveON={} station={})",
                     ending, alivePassengers, alivePrincipals, aliveAccomplices, aliveOutsiderNeutrals,
                     gameTime.getTime() <= 0);
@@ -1039,13 +1052,31 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
 
 
+
+    private static Endings.Ending mobEnding(ServerWorld world, java.util.List<ServerPlayerEntity> players) {
+        int pink = 0, azure = 0;
+        for (ServerPlayerEntity player : players) {
+            if (!GameFunctions.isPlayerAliveAndSurvival(player)) continue;
+            int team = dev.hae.btt.component.PlayerState.KEY.get(player).mobTeam;
+            if (team == dev.hae.btt.role.Mob.PINK) pink++;
+            else if (team == dev.hae.btt.role.Mob.AZURE) azure++;
+        }
+        if (pink == 0 && azure == 0) return Endings.Ending.MOB_DRAW;
+        if (pink == 0) return Endings.Ending.MOB_AZURE_WIN;
+        if (azure == 0) return Endings.Ending.MOB_PINK_WIN;
+        if (GameTimeComponent.KEY.get(world).getTime() <= 0)
+            return pink == azure ? Endings.Ending.MOB_DRAW
+                    : pink > azure ? Endings.Ending.MOB_PINK_WIN : Endings.Ending.MOB_AZURE_WIN;
+        return Endings.Ending.NONE;
+    }
+
     private static String joinableSide(Endings.Ending ending) {
         return switch (ending) {
             case TRIAL_COMPLETE, JOURNEY_END, HERETIC_PASSENGER -> Roles.CAMP_PASSENGER;
             case BLACKDEATH_PASSENGER -> Roles.CAMP_PASSENGER;
             case BLOOD_EXPRESS, NAKU_KORO, BLACKDEATH_KILLER, HERETIC_KILLER -> Roles.CAMP_KILLER;
-            case MAJO_WIN, MESSIAH_WIN, GARDENER_WIN, LEGION_WIN, VOODOO_WIN, WEREWOLF_WIN -> Roles.CAMP_OUTSIDER;
-            case THIEF_WIN, NOVELIST_WIN, ARSONIST_WIN, EXECUTIONER_WIN, ANGEL_WIN, KIDNAPPER_WIN, ASTRAL_WIN, COLD_WAVE_WIN -> Roles.CAMP_SOLO;
+            case MAJO_WIN, MESSIAH_WIN, GARDENER_WIN, LEGION_WIN, VOODOO_WIN, GODFATHER_WIN -> Roles.CAMP_OUTSIDER;
+            case THIEF_WIN, NOVELIST_WIN, ARSONIST_WIN, EXECUTIONER_WIN, ANGEL_WIN, KIDNAPPER_WIN, ASTRAL_WIN, MESSENGER_WIN, JESTER_WIN -> Roles.CAMP_SOLO;
             case LOVERS_WIN, ARCHENEMY_WIN -> JOIN_RELATION;
             default -> null;
         };
@@ -1057,7 +1088,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
     private static boolean isSoloEnding(Endings.Ending ending) {
         return switch (ending) {
-            case THIEF_WIN, NOVELIST_WIN, ARSONIST_WIN, EXECUTIONER_WIN, ANGEL_WIN -> true;
+            case THIEF_WIN, NOVELIST_WIN, ARSONIST_WIN, EXECUTIONER_WIN, ANGEL_WIN, KIDNAPPER_WIN, ASTRAL_WIN, MESSENGER_WIN, JESTER_WIN -> true;
             default -> false;
         };
     }
@@ -1067,7 +1098,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         for (var player : world.getPlayers()) dev.hae.btt.role.Smuggler.releaseOwned(player);
         ServerSettings.cancel(world);
         dev.hae.btt.map.MapEnhancements.consumeExplicitEffect(world);
-        if (mode.usesDebate()) Debate.finishRound(world);
+        if (GameModes.hasRule(world, Rule.DEBATE)) Debate.finishRound(world);
 
         dev.hae.btt.api.event.BttEvents.GameEnded.EVENT.invoker()
                 .onGameEnded(world, GameState.KEY.get(world).lastEnding);

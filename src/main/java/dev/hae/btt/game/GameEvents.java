@@ -60,7 +60,7 @@ public final class GameEvents {
         ensureWatheClientConfig();
         registerKitDispatch();
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
-                server.execute(() -> LateJoin.placeSpectator(handler.getPlayer())));
+                server.execute(() -> { PlayerState.KEY.get(handler.getPlayer()).lateJoinTicks = 2; LateJoin.placeSpectator(handler.getPlayer()); }));
         net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
             if (!(entity instanceof ServerPlayerEntity victim)
                     || !(source.getAttacker() instanceof PlayerEntity attacker) || attacker == victim) return true;
@@ -71,6 +71,7 @@ public final class GameEvents {
         dev.hae.btt.api.event.BttEvents.DeathReaction.EVENT.register((victim, killer, reason) -> dev.hae.btt.role.Warden.died(victim));
         dev.hae.btt.api.event.BttEvents.DeathReaction.EVENT.register((victim, killer, reason) -> {
             if (!SeatAssignment.isBttMode(victim.getWorld())) return;
+            dev.hae.btt.role.Investigations.death(victim, killer, reason);
             var definition = RoleDefs.get(GameWorldComponent.KEY.get(victim.getWorld()).getRole(victim));
             if (definition != null) definition.dispatchDeath(victim, killer, reason);
             java.util.Set<dev.doctor4t.wathe.api.Role> observed = new java.util.HashSet<>();
@@ -85,6 +86,12 @@ public final class GameEvents {
                 dev.hae.btt.component.GameState.KEY.get(victim.getWorld()).lastExecutionAt = victim.getWorld().getTime();
             }
         });
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (!(victim instanceof ServerPlayerEntity player) || !SeatAssignment.isBttMode(player.getWorld())) return true;
+            var game = GameWorldComponent.KEY.get(player.getWorld());
+            var def = RoleDefs.get(game.getRole(player));
+            return !game.isRunning() || def == null || def.allowDeath(player, killer, reason);
+        });
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> !(victim instanceof ServerPlayerEntity player)
                 || dev.hae.btt.trait.TraitRules.allowDeath(player, killer, reason));
         registerJesterPsycho();
@@ -92,20 +99,18 @@ public final class GameEvents {
 
 
 
-        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> server.execute(() -> {
             net.minecraft.server.network.ServerPlayerEntity quitter = handler.getPlayer();
             if (quitter == null) return;
-
-
-            dev.hae.btt.trait.Traits.onDisconnect(quitter.getUuid());
             if (!SeatAssignment.isBttMode(quitter.getWorld())) return;
+            Debate.clearVote(quitter);
             GameWorldComponent gwc = GameWorldComponent.KEY.get(quitter.getWorld());
             if (!gwc.isRunning()) return;
             if (!GameFunctions.isPlayerAliveAndSurvival(quitter)) return;
 
 
             GameFunctions.killPlayer(quitter, true, null, dev.hae.btt.combat.DeathReasons.ESCAPE);
-        });
+        }));
         registerPharmacistPoison();
         ActionReceiver.register();
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
@@ -114,6 +119,13 @@ public final class GameEvents {
                     || dev.hae.btt.trait.TraitRules.voluntaryDeath(victim, killer, reason)) return true;
             dev.hae.btt.combat.DeathResolution.shieldBreak(victim, killer);
             return false;
+        });
+        net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
+            if (!(entity instanceof ServerPlayerEntity player) || !SeatAssignment.isBttMode(player.getWorld())) return true;
+            var game = GameWorldComponent.KEY.get(player.getWorld());
+            var def = RoleDefs.get(game.getRole(player));
+            return !game.isRunning() || def == null || def.allowDeath(player,
+                    source.getAttacker() instanceof PlayerEntity p ? p : null, GameConstants.DeathReasons.GENERIC);
         });
         net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
             if (entity instanceof ServerPlayerEntity player && EncounterRules.stormProtected(player)
@@ -137,14 +149,17 @@ public final class GameEvents {
                     GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
                     if (!gwc.isRunning()) return;
                     if (gwc.getRole(victim) == null) return;
+                    if (dev.hae.btt.role.LucidDream.beforeDeathReactions(victim, null, GameConstants.DeathReasons.GENERIC)) return;
+                    if (dev.hae.btt.role.LucidDream.active(victim.getServerWorld())) victim.changeGameMode(net.minecraft.world.GameMode.SPECTATOR);
                     dev.hae.btt.combat.DeathResolution.notifyDeath(
                             victim, null, GameConstants.DeathReasons.GENERIC, false);
+                    dev.hae.btt.role.LucidDream.afterDeath(victim);
                 });
         ShopGate.init();
         registerMaidGive();
         registerPostmanGive();
         registerDebateReport();
-        registerPsychopathShield();
+        registerWeaponPunching();
         registerProfessorShield();
         registerGuardImmunity();
         registerKidnapperImmunity();
@@ -263,70 +278,39 @@ public final class GameEvents {
             }
         });
 
-
-        dev.hae.btt.api.event.BttEvents.DeathReaction.EVENT.register((victim, killer, reason) -> {
-            if (!SeatAssignment.isBttMode(victim.getWorld())) return;
-            if (!(victim.getWorld() instanceof net.minecraft.server.world.ServerWorld sw)) return;
-            GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
-
-            dev.hae.btt.role.Roles.Kind kind = dev.hae.btt.role.Roles.kindOf(gwc.getRole(victim));
-            boolean neutral = kind != null && kind.isNeutralKind();
-            if (!neutral) return;
-            for (ServerPlayerEntity godfather : sw.getPlayers()) {
-                if (!dev.hae.btt.role.Roles.hasCurrentOrPriorRole(gwc, godfather, dev.hae.btt.role.Roles.GODFATHER)) continue;
-                java.util.UUID mark = dev.hae.btt.component.CurseState.KEY.get(godfather).target;
-                if (mark == null) continue;
-                if (!(sw.getPlayerByUuid(mark) instanceof ServerPlayerEntity marked)) continue;
-                if (marked == victim) continue;
-                if (!GameFunctions.isPlayerAliveAndSurvival(marked)) continue;
-                GameFunctions.killPlayer(marked, true, godfather, dev.hae.btt.combat.DeathReasons.REVENGE);
-            }
-        });
     }
 
 
+    private static final ClassValue<java.util.Optional<java.lang.reflect.Field>> SPRINT_FIELDS = new ClassValue<>() {
+        @Override protected java.util.Optional<java.lang.reflect.Field> computeValue(Class<?> type) {
+            for (Class<?> current = type; current != null; current = current.getSuperclass()) {
+                try {
+                    var field = current.getDeclaredField("sprintingTicks");
+                    if (field.getType() == float.class && field.trySetAccessible())
+                        return java.util.Optional.of(field);
+                } catch (NoSuchFieldException missing) {
 
-
+                } catch (SecurityException inaccessible) {
+                    return java.util.Optional.empty();
+                }
+            }
+            return java.util.Optional.empty();
+        }
+    };
 
     public static void refillSprint(ServerPlayerEntity player) {
+        var field = SPRINT_FIELDS.get(player.getClass());
+        if (field.isEmpty()) return;
         try {
-            java.lang.reflect.Field f = player.getClass().getDeclaredField("sprintingTicks");
-            f.setAccessible(true);
-            f.setFloat(player, 1.0E9F);
-        } catch (Throwable ignored) {
+            field.get().setFloat(player, 1.0E9F);
+        } catch (IllegalAccessException inaccessible) {
 
         }
     }
 
 
 
-    private static void registerPsychopathShield() {
-        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
-            if (!SeatAssignment.isBttMode(victim.getWorld())) return true;
-            GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
-            if (!gwc.isRunning()) return true;
-            if (!gwc.isRole(victim, Roles.PSYCHOPATH)) return true;
-
-            net.minecraft.item.ItemStack handStack = victim.getMainHandStack();
-            boolean holdsWeapon = handStack.isOf(WatheItems.BAT) || handStack.isOf(BttItems.FIRE_AXE);
-            if (!holdsWeapon) return true;
-            if (ItemUse.cooling(victim, handStack.getItem())) return true;
-            dev.hae.btt.combat.DeathResolution.shieldBreak(victim, killer);
-            return false;
-        });
-
-        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
-
-            if (reason != GameConstants.DeathReasons.BAT && reason != dev.hae.btt.combat.DeathReasons.AXE) return true;
-            if (!(killer instanceof PlayerEntity k)) return true;
-            if (!SeatAssignment.isBttMode(victim.getWorld())) return true;
-            GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
-            if (!gwc.isRole(k, Roles.PSYCHOPATH)) return true;
-
-            if (ItemUse.cooling(k, BttItems.FIRE_AXE)) return false;
-            if (ItemUse.cooling(k, WatheItems.BAT)) return false;
-            return true;
-        });
+    private static void registerWeaponPunching() {
 
 
 
@@ -338,10 +322,6 @@ public final class GameEvents {
             var mainHand = attacker.getMainHandStack();
             return mainHand.isOf(dev.hae.btt.registry.BttItems.DAGGER)
                     || mainHand.isOf(dev.hae.btt.registry.BttItems.SWORD)
-
-
-                    || mainHand.isOf(dev.hae.btt.registry.BttItems.PIPE)
-
 
 
                     || mainHand.isOf(dev.hae.btt.registry.BttItems.FIRE_AXE);
@@ -398,6 +378,10 @@ public final class GameEvents {
             if (!GameFunctions.isPlayerAliveAndSurvival(user)
                     || !GameFunctions.isPlayerAliveAndSurvival(target)) return ActionResult.PASS;
 
+            var interactionDef = RoleDefs.get(gwc.getRole(target));
+            if (interactionDef != null && interactionDef.interacted(user, target)) return ActionResult.SUCCESS;
+            var sourceDef = RoleDefs.get(gwc.getRole(user));
+            if (sourceDef != null && sourceDef.interactWith(user, target)) return ActionResult.SUCCESS;
             boolean targetIsPostman = gwc.isRole(target, Roles.POSTMAN);
             if (!gwc.isRole(user, Roles.POSTMAN) && !targetIsPostman) return ActionResult.PASS;
             ItemStack held = user.getMainHandStack();
@@ -468,26 +452,8 @@ public final class GameEvents {
 
             if (PlayerState.KEY.get(victim).isDrunk()) return true;
             if (killer == null || killer == victim || !dev.hae.btt.role.Colonel.executionUser(killer, reason)) return true;
-            dev.doctor4t.wathe.cca.PlayerPsychoComponent psycho = dev.doctor4t.wathe.cca.PlayerPsychoComponent.KEY.get(victim);
-            if (psycho.getPsychoTicks() > 0) return true;
-            PlayerState.KEY.get(victim).jesterExecutioner = killer.getUuidAsString();
-            dev.hae.btt.combat.DeathResolution.shieldBreak(victim, killer);
-            psycho.startPsycho();
-            psycho.setPsychoTicks(GameConstants.getInTicks(2, 0));
-
-            psycho.setArmour(2 + dev.hae.btt.component.GameState.KEY.get(victim.getWorld()).misfireCount);
-            if (victim instanceof ServerPlayerEntity jester) {
-
-                dev.hae.btt.record.GameRecordManager.recordTalentUse(jester, "jester_psycho", null);
-            }
-            victim.giveItemStack(new ItemStack(WatheItems.BAT));
-            for (int i = 0; i < victim.getInventory().size(); i++) {
-                if (victim.getInventory().getStack(i).isOf(WatheItems.BAT)) {
-                    victim.getInventory().selectedSlot = i;
-                    break;
-                }
-            }
-            return false;
+            if (!(victim instanceof ServerPlayerEntity jester) || !(killer instanceof ServerPlayerEntity target)) return true;
+            return !dev.hae.btt.role.Jester.begin(jester, target);
         });
     }
 
@@ -497,7 +463,6 @@ public final class GameEvents {
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
             if (!SeatAssignment.isBttMode(victim.getWorld())) return true;
             PlayerState shieldPc = PlayerState.KEY.get(victim);
-            if (dev.hae.btt.role.Gunslinger.unblockable(killer, reason)) return true;
             if (shieldPc.monkShields > 0) {
         dev.hae.btt.combat.DeathResolution.blocked(victim, killer, true);
                 shieldPc.monkShields--;
@@ -528,8 +493,6 @@ public final class GameEvents {
 
             if (dev.hae.btt.trait.TraitRules.voluntaryDeath(victim, killer, reason)
                     || !dev.hae.btt.trait.TraitRules.harmfulDeath(reason)) return true;
-
-            if (dev.hae.btt.role.Gunslinger.unblockable(killer, reason)) return true;
             boolean blocked = Guard.vetoDeath(serverVictim);
             if (blocked) dev.hae.btt.combat.DeathResolution.shieldBreak(victim, killer);
             return !blocked;

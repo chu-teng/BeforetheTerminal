@@ -61,6 +61,7 @@ public final class DraftManager {
     private static List<UUID> order = List.of();
     private static int index = -1;
     private static final Map<UUID, Role> picks = new HashMap<>();
+    private static final Map<UUID, Role> facades = new HashMap<>();
     private static DraftPool.Hand currentHand = null;
     private static int ticksLeft = 0;
 
@@ -120,7 +121,7 @@ public final class DraftManager {
         }
         if (ticksLeft > 0 && --ticksLeft <= 0) {
 
-            autoPickFaceUp(world);
+            autoPick(world);
             return;
         }
         DraftState state = DraftState.KEY.get(world);
@@ -148,7 +149,9 @@ public final class DraftManager {
 
         List<ServerPlayerEntity> participants = readyPlayers(world);
         List<UUID> ids = new ArrayList<>(participants.stream().map(ServerPlayerEntity::getUuid).toList());
-        SeatAssignment.Roster built = SeatAssignment.buildRoster(ids);
+        var mode = dev.hae.btt.game.GameModes.modeOf(GameWorldComponent.KEY.get(world));
+        int limit = mode == null ? SeatAssignment.MAX_PLAYERS : dev.hae.btt.game.GameModes.of(mode).maxPlayers();
+        SeatAssignment.Roster built = ids.size() > limit ? null : SeatAssignment.buildRoster(ids);
         if (built == null) {
             BeforeTheTerminalGameMode.LOGGER.warn("[BTT] draft: roster not buildable for {} players, falling back to random", ids.size());
             resultReady = true;
@@ -156,7 +159,7 @@ public final class DraftManager {
             return false;
         }
         roster = built;
-        pool = new DraftPool(roster.seats(), RANDOM);
+        pool = new DraftPool(roster.seats(), roster.forced().values(), RANDOM);
 
         List<UUID> draftable = new ArrayList<>();
         for (UUID id : ids) {
@@ -165,6 +168,7 @@ public final class DraftManager {
         Collections.shuffle(draftable, RANDOM);
         order = List.copyOf(draftable);
         picks.clear();
+        facades.clear();
         index = -1;
         resultReady = false;
 
@@ -255,30 +259,32 @@ public final class DraftManager {
     }
 
 
-    private static void autoPickFaceUp(ServerWorld world) {
+    private static void autoPick(ServerWorld world) {
         ServerPlayerEntity current = index >= 0 && index < order.size()
                 && world.getPlayerByUuid(order.get(index)) instanceof ServerPlayerEntity sp ? sp : null;
         if (current == null || currentHand == null || currentHand.faceUp().isEmpty()) {
             nextTurn(world);
             return;
         }
-        int pick = RANDOM.nextInt(currentHand.faceUp().size());
-        commit(world, current, currentHand.faceUp().get(pick), false);
+        int pick = RANDOM.nextInt(currentHand.slotCount());
+        commit(world, current, currentHand.at(pick), currentHand.isHiddenSlot(pick));
     }
 
     private static void commit(ServerWorld world, ServerPlayerEntity player, Role role, boolean hidden) {
         if (!pool.take(role)) return;
         hidden = hidden || role == Roles.HERETIC || role == Roles.BLACKDEATH;
+        Role displayed = pool.displayRole(role);
         picks.put(player.getUuid(), role);
+        if (displayed != role) facades.put(player.getUuid(), displayed);
         clearSlips(player);
         currentHand = null;
         DraftState state = DraftState.KEY.get(world);
-        if (!hidden) state.knownRoles += (state.knownRoles.isEmpty() ? "" : ",") + role.identifier();
+        if (!hidden) state.knownRoles += (state.knownRoles.isEmpty() ? "" : ",") + displayed.identifier();
         state.pendingCount = pool.size();
         state.sync();
         BttEvents.DraftPick.EVENT.invoker().onDraftPick(world, player.getUuid(), index + 1, role, hidden);
 
-        Text visibleRole = SeatAssignment.displayName(role).copy().withColor(role.color());
+        Text visibleRole = SeatAssignment.displayName(displayed).copy().withColor(displayed.color());
         Text announce = Text.translatable("btt.draft.picked", index + 1,
                 hidden ? Text.translatable("btt.draft.hidden").withColor(0xAAAAAA) : visibleRole).withColor(0xFFFFFF);
         lastAnnouncement = announce;
@@ -286,8 +292,6 @@ public final class DraftManager {
         personalAnnouncements.put(player.getUuid(), Text.translatable("btt.draft.mine", visibleRole).withColor(0xFFFFFF));
         for (ServerPlayerEntity p : world.getPlayers()) {
             p.sendMessage(p == player ? personalAnnouncements.get(player.getUuid()) : announce, false);
-            p.playSoundToPlayer(dev.hae.btt.registry.Sounds.PUBLIC_NOTICE,
-                    net.minecraft.sound.SoundCategory.PLAYERS, 0.6f, 1.0f);
         }
         nextTurn(world);
     }
@@ -308,13 +312,13 @@ public final class DraftManager {
     public static Result consume(ServerWorld world) {
         if (world != draftWorld) return null;
         if (!resultReady) return null;
-        Result r = roster == null ? null : new Result(roster, Map.copyOf(picks));
+        Result r = roster == null ? null : new Result(roster, Map.copyOf(picks), Map.copyOf(facades));
         reset();
         return r;
     }
 
 
-    public record Result(SeatAssignment.Roster roster, Map<UUID, Role> picks) {}
+    public record Result(SeatAssignment.Roster roster, Map<UUID, Role> picks, Map<UUID, Role> facades) {}
 
 
     public static void reset() {
@@ -325,6 +329,7 @@ public final class DraftManager {
         order = List.of();
         index = -1;
         picks.clear();
+        facades.clear();
         currentHand = null;
         ticksLeft = 0;
         resultReady = false;
@@ -352,7 +357,7 @@ public final class DraftManager {
     private static void giveSlips(ServerPlayerEntity player, DraftPool.Hand hand) {
         player.getInventory().clear();
         for (int slot = 0; slot < hand.slotCount() && slot < 9; slot++) {
-            Role role = hand.at(slot);
+            Role role = pool.displayRole(hand.at(slot));
             boolean hidden = hand.isHiddenSlot(slot);
             ItemStack stack = new ItemStack(BttItems.SLIP);
             stack.set(DataComponentTypes.CUSTOM_NAME, (hidden

@@ -44,7 +44,13 @@ public class FireAxeCrosshairMixin {
         context.getMatrices().push();
         context.getMatrices().translate(context.getScaledWindowWidth() / 2f, context.getScaledWindowHeight() / 2f, 0);
 
-        if (cooldowns.isCoolingDown(BttItems.FIRE_AXE)) {
+        int window = dev.hae.btt.component.PlayerState.KEY.get(player).axeTicks;
+        if (window > 0) {
+            float left = Math.min(1f, window / (float) dev.hae.btt.item.FireAxeItem.WINDOW_TICKS);
+            context.drawGuiTexture(ATTACK, -5, 5, W, H);
+            context.drawGuiTexture(BACKGROUND, -5, 5, W, H);
+            context.drawGuiTexture(PROGRESS, W, H, 0, 0, -5, 5, (int) (left * W), H);
+        } else if (cooldowns.isCoolingDown(BttItems.FIRE_AXE)) {
             float progress = 1f - cooldowns.getCooldownProgress(BttItems.FIRE_AXE, tickDelta);
             context.drawGuiTexture(BACKGROUND, -5, 5, W, H);
             context.drawGuiTexture(PROGRESS, W, H, 0, 0, -5, 5, (int) (progress * W), H);

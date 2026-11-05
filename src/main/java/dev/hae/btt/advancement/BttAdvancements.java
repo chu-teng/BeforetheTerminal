@@ -35,6 +35,11 @@ public final class BttAdvancements {
     public static void register() {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> award(handler.player, "arrival"));
         BttEvents.GameEnded.EVENT.register(BttAdvancements::end);
+        BttEvents.DraftPick.EVENT.register((world, uuid, ordinal, role, hidden) -> {
+            var player = world.getPlayerByUuid(uuid);
+            if (player instanceof ServerPlayerEntity p && hidden
+                    && (Roles.kindOf(role) == Roles.Kind.PRINCIPAL || Roles.kindOf(role) == Roles.Kind.OUTSIDER)) award(p, "draft_hidden");
+        });
         BttEvents.Death.EVENT.register(BttAdvancements::death);
         BttEvents.TaskCompleted.EVENT.register((player, task) -> {
             fact(player, "need");
@@ -70,9 +75,9 @@ public final class BttAdvancements {
         var values = new HashSet<>(Arrays.asList(data.getString(key).split(",")));
         values.remove(""); values.add(value); data.putString(key, String.join(",", values)); return values.size();
     }
-    private static final Set<String> END_ONLY = Set.of("drunk", "memory_change", "unanimous",
+    private static final Set<String> END_ONLY = Set.of("drunk", "unanimous",
             "execution_two", "execution_three", "passenger_trap", "magic_kill",
-            "marionette_execution", "lunatic_principal", "parity", "kill_one", "kill_three", "kill_five");
+            "marionette_execution", "lunatic_principal", "parity");
     public static void award(ServerPlayerEntity player, String id) {
         var status = game(player).getGameStatus();
         if (END_ONLY.contains(id) && status != GameWorldComponent.GameStatus.INACTIVE) {
@@ -107,10 +112,6 @@ public final class BttAdvancements {
     public static void ready(ServerWorld world) {
         GameState.KEY.get(world).advancementRound = new NbtCompound();
         var game = GameWorldComponent.KEY.get(world);
-        var unarmedPrincipals = Set.of(Roles.RIOT, Roles.LEVIATHAN, Roles.SCULPTOR, Roles.VORTEX);
-        boolean noKnife = GameState.KEY.get(world).openingRoles.values().stream()
-                .map(Roles::byId).anyMatch(unarmedPrincipals::contains);
-        worldRound(world).putBoolean("unarmedPrincipal", noKnife);
         for (var player : world.getPlayers()) {
             if (game.getRole(player) == null) continue;
             PlayerState.KEY.get(player).advancementRound = new NbtCompound();
@@ -120,13 +121,9 @@ public final class BttAdvancements {
             state.putString("startCamp", Roles.campOf(game, player).name());
             state.putString("role", game.getRole(player).identifier().toString());
             state.putBoolean("guesser", guessesRoles(game.getRole(player)));
-            if (game.getRole(player) == Roles.WEREWOLF) {
-                state.putString("wolfAllies", world.getPlayers().stream()
-                        .filter(p -> PlayerState.KEY.get(p).werewolfOwner.equals(player.getUuidAsString()))
-                        .map(p -> p.getUuidAsString()).collect(java.util.stream.Collectors.joining(",")));
-            }
-            if (GameModes.modeOf(game) == BeforeTheTerminalGameMode.Mode.SCRIPT
-                    && (Roles.kindOfReal(game, player) == Roles.Kind.LONE || Roles.kindOfReal(game, player) == Roles.Kind.OUTSIDER)) award(player, "script");
+            if (GameModes.hasRule(world, dev.hae.btt.game.Rule.SCRIPT)
+                    && dev.hae.btt.game.Scripts.byId(GameState.KEY.get(world).script) != null)
+                criterion(player, "scripts", GameState.KEY.get(world).script);
         }
     }
     private static boolean guessesRoles(Role role) {
@@ -147,10 +144,6 @@ public final class BttAdvancements {
         if (active(caster) && increment(round(caster), "voodooRevives") >= 3) award(caster, "voodoo_three");
     }
     public static void succession(ServerPlayerEntity predecessor) { fact(predecessor, "legion_succession"); }
-    public static void executionSanity(ServerPlayerEntity player, float before) {
-        if (active(player) && before > 0 && dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(player).getMood() <= 0)
-            round(player).putLong("executionCollapseUntil", player.getServerWorld().getTime() + 2);
-    }
     public static void protection(ServerPlayerEntity caster, PlayerEntity target) {
         if (target != caster) fact(caster, "protection");
     }
@@ -172,10 +165,17 @@ public final class BttAdvancements {
     public static void changedRole(ServerPlayerEntity player) {
         if (!active(player) || !round(player).getBoolean("initialized")) return;
         round(player).putBoolean("roleChanged", true);
-        if (GameModes.modeOf(game(player)) == BeforeTheTerminalGameMode.Mode.MEMORY) award(player, "memory_change");
+        if (GameModes.hasRule(player.getWorld(), dev.hae.btt.game.Rule.MEMORY)) award(player, "memory_change");
     }
     public static void changedCamp(ServerPlayerEntity player) {
         if (active(player) && round(player).getBoolean("initialized")) round(player).putBoolean("campChanged", true);
+    }
+    public static void knifeUsed(ServerPlayerEntity player) {
+        if (active(player)) round(player).putBoolean("knifeUsed", true);
+    }
+    public static void flowerMatured(ServerPlayerEntity player) {
+        if (active(player) && Roles.hasCurrentRole(game(player), player, Roles.GARDENER)
+                && increment(round(player), "matureFlowers") >= 2) award(player, "bloom_kill");
     }
     public static void psychoStarted(ServerPlayerEntity player) {
         if (active(player)) round(player).putInt("psychoKills", 0);
@@ -183,7 +183,7 @@ public final class BttAdvancements {
     public static void derringer(ServerPlayerEntity player, boolean hit) {
         if (!active(player)) return;
         if (!hit) round(player).putInt("derringerHits", 0);
-        else if (increment(round(player), "derringerHits") >= 3) award(player, "derringer_streak");
+        else if (increment(round(player), "derringerHits") >= 2) award(player, "derringer_streak");
     }
     public static void debate(ServerWorld world, ServerPlayerEntity victim, Map<String, String> votes, int aliveBefore) {
         var game = GameWorldComponent.KEY.get(world);
@@ -199,10 +199,10 @@ public final class BttAdvancements {
         if (!active(victim)) return;
         var world = victim.getServerWorld(); var game = game(victim); var state = round(victim);
         state.putBoolean("dead", true);
-        for (var owner : world.getPlayers())
-            if (Arrays.asList(round(owner).getString("wolfAllies").split(",")).contains(victim.getUuidAsString()))
-                distinct(round(owner), "wolfLosses", victim.getUuidAsString());
-        if (DeathReasons.SELF_EXECUTION.equals(reason) && state.contains("misfireAt") && state.getLong("misfireAt") == world.getTime()) award(victim, "self_execution");
+        for (var owner : world.getPlayers()) {
+            var relation = PlayerState.KEY.get(owner);
+            if ("ARCHENEMY".equals(relation.relType) && victim.getUuidAsString().equals(relation.partner)) award(owner, "archenemy");
+        }
         if (WorldBlackoutComponent.KEY.get(world).isBlackoutActive()) {
             int deaths = increment(worldRound(world), "blackoutDeaths");
             var owner = player(world, worldRound(world).getString("blackoutOwner"));
@@ -216,7 +216,7 @@ public final class BttAdvancements {
         }
         if (GameConstants.DeathReasons.POISON.equals(reason)) award(killer, "poison_kill");
         if (DeathReasons.MAGIC.equals(reason) && !Roles.isPassengerCampFor(game, victim)) award(killer, "magic_kill");
-        if (DeathReasons.BLOOM.equals(reason)) award(killer, "bloom_kill");
+
         if (Roles.hasCurrentOrPriorRole(game, killer, Roles.LUNATIC) && Roles.kindOfReal(game, victim) == Roles.Kind.PRINCIPAL) award(killer, "lunatic_principal");
         if (PlayerPsychoComponent.KEY.get(killer).getPsychoTicks() > 0 && increment(actor, "psychoKills") >= 4) award(killer, "psycho_four");
         var explosion = EXPLOSION.get();
@@ -231,10 +231,11 @@ public final class BttAdvancements {
         }
         if (Roles.hasCurrentOrPriorRole(game, killer, Roles.MARIONETTE) && Roles.isPassengerCampFor(game, victim)) award(killer, "marionette_execution");
         if (dev.hae.btt.trait.TraitRules.execution(victim, killer, reason)) {
+            if (GameModes.hasRule(world, dev.hae.btt.game.Rule.DUEL) && Roles.kindOfReal(game, victim) == Roles.Kind.PRINCIPAL)
+                award(killer, "duel_execution");
             if (Roles.isPassengerCampFor(game, killer)) {
                 award(killer, "execution");
-                if (Roles.isPassengerCampFor(game, victim)) { actor.putLong("misfireAt", world.getTime()); }
-                else {
+                if (!Roles.isPassengerCampFor(game, victim)) {
                     int executions = increment(actor, "executions");
                     if (executions >= 2) award(killer, "execution_two"); if (executions >= 3) award(killer, "execution_three");
                 }
@@ -257,11 +258,14 @@ public final class BttAdvancements {
             if (pc.consoleOpen) award(player, "console");
             if (player.getVehicle() instanceof dev.doctor4t.wathe.block.entity.SeatEntity seat
                     && world.getBlockState(seat.getBlockPos()).isOf(dev.hae.btt.registry.BttBlocks.LOOKOUT_CHAIR)) award(player, "lookout");
-            if (pc.isProjecting() && (game.getRole(player) == Roles.MUYUUBYOU || game.getRole(player) == Roles.ASTRAL)) award(player, "dream_walk");
+            if (pc.lucidActive && Roles.hasCurrentRole(game, player, Roles.HIKIKOMORI)
+                    || pc.isProjecting() && (Roles.hasCurrentRole(game, player, Roles.MUYUUBYOU) || Roles.hasCurrentRole(game, player, Roles.ASTRAL))) award(player, "dream_walk");
+            if (Backgrounds.isActive(world, Backgrounds.DUPLICATES) && world.getPlayers().stream().anyMatch(p -> p != player
+                    && game.getRole(p) != null && Roles.realRole(game, p) == Roles.realRole(game, player))) award(player, "twins_role");
             if (alive && !GameState.KEY.get(world).epilogueType.isEmpty()) award(player, "epilogue");
             String role = game.getRole(player).identifier().toString();
             if (!state.getString("role").equals(role)) {
-                if (GameModes.modeOf(game) == BeforeTheTerminalGameMode.Mode.MEMORY) award(player, "memory_change");
+                if (GameModes.hasRule(world, dev.hae.btt.game.Rule.MEMORY)) award(player, "memory_change");
                 state.putBoolean("roleChanged", true); state.putString("role", role);
             }
             if (guessesRoles(game.getRole(player))) state.putBoolean("guesser", true);
@@ -295,11 +299,10 @@ public final class BttAdvancements {
             deliverDeferred(player);
             boolean alive = GameFunctions.isPlayerAliveAndSurvival(player), won = winners.contains(player.getUuidAsString());
             if (alive) award(player, "last_stop"); nextCriterion(player, "ten_rounds");
-            if (GameModes.modeOf(game) != BeforeTheTerminalGameMode.Mode.DRAFT) award(player, "modes");
+            if (!btt.background.isEmpty()) award(player, "modes");
+            if (won && alive && GameModes.modeOf(game) == BeforeTheTerminalGameMode.Mode.MOB) award(player, "script");
             if (!won) continue;
-            if (game.getRole(player) == Roles.WEREWOLF
-                    && Arrays.stream(state.getString("wolfLosses").split(",")).filter(x -> !x.isEmpty()).count() <= 2)
-                award(player, "werewolf_survivors");
+            if (Roles.realRole(game, player) == Roles.GODFATHER && pc.soloObjectiveComplete) award(player, "cops_and_robbers");
             var camp = Roles.campOf(game, player); var kind = Roles.kindOfReal(game, player);
             var initialKind = Roles.kindOf(Roles.byId(btt.openingRoles.getOrDefault(player.getUuid(), "")));
             criterion(player, "all_camps", camp.name());
@@ -308,7 +311,7 @@ public final class BttAdvancements {
             if (camp == Roles.Faction.KILLER) {
                 award(player, "killer_win"); if (alive && killers == 1) award(player, "last_killer");
                 if (!"KILLER".equals(state.getString("startCamp"))) award(player, "joined_killer");
-                if (worldRound(world).getBoolean("unarmedPrincipal")) award(player, "unarmed_principal");
+                if (kind == Roles.Kind.PRINCIPAL && !state.getBoolean("knifeUsed")) award(player, "unarmed_principal");
             }
             if (camp == Roles.Faction.OUTSIDER) {
                 award(player, "outsider_win"); if (!"OUTSIDER".equals(state.getString("startCamp"))) award(player, "joined_outsider");
@@ -323,12 +326,9 @@ public final class BttAdvancements {
             if (ending.equals("BLACKDEATH_KILLER") && Roles.hasCurrentOrPriorRole(game, player, Roles.BLACKDEATH)) award(player, "black_death");
             if (ending.equals("HERETIC_PASSENGER") && Roles.hasCurrentOrPriorRole(game, player, Roles.HERETIC)) award(player, "heretic");
             var partner = player(world, pc.partner);
-            if ("LOVER".equals(pc.relType) && ending.equals("LOVERS_WIN")) award(player, "lovers");
-            if ("ARCHENEMY".equals(pc.relType) && ending.equals("ARCHENEMY_WIN")) award(player, "archenemy");
+            if ("LOVER".equals(pc.relType) && partner != null && winners.contains(partner.getUuidAsString())) award(player, "lovers");
             if ("FATED".equals(pc.relType) && state.getBoolean("roleChanged")) award(player, "rivals");
-            if (Backgrounds.isActive(world, Backgrounds.DUPLICATES) && alive && world.getPlayers().stream().anyMatch(p -> p != player
-                    && GameFunctions.isPlayerAliveAndSurvival(p) && winners.contains(p.getUuidAsString())
-                    && Roles.realRole(game, p) == Roles.realRole(game, player))) award(player, "twins_role");
+
         }
     }
     private static ServerPlayerEntity player(ServerWorld world, String id) {

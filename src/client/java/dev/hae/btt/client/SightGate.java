@@ -4,21 +4,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 public final class SightGate {
     private SightGate() {}
 

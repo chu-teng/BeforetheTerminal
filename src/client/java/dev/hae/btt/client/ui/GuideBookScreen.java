@@ -14,7 +14,6 @@ import java.util.List;
 
 public class GuideBookScreen extends Screen {
 
-
     private static final int MAX_BOOK_WIDTH = 400;
     private static final int TAB_WIDTH = 48;
     private static final int TAB_HEIGHT = 17;

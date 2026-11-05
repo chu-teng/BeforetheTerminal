@@ -1,0 +1,29 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:writable_book"
+    },
+    "title": {
+      "translate": "btt.advancement.scripts.title"
+    },
+    "description": {
+      "translate": "btt.advancement.scripts.description"
+    },
+    "show_toast": true,
+    "hidden": false,
+    "frame": "task"
+  },
+  "criteria": {
+    "locked_room_murders": {
+      "trigger": "minecraft:impossible"
+    },
+    "sects_and_sinners": {
+      "trigger": "minecraft:impossible"
+    },
+    "the_dreamers_diary": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:modes"
+}

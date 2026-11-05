@@ -14,12 +14,16 @@ import java.util.List;
 import java.util.Map;
 
 public class BttConfig {
-    @SerialEntry(comment = "Server next-round mode: SCRIPT / DRAFT / DEBATE")
+    @SerialEntry(comment = "Server next-round mode: SCRIPT / DRAFT / MEMORY / CUSTOM")
     public String serverMode = "DRAFT";
     @SerialEntry(comment = "Server next-round script: random or a script id")
     public String serverScript = "random";
     @SerialEntry(comment = "Server next-round encounter: random, none or an implemented encounter id")
     public String serverEncounter = "random";
+    @SerialEntry(comment = "Custom mode base rule: SCRIPT / DRAFT / MEMORY")
+    public String serverBase = "SCRIPT";
+    @SerialEntry(comment = "Custom mode optional rules (CSV): DEBATE / DUEL / JUDGMENT")
+    public String serverRules = "";
     public static ConfigClassHandler<BttConfig> HANDLER = ConfigClassHandler.createBuilder(BttConfig.class)
             .id(Identifier.of(BeforeTheTerminal.MOD_ID, "config"))
             .serializer(config -> GsonConfigSerializerBuilder.create(config)
@@ -30,9 +34,6 @@ public class BttConfig {
 
     @SerialEntry(comment = "Whether insane players will randomly see people as morphed.")
     public boolean insanePlayersSeeMorphs = true;
-
-    @SerialEntry(comment = "Allow Natural deaths to trigger curse (deaths without an assigned killer)")
-    public boolean curseNonKillerDeaths = false;
 
 
 

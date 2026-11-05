@@ -41,7 +41,7 @@ public final class Riot {
 
     public static boolean alive(ServerWorld world, GameWorldComponent gwc) {
         for (ServerPlayerEntity p : world.getPlayers()) {
-            if (!gwc.isRole(p, Roles.RIOT)) continue;
+            if (!gwc.isRole(p, Roles.REVOLUCIONARIO)) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
             if (PlayerState.KEY.get(p).isDrunk()) continue;
             return true;

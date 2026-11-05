@@ -28,13 +28,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-
-
-
-
 public final class DoorHighlightRenderer {
     private DoorHighlightRenderer() {}
-
 
     private static final int DURATION_TICKS = 100;
 

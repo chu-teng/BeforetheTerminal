@@ -9,10 +9,6 @@ import org.spongepowered.asm.mixin.Mixin;
 
 import dev.hae.btt.component.PlayerState;
 
-
-
-
-
 @Mixin(LivingEntity.class)
 public abstract class FakeDeathPushMixin {
 

@@ -12,25 +12,13 @@ import net.minecraft.sound.SoundCategory;
 import org.spongepowered.asm.mixin.Mixin;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 @Mixin(PlayerEntity.class)
 public abstract class FireAxeAttackMixin {
 
     @WrapMethod(method = "attack")
     private void bttFireAxeAttack(Entity target, Operation<Void> original) {
         PlayerEntity self = (PlayerEntity) (Object) this;
-        if (self.getWorld().isClient() || !self.getMainHandStack().isOf(BttItems.FIRE_AXE)) {
+        if (self.getWorld().isClient() || !dev.hae.btt.item.ItemUse.inBttRound(self.getWorld()) || !self.getMainHandStack().isOf(BttItems.FIRE_AXE)) {
             original.call(target);
             return;
         }
@@ -43,7 +31,7 @@ public abstract class FireAxeAttackMixin {
             original.call(target);
             return;
         }
-        if (self.getAttackCooldownProgress(0.5F) < 1f) {
+        if (dev.hae.btt.component.PlayerState.KEY.get(self).axeTicks <= 0 && self.getAttackCooldownProgress(0.5F) < 1f) {
             original.call(target);
             return;
         }

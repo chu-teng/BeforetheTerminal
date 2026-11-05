@@ -5,16 +5,6 @@ import net.minecraft.client.input.Input;
 import net.minecraft.client.input.KeyboardInput;
 import dev.hae.btt.component.PlayerState;
 
-
-
-
-
-
-
-
-
-
-
 public final class SpiritCameraHandler {
     private SpiritCameraHandler() {}
 
@@ -28,11 +18,7 @@ public final class SpiritCameraHandler {
 
     private static boolean inputFrozen = false;
 
-    public static boolean isAnonymous() {
-        var player = MinecraftClient.getInstance().player;
-        return isActive() && player != null && !dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(player.getWorld())
-                .isRole(player, dev.hae.btt.role.Roles.ASTRAL);
-    }
+    public static boolean isAnonymous() { return isActive(); }
 
     public static boolean isActive() {
         return active;
@@ -93,12 +79,17 @@ public final class SpiritCameraHandler {
             disable();
         }
 
+        if (active && spiritCamera != null && PlayerState.KEY.get(MC.player).sleepwalkTicks > 0) {
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                    new dev.hae.btt.network.SpiritPositionC2SPacket(spiritCamera.getX(), spiritCamera.getY(), spiritCamera.getZ()));
+        }
+
 
         PlayerState selfPc = PlayerState.KEY.get(MC.player);
         boolean fakeDead = selfPc.isFakeDead();
 
         boolean swallowed = selfPc.isSwallowed();
-        boolean freeze = active || fakeDead || swallowed;
+        boolean freeze = active || fakeDead || swallowed || selfPc.trapped;
         if (freeze) {
 
 

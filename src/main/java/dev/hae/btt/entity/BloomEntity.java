@@ -48,6 +48,15 @@ public final class BloomEntity extends ZombieEntity {
         GameFunctions.killPlayer(player, true, owner, DeathReasons.BLOOM);
         return true;
     }
+    public boolean hitBy(ServerPlayerEntity player, double range) {
+        if (!isAlive() || !SeatAssignment.isBttMode(getWorld()) || player.getWorld() != getWorld()
+                || !(player.isCreative() || GameFunctions.isPlayerAliveAndSurvival(player))) return false;
+        var hit = net.minecraft.entity.projectile.ProjectileUtil.getCollision(player,
+                entity -> entity instanceof BloomEntity && entity.isAlive()
+                        || entity instanceof PlayerEntity p && GameFunctions.isPlayerAliveAndSurvival(p), range);
+        return hit instanceof net.minecraft.util.hit.EntityHitResult result && result.getEntity() == this
+                && damage(getWorld().getDamageSources().playerAttack(player), 1);
+    }
     @Override public boolean damage(DamageSource source, float amount) {
         if (getWorld().isClient || amount <= 0) return false;
         discard(); return true;

@@ -339,18 +339,11 @@ public final class ReplayGenerator {
                     Text.translatable("btt.camp.passenger").withColor(0x4EDD35);
             case dev.hae.btt.role.Roles.CAMP_SOLO ->
                     Text.translatable("btt.camp.lone").withColor(0x00FFFF);
-            case "MAJO" -> Text.translatable("btt.campgroup.majo").withColor(dev.hae.btt.role.Roles.MAJO.color());
-            case "MESSIAH" -> Text.translatable("btt.campgroup.messiah").withColor(dev.hae.btt.role.Roles.MESSIAH.color());
-            case "KIDNAPPER" ->
-                    Text.translatable("btt.campgroup.kidnapper").withColor(dev.hae.btt.role.Roles.KIDNAPPER.color());
-            case "GARDENER" ->
-                    Text.translatable("btt.campgroup.gardener").withColor(dev.hae.btt.role.Roles.GARDENER.color());
-            case "ASTRAL" -> Text.translatable("btt.campgroup.astral").withColor(dev.hae.btt.role.Roles.ASTRAL.color());
-            case "COLD_WAVE" ->
-                    Text.translatable("btt.campgroup.cold_wave").withColor(dev.hae.btt.role.Roles.COLD_WAVE.color());
+            case dev.hae.btt.role.Roles.CAMP_MOB_PINK -> Text.translatable("btt.camp.mob_pink").withColor(dev.hae.btt.role.Mob.PINK_COLOR);
+            case dev.hae.btt.role.Roles.CAMP_MOB_AZURE -> Text.translatable("btt.camp.mob_azure").withColor(dev.hae.btt.role.Mob.AZURE_COLOR);
             default -> {
                 var host = dev.hae.btt.role.RoleDefs.host(camp);
-                yield host == null ? null : dev.hae.btt.faction.Camps.name(host.role)
+                yield host == null ? null : Text.translatable("btt.camp.outsider")
                         .withColor(host.role.color());
             }
         };
@@ -469,7 +462,7 @@ public final class ReplayGenerator {
             case "kidnapper" -> dev.hae.btt.role.Roles.KIDNAPPER.color();
             case "gardener" -> dev.hae.btt.role.Roles.GARDENER.color();
             case "astral" -> dev.hae.btt.role.Roles.ASTRAL.color();
-            case "cold_wave" -> dev.hae.btt.role.Roles.COLD_WAVE.color();
+            case "messenger" -> dev.hae.btt.role.Roles.MESSENGER.color();
             default -> dev.hae.btt.game.BeforeTheTerminalGameMode.FACTION_PASSENGER_COLOR;
         };
         return Text.translatable("btt.replay.epilogue",

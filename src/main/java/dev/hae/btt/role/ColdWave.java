@@ -26,7 +26,7 @@ public final class ColdWave {
                 || Roles.isPassengerCampFor(game, player)) return false;
         if (player.getWorld().isClient) return PlayerState.KEY.get(player).coldWaveSanity;
         return ((ServerWorld) player.getWorld()).getPlayers().stream().anyMatch(p ->
-                GameFunctions.isPlayerAliveAndSurvival(p) && Roles.hasCurrentRole(game, p, Roles.COLD_WAVE));
+                GameFunctions.isPlayerAliveAndSurvival(p) && Roles.hasCurrentRole(game, p, Roles.MESSENGER));
     }
 
     public static void updateSanity(ServerWorld world) {
@@ -64,7 +64,7 @@ public final class ColdWave {
             listener.playSoundToPlayer(dev.hae.btt.registry.Sounds.COLD_WAVE_CONTAMINATION,
                     net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
             listener.sendMessage(Text.translatable("btt.action.cold_wave.contamination")
-                    .withColor(Roles.COLD_WAVE.color()), true);
+                    .withColor(Roles.MESSENGER.color()), true);
         }
     }
 
@@ -77,14 +77,10 @@ public final class ColdWave {
             pc.sync();
             return;
         }
-        patient.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, 20, 0, false, false, true));
-        for (ServerPlayerEntity other : patient.getServerWorld().getPlayers()) {
-            if (other == patient || !other.isAlive() || !GameFunctions.isPlayerAliveAndSurvival(other)) continue;
-            if (other.squaredDistanceTo(patient) > AURA_RANGE * AURA_RANGE) continue;
-            PlayerMoodComponent mood = PlayerMoodComponent.KEY.get(other);
-            int tasks = dev.hae.btt.game.Needs.count(other);
-            if (tasks > 0) mood.setMood(mood.getMood() - 2f * tasks * GameConstants.MOOD_DRAIN);
-        }
+        var glow = patient.getStatusEffect(StatusEffects.GLOWING);
+        if (glow == null || glow.getDuration() <= 20)
+            patient.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING,
+                    Math.min(40, pc.coldWaveTicks), 0, false, false, true));
     }
 
 
@@ -113,29 +109,28 @@ public final class ColdWave {
 
 
 
-    public static void tickCorpseSources(ServerWorld world) {
+    public static void tickSources(ServerWorld world) {
         if (!GameWorldComponent.KEY.get(world).isRunning()) return;
-        dev.hae.btt.component.GameState st = dev.hae.btt.component.GameState.KEY.get(world);
-        if (st.coldWaveSources.isEmpty()) return;
-        for (String s : st.coldWaveSources.split(",")) {
-            if (s.isEmpty()) continue;
-            java.util.UUID id;
-            try {
-                id = java.util.UUID.fromString(s);
-            } catch (IllegalArgumentException e) {
-                continue;
-            }
-            for (ServerPlayerEntity player : world.getPlayers()) {
-                if (!GameFunctions.isPlayerAliveAndSurvival(player)) continue;
-                net.minecraft.util.math.Box box = net.minecraft.util.math.Box.of(player.getPos(),
-                        AURA_RANGE * 2, AURA_RANGE * 2, AURA_RANGE * 2);
-                boolean near = !world.getEntitiesByClass(dev.doctor4t.wathe.entity.PlayerBodyEntity.class, box,
-                        b -> id.equals(b.getPlayerUuid())
-                                && player.squaredDistanceTo(b) <= AURA_RANGE * AURA_RANGE).isEmpty();
-                if (!near) continue;
-                var mood = dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(player);
-                mood.setMood(mood.getMood() - 2f * Math.max(1, dev.hae.btt.game.Needs.count(player)) * GameConstants.MOOD_DRAIN);
-            }
+        var state = dev.hae.btt.component.GameState.KEY.get(world);
+        var ids = new java.util.HashSet<java.util.UUID>();
+        for (String id : state.coldWaveSources.split(",")) {
+            try { ids.add(java.util.UUID.fromString(id)); }
+            catch (IllegalArgumentException ignored) { }
+        }
+        java.util.List<net.minecraft.entity.Entity> sources = new java.util.ArrayList<>();
+        for (var player : world.getPlayers())
+            if (PlayerState.KEY.get(player).coldWaveTicks > 0 && GameFunctions.isPlayerAliveAndSurvival(player))
+                sources.add(player);
+        if (!ids.isEmpty()) sources.addAll(world.getEntitiesByType(
+                dev.doctor4t.wathe.index.WatheEntities.PLAYER_BODY, body -> ids.contains(body.getPlayerUuid())));
+        if (sources.isEmpty()) return;
+        for (var player : world.getPlayers()) {
+            if (!GameFunctions.isPlayerAliveAndSurvival(player)) continue;
+            if (sources.stream().noneMatch(source -> source != player
+                    && player.squaredDistanceTo(source) <= AURA_RANGE * AURA_RANGE)) continue;
+            var mood = PlayerMoodComponent.KEY.get(player);
+            int tasks = dev.hae.btt.game.Needs.drainingCount(player);
+            if (tasks > 0) mood.setMood(mood.getMood() - 3f * tasks * GameConstants.MOOD_DRAIN);
         }
     }
 }

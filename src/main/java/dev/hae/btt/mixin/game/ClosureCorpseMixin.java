@@ -33,6 +33,6 @@ public abstract class ClosureCorpseMixin {
                 || reason == GameConstants.DeathReasons.BAT
                 || reason == DeathReasons.AXE
                 || reason == DeathReasons.DAGGER
-                || reason == DeathReasons.PIPE);
+               );
     }
 }

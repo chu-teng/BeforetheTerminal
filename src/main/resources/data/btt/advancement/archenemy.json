@@ -9,7 +9,7 @@
     "description": {
       "translate": "btt.advancement.archenemy.description"
     },
-    "frame": "goal",
+    "frame": "task",
     "show_toast": true,
     "hidden": false
   },
@@ -19,5 +19,5 @@
     }
   },
   "sends_telemetry_event": false,
-  "parent": "btt:modes"
+  "parent": "btt:lovers"
 }

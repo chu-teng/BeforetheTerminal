@@ -1,7 +1,7 @@
 {
   "display": {
     "icon": {
-      "id": "minecraft:white_bed"
+      "id": "minecraft:pink_bed"
     },
     "title": {
       "translate": "btt.advancement.dream_walk.title"

@@ -24,6 +24,7 @@ public abstract class RoleProtectionMixin {
 
     @Inject(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V", at = @At("HEAD"), cancellable = true)
     private static void bttProtectRole(PlayerEntity victim, boolean body, PlayerEntity killer, Identifier reason, CallbackInfo ci) {
+        if (dev.hae.btt.combat.DeathResolution.finalDeath(victim)) return;
         if (!(victim instanceof ServerPlayerEntity player) || !SeatAssignment.isBttMode(player.getWorld())
                 || !TraitRules.harmfulDeath(reason) || TraitRules.voluntaryDeath(player, killer, reason)
                 || !player.isAlive() || !GameFunctions.isPlayerAliveAndSurvival(player)) return;

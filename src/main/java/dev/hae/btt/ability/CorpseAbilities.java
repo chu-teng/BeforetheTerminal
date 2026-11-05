@@ -46,37 +46,45 @@ public final class CorpseAbilities {
             AbilityRules.recordUse(user, null, Roles.AMNESIAC);
             dev.hae.btt.advancement.BttAdvancements.fact(user, "corpse_use");
             BodyState.KEY.get(body).markAmnesiacUsed();
+            body.discard();
             RoleTransitions.takeOver(user, dead);
+            var inherited = dev.hae.btt.role.RoleDefs.get(dead);
+            if (inherited != null) inherited.dispatchEquipment(user);
             user.getServerWorld().playSound(null, body.getBlockPos(), Sounds.SCAVENGE,
                     net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
             user.sendMessage(RoleTransitions.tookOverText(dead), true);
             return;
         }
-
-        if ((Roles.effectiveRole(gwc, user) == Roles.CANNIBAL)) {
-            Role dead = Roles.byId(CorpseState.KEY.get(body).technicalRole.toString());
-
-            if (!Roles.isCivilianPassenger(dead) || BodyState.KEY.get(body).isAmnesiacUsed()) return;
+        if (Roles.effectiveRole(gwc, user) == Roles.CANNIBAL) {
+            var corpse = CorpseState.KEY.get(body);
+            Role learned = Roles.byId(corpse.technicalRole.toString());
+            if (learned == null || BodyState.KEY.get(body).isAmnesiacUsed()) return;
             AbilityState ability = AbilityState.KEY.get(user);
             if (ability.cooldown > 0) return;
+            boolean falseMeal = !corpse.passengerAtDeath;
+            if (falseMeal) {
+                var opening = dev.hae.btt.component.GameState.KEY.get(user.getWorld()).openingRoles.values();
+                var absent = Roles.allRoles().stream().filter(Roles::isImplemented)
+                        .filter(r -> Roles.factionOf(r) == Roles.Faction.PASSENGER && !Roles.kindOf(r).isNeutralKind())
+                        .filter(r -> !gwc.getRoles().containsValue(r) && !opening.contains(r.identifier().toString())).toList();
+                if (absent.isEmpty()) return;
+                learned = absent.get(user.getRandom().nextInt(absent.size()));
+            }
             ability.setCooldown(GameConstants.getInTicks(1, 0));
             ability.sync();
-
             if (Drunk.isDrunk(user)) return;
             AbilityRules.recordUse(user, null, Roles.CANNIBAL);
             dev.hae.btt.advancement.BttAdvancements.fact(user, "corpse_use");
             BodyState.KEY.get(body).markAmnesiacUsed();
-
-
-
-            RoleTransitions.replace(user, dead, GameConstants.getInTicks(1, 0), null, false);
-
+            body.discard();
+            var facts = dev.hae.btt.component.GameState.KEY.get(user.getWorld()).roleEffects;
+            facts.putString("cannibalCamp:" + user.getUuidAsString(), PlayerState.KEY.get(user).campOverride);
+            RoleTransitions.replace(user, learned, GameConstants.getInTicks(1, 0), Roles.CAMP_PASSENGER, false);
+            if (falseMeal) PlayerState.KEY.get(user).applyDrunk(GameConstants.getInTicks(1, 0));
             user.getServerWorld().playSound(null, body.getBlockPos(), Sounds.SCAVENGE,
-                    net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
-            user.sendMessage(Text.translatable("btt.action.cannibal.learn",
-                            SeatAssignment.displayName(dead).getString())
+                    SoundCategory.PLAYERS, 1.0F, 1.0F);
+            user.sendMessage(Text.translatable("btt.action.cannibal.learn", SeatAssignment.displayName(learned).getString())
                     .withColor(Roles.CANNIBAL.color()), true);
-            return;
         }
 
     }
@@ -111,6 +119,7 @@ public final class CorpseAbilities {
         AbilityRules.recordUse(user, null, Roles.THIEF);
         scavenger.sync();
         dev.hae.btt.advancement.BttAdvancements.fact(user, "corpse_use");
+        body.discard();
         death.scavenged = true;
         user.getServerWorld().playSound(null, body.getBlockPos(), Sounds.SCAVENGE,
                 SoundCategory.PLAYERS, 1.0F, 1.0F);

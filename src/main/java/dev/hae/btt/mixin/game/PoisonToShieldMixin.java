@@ -14,14 +14,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.UUID;
 
-
-
-
-
-
-
-
-
 @Mixin(PlayerPoisonComponent.class)
 public abstract class PoisonToShieldMixin {
 

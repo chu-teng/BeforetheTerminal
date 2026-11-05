@@ -15,22 +15,6 @@ import dev.hae.btt.game.GameEvents;
 import dev.hae.btt.game.SeatAssignment;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 public final class Roles {
     private Roles() {}
 
@@ -69,7 +53,7 @@ public final class Roles {
 
 
     private static final Map<Role, Faction> FACTIONS = new java.util.LinkedHashMap<>();
-    private static final List<Identifier> NEW_ROLE_IDS = new ArrayList<>();
+    private static final List<Identifier> REGISTERED_ROLE_IDS = new ArrayList<>();
 
 
 
@@ -132,7 +116,7 @@ public final class Roles {
                 f.innocent, f.canUseKiller, f.mood, f.maxSprintTime, f.canSeeTime));
         FACTIONS.put(r, f);
         KINDS.put(r, kind);
-        NEW_ROLE_IDS.add(r.identifier());
+        REGISTERED_ROLE_IDS.add(r.identifier());
         return r;
     }
 
@@ -149,7 +133,7 @@ public final class Roles {
                 innocent, canUseKiller, mood, maxSprintTime, canSeeTime));
         FACTIONS.put(r, f);
         KINDS.put(r, kind);
-        NEW_ROLE_IDS.add(r.identifier());
+        REGISTERED_ROLE_IDS.add(r.identifier());
         return r;
     }
 
@@ -158,125 +142,47 @@ public final class Roles {
     public static final Role VIGILANTE = register("vigilante", 0x0000FF, Faction.PASSENGER, Kind.ENFORCER);
     public static final Role RAILWAY_POLICE = register("railway_police", 0x00BFFF, Faction.PASSENGER, Kind.ENFORCER,
             true, false, Role.MoodType.REAL, -1, false);
-    public static final Role HUNTER = register("hunter", 0x0000FF, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role JUDGE = register("judge", 0x00BFFF, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role CABALLERO = register("caballero", 0x0000FF, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role RANGER = register("ranger", 0x00BFFF, Faction.PASSENGER, Kind.ENFORCER);
     public static final Role WITCH = register("witch", 0x7B68EE, Faction.PASSENGER, Kind.ENFORCER,
             true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
     public static final Role VETERAN = register("veteran", 0xBA55D3, Faction.PASSENGER, Kind.ENFORCER);
-
-    public static final Role GUNSLINGER = register("gunslinger", 0x7B68EE, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role NIGHT_WATCHMAN = register("night_watchman", 0xBA55D3, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role PRIEST = register("priest", 0x7B68EE, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role AVIATEUR = register("aviateur", 0xBA55D3, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role DETECTIVE = register("detective", 0x008000, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role PROPHET = register("prophet", 0x9ACD32, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role DOCTOR = register("doctor", 0x00FF00, Faction.PASSENGER, Kind.CIVILIAN,
-            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
-    public static final Role INVESTIGATOR = register("investigator", 0x00FF00, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role JOURNALIST = register("journalist", 0x66FF00, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role ENGINEER = register("engineer", 0x6B8E23, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role FOLKLORIST = register("folklorist", 0x9ACD32, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role MUYUUBYOU = register("muyuubyou", 0x228B22, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role NOBLE = register("noble", 0x9ACD32, Faction.PASSENGER, Kind.CIVILIAN);
-
-    public static final Role VIRGIN = register("virgin", 0x66FF00, Faction.PASSENGER, Kind.CIVILIAN,
-            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
-    public static final Role STAR = register("star", 0x6B8E23, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role PROFESSOR = register("professor", 0x808000, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role BODYGUARD = register("bodyguard", 0x008000, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x6A5ACD, Faction.PASSENGER, Kind.ENFORCER);
-
-
-    public static final Role MONK = register("monk", 0x66CDAA, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role CANNIBAL = register("cannibal", 0x008080, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role PHILOSOPHER = register("philosopher", 0x1E90FF, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role UNDERCOVER = register("undercover", 0x000080, Faction.PASSENGER, Kind.ENFORCER,
-            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
-    public static final Role EX_UNDERCOVER = register("ex_undercover", 0x000080, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role CONDUCTOR = register("conductor", 0x66FF00, Faction.PASSENGER, Kind.CIVILIAN,
-            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
-    public static final Role ATTENDANT = register("attendant", 0x6B8E23, Faction.PASSENGER, Kind.CIVILIAN,
-            true, false, Role.MoodType.REAL, 200, true);
     public static final Role ARCHITECT = register("architect", 0x000080, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role LOCKSMITH = register("locksmith", 0x6A5ACD, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role PHARMACIST = register("pharmacist", 0x228B22, Faction.PASSENGER, Kind.CIVILIAN,
-            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
-    public static final Role BARTENDER = register("bartender", 0x66CDAA, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role SHOUJO = register("shoujo", 0x808000, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role POPPY_GROWER = register("poppy_grower", 0x008000, Faction.PASSENGER, Kind.CIVILIAN);
-    public static final Role MAID = register("maid", 0x66CDAA, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role ENGINEER = register("engineer", 0x000080, Faction.PASSENGER, Kind.ENFORCER);
     public static final Role POSTMAN = register("postman", 0x008080, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role ASSASSIN = register("assassin", 0xFF0000, Faction.KILLER, Kind.PRINCIPAL,
-            false,true, Role.MoodType.FAKE, -1, true);
-
-    public static final Role AGENT = register("agent", 0x8B0000, Faction.KILLER, Kind.PRINCIPAL);
-    public static final Role ACTOR = register("actor", 0xCD5C5C, Faction.KILLER, Kind.PRINCIPAL,
-            false,true, Role.MoodType.FAKE, -1, true);
-    public static final Role STOWAWAY = register("stowaway", 0xA52A2A, Faction.KILLER, Kind.PRINCIPAL,
-            false,true, Role.MoodType.FAKE, -1, true);
-    public static final Role IMP = register("imp", 0xCD5C5C, Faction.KILLER, Kind.PRINCIPAL);
-    public static final Role LEECH = register("leech", 0xA52A2A, Faction.KILLER, Kind.PRINCIPAL);
-    public static final Role RIOT = register("riot", 0xCD5C5C, Faction.KILLER, Kind.PRINCIPAL);
-    public static final Role VORTEX = register("vortex", 0x8B0000, Faction.KILLER, Kind.PRINCIPAL);
-    public static final Role SCULPTOR = register("sculptor", 0xFF0000, Faction.KILLER, Kind.PRINCIPAL);
-    public static final Role LEGION = register("legion", 0xFF1493, Faction.OUTSIDER, Kind.OUTSIDER);
-    public static final Role SWORDSMAN = register("swordsman", 0xD2B48C, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role HIKIKOMORI = register("hikikomori", 0xF0E68C, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role ALCHEMIST = register("alchemist", 0xFFFF00, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role TERRORIST = register("terrorist", 0xD2B48C, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role CLEANER = register("cleaner", 0xBDB76B, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role COLONEL = register("colonel", 0xFFFF00, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role COMEDIAN = register("comedian", 0xFFFF00, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role PSYCHOPATH = register("psychopath", 0xBDB76B, Faction.KILLER, Kind.ACCOMPLICE);
-
-    public static final Role MAGICIAN = register("magician", 0xFF0000, Faction.KILLER, Kind.PRINCIPAL,
-            false,true, Role.MoodType.FAKE, -1, true);
-    public static final Role RIGGER = register("rigger", 0x8B0000, Faction.KILLER, Kind.PRINCIPAL);
-    public static final Role SUCCUBUS = register("succubus", 0xD2B48C, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role LAWYER = register("lawyer", 0xBDB76B, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role NOVELIST = register("novelist", 0x00FFFF, Faction.SOLO, Kind.LONE);
-    public static final Role EXECUTIONER = register("executioner", 0xAFEEEE, Faction.SOLO, Kind.LONE,
-            false,false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), true);
-    public static final Role JESTER = register("jester", 0x00FFFF, Faction.SOLO, Kind.LONE,
-
-            false,false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), true);
-    public static final Role PUPPETEER = register("puppeteer", 0x6A5ACD, Faction.PASSENGER, Kind.ENFORCER);
-    public static final Role ARSONIST = register("arsonist", 0x00FFFF, Faction.SOLO, Kind.LONE);
-    public static final Role THIEF = register("thief", 0xAFEEEE, Faction.SOLO, Kind.LONE,
-            false,false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), true);
-    public static final Role MAJO = register("majo", 0xFF00FF, Faction.OUTSIDER, Kind.OUTSIDER);
-    public static final Role MESSIAH = register("messiah", 0xFF00FF, Faction.OUTSIDER, Kind.OUTSIDER);
-    public static final Role KIDNAPPER = register("kidnapper", 0x7FFFD4, Faction.SOLO, Kind.LONE);
-    public static final Role ASTRAL = register("astral", 0x7FFFD4, Faction.SOLO, Kind.LONE);
-    public static final Role GARDENER = register("gardener", 0xFF1493, Faction.OUTSIDER, Kind.OUTSIDER);
-
-
-    public static final Role COLD_WAVE = register("cold_wave", 0x7FFFD4, Faction.SOLO, Kind.LONE);
-    public static final Role BLACKDEATH = register("black_death", 0xFFA500, Faction.KILLER, Kind.MAD,
-            false, false, Role.MoodType.FAKE, 200, false);
-    public static final Role HERETIC = register("heretic", 0xFF4500, Faction.PASSENGER, Kind.MAD);
-    public static final Role AMNESIAC = register("amnesiac", 0xFFA07A, Faction.PASSENGER, Kind.MAD);
-    public static final Role HERMIT = register("hermit", 0xFFA07A, Faction.PASSENGER, Kind.MAD);
-    public static final Role MARIONETTE = register("marionette", 0xFFA500, Faction.KILLER, Kind.MAD,
-            true, false, Role.MoodType.REAL, 200, false);
-    public static final Role LUNATIC = register("lunatic", 0xFF4500, Faction.PASSENGER, Kind.MAD);
-    public static final Role TRAITOR = register("traitor", 0xFFA500, Faction.KILLER, Kind.MAD,
-            false, true, Role.MoodType.FAKE, -1, true);
-    public static final Role EX_TRAITOR = register("ex_traitor", 0xFF7F50, Faction.KILLER, Kind.MAD,
-            false, true, Role.MoodType.FAKE, -1, true);
-
-
-
-
-    public static final Role GODFATHER = register("godfather", 0xF0E68C, Faction.KILLER, Kind.ACCOMPLICE);
 
 
 
     public static final Role COLLECTOR = register("collector", 0x1E90FF, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role HUNTER = register("hunter", 0x0000FF, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role JUDGE = register("judge", 0x00BFFF, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role CHESS_PLAYER = register("chess_player", 0x7B68EE, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role TLAMACAZQUI = register("tlamacazqui", 0xBA55D3, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role UNDERCOVER = register("undercover", 0x000080, Faction.PASSENGER, Kind.ENFORCER,
+            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
+    public static final Role PUPPETEER = register("puppeteer", 0x6A5ACD, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role CRAFTSMAN = register("craftsman", 0x008080, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role SMUGGLER = register("smuggler", 0x1E90FF, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role CABALLERO = register("caballero", 0x0000FF, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role XIA = register("xia", 0x00BFFF, Faction.PASSENGER, Kind.ENFORCER);
+
+    public static final Role NIGHT_WATCHMAN = register("night_watchman", 0x7B68EE, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role AVIATEUR = register("aviateur", 0xBA55D3, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role MERCENARY = register("mercenary", 0x000080, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x6A5ACD, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role CANNIBAL = register("cannibal", 0x008080, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role PHILOSOPHER = register("philosopher", 0x1E90FF, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role DOCTOR = register("doctor", 0x00FF00, Faction.PASSENGER, Kind.CIVILIAN,
+            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
+    public static final Role NOBLE = register("noble", 0x9ACD32, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role PHARMACIST = register("pharmacist", 0x228B22, Faction.PASSENGER, Kind.CIVILIAN,
+            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
+    public static final Role BARTENDER = register("bartender", 0x66CDAA, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role JOURNALIST = register("journalist", 0x66FF00, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role SCRIBE = register("scribe", 0x6B8E23, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role MAID = register("maid", 0x808000, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role DETECTIVE = register("detective", 0x008000, Faction.PASSENGER, Kind.CIVILIAN);
 
     public static final Role MORTICIAN = register("mortician", 0x00FF00, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role FOLKLORIST = register("folklorist", 0x9ACD32, Faction.PASSENGER, Kind.CIVILIAN);
 
 
 
@@ -285,53 +191,119 @@ public final class Roles {
 
     public static final Role MEDIUM = register("medium", 0x228B22, Faction.PASSENGER, Kind.CIVILIAN);
 
-    public static final Role GAMBLER = register("gambler", 0xFF4500, Faction.PASSENGER, Kind.MAD);
-    public static final Role GOON = register("goon", 0xFF7F50, Faction.PASSENGER, Kind.MAD);
 
-    public static final Role LEVIATHAN = register("leviathan", 0xA52A2A, Faction.KILLER, Kind.PRINCIPAL);
-    public static final Role CRAFTSMAN = register("craftsman", 0x008080, Faction.PASSENGER, Kind.ENFORCER);
+    public static final Role MONK = register("monk", 0x66CDAA, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role VIRGIN = register("virgin", 0x66FF00, Faction.PASSENGER, Kind.CIVILIAN,
+            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
+    public static final Role STAR = register("star", 0x6B8E23, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role PROFESSOR = register("professor", 0x808000, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role BODYGUARD = register("bodyguard", 0x008000, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role INVESTIGATOR = register("investigator", 0x00FF00, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role PROPHET = register("prophet", 0x9ACD32, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role MUYUUBYOU = register("muyuubyou", 0x228B22, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role HIKIKOMORI = register("hikikomori", 0x66CDAA, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role CONDUCTOR = register("conductor", 0x66FF00, Faction.PASSENGER, Kind.CIVILIAN,
+            true,false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false);
+    public static final Role ATTENDANT = register("attendant", 0x6B8E23, Faction.PASSENGER, Kind.CIVILIAN,
+            true, false, Role.MoodType.REAL, 200, true);
+    public static final Role DEVUSHKA = register("devushka", 0x808000, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role POPPY_GROWER = register("poppy_grower", 0x008000, Faction.PASSENGER, Kind.CIVILIAN);
+    public static final Role ASSASSIN = register("assassin", 0xFF0000, Faction.KILLER, Kind.PRINCIPAL,
+            false,true, Role.MoodType.FAKE, -1, true);
 
-    public static final Role WARDEN = register("warden", 0xF0E68C, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role DUCE = register("duce", 0x8B0000, Faction.KILLER, Kind.PRINCIPAL);
+    public static final Role HARPY = register("harpy", 0xCD5C5C, Faction.KILLER, Kind.PRINCIPAL);
+    public static final Role HARLOT = register("harlot", 0xA52A2A, Faction.KILLER, Kind.PRINCIPAL);
 
-    public static final Role VOODOO = register("voodoo", 0xFF1493, Faction.OUTSIDER, Kind.OUTSIDER);
+    public static final Role MAGICIAN = register("magician", 0xFF0000, Faction.KILLER, Kind.PRINCIPAL,
+            false,true, Role.MoodType.FAKE, -1, true);
+    public static final Role RIGGER = register("rigger", 0x8B0000, Faction.KILLER, Kind.PRINCIPAL);
+    public static final Role IMP = register("imp", 0xCD5C5C, Faction.KILLER, Kind.PRINCIPAL);
+    public static final Role LEECH = register("leech", 0xA52A2A, Faction.KILLER, Kind.PRINCIPAL);
+    public static final Role SCULPTOR = register("sculptor", 0xFF0000, Faction.KILLER, Kind.PRINCIPAL);
+    public static final Role BARBER = register("barber", 0x8B0000, Faction.KILLER, Kind.PRINCIPAL);
+    public static final Role REVOLUCIONARIO = register("revolucionario", 0xCD5C5C, Faction.KILLER, Kind.PRINCIPAL);
+    public static final Role WEREWOLF = register("werewolf", 0xA52A2A, Faction.KILLER, Kind.PRINCIPAL);
+    public static final Role STOWAWAY = register("stowaway", 0xFFFF00, Faction.KILLER, Kind.ACCOMPLICE,
+            false,true, Role.MoodType.FAKE, -1, true);
+    public static final Role ACTOR = register("actor", 0xBDB76B, Faction.KILLER, Kind.ACCOMPLICE,
+            false,true, Role.MoodType.FAKE, -1, true);
+    public static final Role TOYMAKER = register("toymaker", 0xD2B48C, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role ALCHEMIST = register("alchemist", 0xF0E68C, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role TERRORIST = register("terrorist", 0xFFD700, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role MASTERMIND = register("mastermind", 0xFFFF00, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role CLEANER = register("cleaner", 0xBDB76B, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role COLONEL = register("colonel", 0xD2B48C, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role LAWYER = register("lawyer", 0xF0E68C, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role WARDEN = register("warden", 0xFFD700, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role LIBRARIAN = register("librarian", 0xFFFF00, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role COMEDIAN = register("comedian", 0xBDB76B, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role KHESHIG = register("kheshig", 0xD2B48C, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role PSYCHOPATH = register("psychopath", 0xF0E68C, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role GURU = register("guru", 0xFFD700, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role SAINT = register("saint", 0xFFA500, Faction.PASSENGER, Kind.MAD);
+    public static final Role HERMIT = register("hermit", 0xFF4500, Faction.PASSENGER, Kind.MAD);
+    public static final Role DELINQUENT = register("delinquent", 0xFF7F50, Faction.KILLER, Kind.MAD,
+            false, true, Role.MoodType.FAKE, -1, true);
+    public static final Role GAMBLER = register("gambler", 0xFFA07A, Faction.PASSENGER, Kind.MAD);
+    public static final Role DAMSEL = register("damsel", 0xFFA500, Faction.PASSENGER, Kind.MAD);
+    public static final Role POLITICIAN = register("politician", 0xFF4500, Faction.PASSENGER, Kind.MAD);
+    public static final Role MARIONETTE = register("marionette", 0xFF7F50, Faction.KILLER, Kind.MAD,
+            true, false, Role.MoodType.REAL, 200, false);
+    public static final Role HERETIC = register("heretic", 0xFFA07A, Faction.PASSENGER, Kind.MAD);
+    public static final Role TRAITOR = register("traitor", 0xFFA500, Faction.KILLER, Kind.MAD,
+            false, true, Role.MoodType.FAKE, -1, true);
+    public static final Role LUNATIC = register("lunatic", 0xFF4500, Faction.PASSENGER, Kind.MAD);
+    public static final Role AMNESIAC = register("amnesiac", 0xFF7F50, Faction.PASSENGER, Kind.MAD);
+    public static final Role BLACKDEATH = register("black_death", 0xFFA07A, Faction.KILLER, Kind.MAD,
+            false, false, Role.MoodType.FAKE, 200, false);
+    public static final Role ARSONIST = register("arsonist", 0x00FFFF, Faction.SOLO, Kind.LONE);
+    public static final Role THIEF = register("thief", 0xAFEEEE, Faction.SOLO, Kind.LONE,
+            false,false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), true);
+    public static final Role ASTRAL = register("astral", 0x7FFFD4, Faction.SOLO, Kind.LONE);
+    public static final Role JESTER = register("jester", 0x00FFFF, Faction.SOLO, Kind.LONE,
+
+            false,false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), true);
+    public static final Role EXECUTIONER = register("executioner", 0xAFEEEE, Faction.SOLO, Kind.LONE,
+            false,false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), true);
+    public static final Role KIDNAPPER = register("kidnapper", 0x7FFFD4, Faction.SOLO, Kind.LONE);
+    public static final Role NOVELIST = register("novelist", 0x00FFFF, Faction.SOLO, Kind.LONE);
     public static final Role ANGEL = register("angel", 0xAFEEEE, Faction.SOLO, Kind.LONE);
 
-    public static final Role DAMSEL = register("damsel", 0xFF7F50, Faction.PASSENGER, Kind.MAD);
-    public static final Role SAINT = register("saint", 0xFFA07A, Faction.PASSENGER, Kind.MAD);
 
-    public static final Role SMUGGLER = register("smuggler", 0x1E90FF, Faction.PASSENGER, Kind.ENFORCER);
-
-    public static final Role EMPATH = register("empath", 0x808000, Faction.PASSENGER, Kind.CIVILIAN);
-
+    public static final Role MESSENGER = register("messenger", 0x7FFFD4, Faction.SOLO, Kind.LONE);
+    public static final Role MESSIAH = register("messiah", 0xFF00FF, Faction.OUTSIDER, Kind.OUTSIDER);
+    public static final Role GARDENER = register("gardener", 0xFF1493, Faction.OUTSIDER, Kind.OUTSIDER);
+    public static final Role MAJO = register("majo", 0xFF00FF, Faction.OUTSIDER, Kind.OUTSIDER);
 
 
-    public static final Role HARPY = register("harpy", 0xFFD700, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role MASTERMIND = register("mastermind", 0xFFD700, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role LIBRARIAN = register("librarian", 0xFFD700, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role WEREWOLF = register("werewolf", 0xFF00FF, Faction.OUTSIDER, Kind.OUTSIDER);
+
+
+    public static final Role GODFATHER = register("godfather", 0xFF1493, Faction.OUTSIDER, Kind.OUTSIDER);
+    public static final Role VOODOO = register("voodoo", 0xFF00FF, Faction.OUTSIDER, Kind.OUTSIDER);
+    public static final Role LEGION = register("legion", 0xFF1493, Faction.OUTSIDER, Kind.OUTSIDER);
 
 
 
 
     private static final java.util.Set<Role> IMPLEMENTED = java.util.Set.of(
             HARPY, MASTERMIND, LIBRARIAN, WEREWOLF,
-            DAMSEL, SAINT, SMUGGLER, EMPATH, AGENT, GODFATHER, SCULPTOR, VIGILANTE, DOCTOR, INVESTIGATOR, VIRGIN, JESTER, CONDUCTOR,
+            DAMSEL, SAINT, SMUGGLER, DUCE, GODFATHER, SCULPTOR, VIGILANTE, DOCTOR, INVESTIGATOR, VIRGIN, JESTER, CONDUCTOR,
             ACTOR, UNDERCOVER, WITCH, RAILWAY_POLICE, VETERAN, HUNTER,
-
-            GUNSLINGER, NIGHT_WATCHMAN, PRIEST, AVIATEUR,
-            COLONEL, PSYCHOPATH, CLEANER, STAR, DETECTIVE,
-            PHARMACIST, RIGGER, AMNESIAC, THIEF, MAID, SWORDSMAN, STOWAWAY,
+            NIGHT_WATCHMAN, TLAMACAZQUI, AVIATEUR,
+            COLONEL, PSYCHOPATH, TOYMAKER, CLEANER, STAR, DETECTIVE,
+            PHARMACIST, RIGGER, AMNESIAC, THIEF, MAID, KHESHIG, STOWAWAY,
             PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO, MESSIAH,
-            BARTENDER, SUCCUBUS, POPPY_GROWER, RIOT, VORTEX, LEVIATHAN,
-            JUDGE, JOURNALIST, ENGINEER, CABALLERO, RANGER, TRAITOR, EX_TRAITOR,
-            IMP, TERRORIST, WARDEN, COMEDIAN, GARDENER, EX_UNDERCOVER, BLACKDEATH,
-            SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, MUYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
-            CANNIBAL, BODYGUARD, LEECH, LOCKSMITH, NOBLE, MONK,
+            BARTENDER, HARLOT, POPPY_GROWER, REVOLUCIONARIO, BARBER,
+            JUDGE, CHESS_PLAYER, JOURNALIST, SCRIBE, CABALLERO, XIA, DELINQUENT, TRAITOR,
+            IMP, TERRORIST, WARDEN, COMEDIAN, GARDENER, MERCENARY, BLACKDEATH,
+            DEVUSHKA, HERETIC, ARCHITECT, ALCHEMIST, MUYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
+            CANNIBAL, BODYGUARD, LEECH, ENGINEER, NOBLE, MONK,
 
             COLLECTOR, MORTICIAN, CRAFTSMAN,
 
             MEDIUM,
-            MARIONETTE, LUNATIC, HERMIT, FOLKLORIST, POSTMAN, GAMBLER, GOON,
+            MARIONETTE, LUNATIC, HERMIT, FOLKLORIST, POSTMAN, GAMBLER, POLITICIAN,
 
             EXECUTIONER, ANGEL,
 
@@ -339,25 +311,25 @@ public final class Roles {
 
             PHILOSOPHER,
 
-            HIKIKOMORI,
+            HIKIKOMORI, GURU,
 
             LEGION, VOODOO,
 
-            PUPPETEER, ASTRAL, COLD_WAVE,
+            PUPPETEER, ASTRAL, MESSENGER,
 
 
             ATTENDANT);
 
-    public static final java.util.Set<Role> SOLO_NEUTRALS = java.util.Set.of(NOVELIST, ANGEL, EXECUTIONER, JESTER, THIEF, ARSONIST, ASTRAL, KIDNAPPER, COLD_WAVE);
+    public static final java.util.Set<Role> SOLO_NEUTRALS = java.util.Set.of(NOVELIST, ANGEL, EXECUTIONER, JESTER, THIEF, ARSONIST, ASTRAL, KIDNAPPER, MESSENGER);
 
 
     private static final java.util.Set<Role> EXCLUDED = java.util.Set.of();
-
+    private static final List<Role> ALL_ROLES = FACTIONS.keySet().stream()
+            .filter(role -> !EXCLUDED.contains(role)).toList();
 
     public static boolean isImplemented(Role role) {
         return IMPLEMENTED.contains(role);
     }
-
 
     public static Faction factionOf(Role role) {
         return role == null ? null : FACTIONS.get(role);
@@ -371,25 +343,9 @@ public final class Roles {
         return factionOf(role) == Faction.KILLER;
     }
 
-
-
-
-
     public static boolean isKillerCampNonSeat(Role role) {
         Kind kind = kindOf(role);
         return kind != null && kind == Kind.MAD && factionOf(role) == Faction.KILLER;
-    }
-
-
-
-
-
-
-
-
-    public static boolean canUseKillerShop(Role role) {
-        Kind kind = kindOf(role);
-        return kind != null && kind.isKillerSeat();
     }
 
 
@@ -399,6 +355,9 @@ public final class Roles {
     public static final String CAMP_KILLER = "KILLER";
     public static final String CAMP_SOLO = "LONE";
     public static final String CAMP_OUTSIDER = "OUTSIDER";
+
+    public static final String CAMP_MOB_PINK = "MOB_PINK";
+    public static final String CAMP_MOB_AZURE = "MOB_AZURE";
 
 
     public static final java.util.List<String> LETTER_CAMPS =
@@ -462,7 +421,8 @@ public final class Roles {
                                  net.minecraft.entity.player.PlayerEntity p) {
         if (p == null) return null;
         Faction camp = unmappedCampOf(gwc, p);
-        if (dev.hae.btt.game.GameModes.modeOf(gwc) != null && dev.hae.btt.game.GameModes.modeOf(gwc).usesScript()) {
+
+        if (dev.hae.btt.game.GameModes.hasRule(p.getWorld(), dev.hae.btt.game.Rule.DUEL)) {
             if (camp == Faction.SOLO) return Faction.PASSENGER;
             if (camp == Faction.OUTSIDER) return Faction.KILLER;
         }
@@ -470,8 +430,6 @@ public final class Roles {
     }
 
     private static Faction unmappedCampOf(dev.doctor4t.wathe.cca.GameWorldComponent gwc, net.minecraft.entity.player.PlayerEntity p) {
-        if (gwc != null && gwc.getRole(p) == BLACKDEATH) return Faction.KILLER;
-        if (Werewolf.member(p)) return Faction.OUTSIDER;
         Faction byOverride = switch (campOverride(p)) {
             case CAMP_PASSENGER -> Faction.PASSENGER;
             case CAMP_KILLER -> Faction.KILLER;
@@ -523,6 +481,7 @@ public final class Roles {
 
     public static int maxSprintTimeFor(dev.doctor4t.wathe.cca.GameWorldComponent gwc,
                                        net.minecraft.entity.player.PlayerEntity player, int original) {
+        if (gwc != null && dev.hae.btt.game.GameModes.modeOf(gwc) == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.MOB) return -1;
         Faction camp = campFactionFor(gwc, player);
         return camp == null ? original : camp.maxSprintTime;
     }
@@ -530,6 +489,8 @@ public final class Roles {
 
     public static boolean canSeeTimeFor(dev.doctor4t.wathe.cca.GameWorldComponent gwc,
                                         net.minecraft.entity.player.PlayerEntity player) {
+        if (gwc != null && dev.hae.btt.game.GameModes.modeOf(gwc) == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.MOB) return true;
+        if (dev.hae.btt.trait.Traits.has(player, dev.hae.btt.trait.Traits.RHYTHM)) return true;
         Faction camp = campFactionFor(gwc, player);
         if (camp != null) return camp.canSeeTime;
         Role role = gwc == null ? null : gwc.getRole(player);
@@ -650,7 +611,7 @@ public final class Roles {
 
 
     public static java.util.List<Role> allRoles() {
-        return FACTIONS.keySet().stream().filter(r -> !EXCLUDED.contains(r)).toList();
+        return ALL_ROLES;
     }
 
     public static java.util.List<Role> displayRoles() {
@@ -675,8 +636,8 @@ public final class Roles {
     }
 
 
-    public static List<Identifier> newRoleIds() {
-        return List.copyOf(NEW_ROLE_IDS);
+    public static List<Identifier> registeredRoleIds() {
+        return List.copyOf(REGISTERED_ROLE_IDS);
     }
 
     public static void register() {

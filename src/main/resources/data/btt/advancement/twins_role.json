@@ -1,7 +1,7 @@
 {
   "display": {
     "icon": {
-      "id": "minecraft:player_head"
+      "id": "minecraft:glass"
     },
     "title": {
       "translate": "btt.advancement.twins_role.title"
@@ -9,7 +9,7 @@
     "description": {
       "translate": "btt.advancement.twins_role.description"
     },
-    "frame": "goal",
+    "frame": "task",
     "show_toast": true,
     "hidden": false
   },

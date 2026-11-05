@@ -21,20 +21,18 @@ public final class Sounds {
     public static final SoundEvent EPILOGUE_GARDENER = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_gardener"));
     public static final SoundEvent EPILOGUE_VOODOO = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_voodoo"));
     public static final SoundEvent EPILOGUE_LEGION = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_legion"));
-    public static final SoundEvent EPILOGUE_WEREWOLF = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_werewolf"));
+    public static final SoundEvent EPILOGUE_GODFATHER = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_godfather"));
     public static final SoundEvent EPILOGUE_SURVIVAL = SoundEvent.of(Identifier.of(BeforeTheTerminal.MOD_ID, "epilogue_survival"));
 
     public static final SoundEvent[] EPILOGUE_ALL = {
             EPILOGUE_MAJO, EPILOGUE_MESSIAH, EPILOGUE_GARDENER, EPILOGUE_SURVIVAL,
-            EPILOGUE_VOODOO, EPILOGUE_LEGION, EPILOGUE_WEREWOLF
+            EPILOGUE_VOODOO, EPILOGUE_LEGION, EPILOGUE_GODFATHER
     };
 
 
 
 
     public static final SoundEvent POUR_GASOLINE = btt("pour_gasoline");
-
-    public static final SoundEvent PIPE_HIT = btt("pipe_hit");
     public static final SoundEvent FIRE_AXE_HIT = btt("fire_axe_hit");
     public static final SoundEvent MEETING_BELL = btt("meeting_bell");
     public static final SoundEvent METAL_NOTICE = btt("metal_notice");
@@ -54,8 +52,6 @@ public final class Sounds {
     public static final SoundEvent SCAVENGE = btt("thief_scavenge");
 
     public static final SoundEvent JUDGMENT = btt("judgment");
-
-    public static final SoundEvent PUBLIC_NOTICE = btt("public_notice");
     public static final SoundEvent HARPY_SHROUD = btt("harpy_shroud");
     public static final SoundEvent COLD_WAVE_CONTAMINATION = btt("cold_wave_contamination");
 
@@ -76,6 +72,37 @@ public final class Sounds {
     }
 
 
+    public static void requestEpilogue(net.minecraft.server.world.ServerWorld world, SoundEvent track, int ticks) {
+        if (track == null || ticks <= 0) return;
+        for (var player : world.getPlayers()) stopEpilogue(player);
+        var state = dev.hae.btt.component.GameState.KEY.get(world).roleEffects;
+        state.putString("musicCurrent", track.getId().toString());
+        state.putLong("musicUntil", world.getTime() + ticks);
+        for (var player : world.getPlayers())
+            player.playSoundToPlayer(track, net.minecraft.sound.SoundCategory.MASTER, 1.0f, 1.0f);
+        org.slf4j.LoggerFactory.getLogger("btt").info("[BTT] music replaced: {} (until={})", track.getId(), state.getLong("musicUntil"));
+    }
+
+    public static void tickEpilogue(net.minecraft.server.world.ServerWorld world) {
+        var state = dev.hae.btt.component.GameState.KEY.get(world).roleEffects;
+        if (state.getString("musicCurrent").isEmpty() || state.getLong("musicUntil") > world.getTime()) return;
+        clearEpilogue(world);
+    }
+
+    public static void stopEpilogue(net.minecraft.server.network.ServerPlayerEntity player) {
+        for (var track : EPILOGUE_ALL) player.networkHandler.sendPacket(
+                new net.minecraft.network.packet.s2c.play.StopSoundS2CPacket(
+                        track.getId(), net.minecraft.sound.SoundCategory.MASTER));
+    }
+
+    public static void clearEpilogue(net.minecraft.server.world.ServerWorld world) {
+        for (var player : world.getPlayers()) stopEpilogue(player);
+        var state = dev.hae.btt.component.GameState.KEY.get(world).roleEffects;
+        state.remove("musicCurrent");
+        state.remove("musicUntil");
+    }
+
+
     public static SoundEvent forEpilogue(String type) {
         return switch (type) {
             case "MAJO" -> EPILOGUE_MAJO;
@@ -83,7 +110,7 @@ public final class Sounds {
             case "GARDENER" -> EPILOGUE_GARDENER;
             case "VOODOO" -> EPILOGUE_VOODOO;
             case "LEGION" -> EPILOGUE_LEGION;
-            case "WEREWOLF" -> EPILOGUE_WEREWOLF;
+            case "GODFATHER" -> EPILOGUE_GODFATHER;
             default -> EPILOGUE_SURVIVAL;
         };
     }

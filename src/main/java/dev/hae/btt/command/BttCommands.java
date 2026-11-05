@@ -119,7 +119,6 @@ public final class BttCommands {
 
 
 
-
             dispatcher.register(CommandManager.literal("maps")
                     .requires(src -> src.hasPermissionLevel(2))
                     .executes(ctx -> listMaps(ctx.getSource()))
@@ -146,7 +145,6 @@ public final class BttCommands {
                                             .executes(ctx -> setTimer(ctx.getSource(),
                                                     IntegerArgumentType.getInteger(ctx, "minutes"),
                                                     IntegerArgumentType.getInteger(ctx, "seconds")))))));
-
 
         });
     }

@@ -15,15 +15,17 @@ import java.util.List;
 
 public final class KillObjectives {
     private KillObjectives() {}
-    public static final int REQUIRED = 3;
+    public static int required(dev.doctor4t.wathe.api.Role role) {
+        return role == Roles.ASTRAL ? 3 : 2;
+    }
 
     public static void observe(Role role, ServerPlayerEntity victim, ServerPlayerEntity killer, Identifier reason) {
         var game = GameWorldComponent.KEY.get(victim.getWorld());
         if (!game.isRunning()) return;
-        if (role == Roles.COLD_WAVE && DeathReasons.COLLAPSE.equals(reason)) {
+        if (role == Roles.MESSENGER && DeathReasons.COLLAPSE.equals(reason)) {
             for (var owner : victim.getServerWorld().getPlayers()) {
                 if (game.isRole(owner, role) && owner.isAlive() && GameFunctions.isPlayerAliveAndSurvival(owner))
-                    count(owner, victim, Endings.Ending.COLD_WAVE_WIN);
+                    count(owner, victim, Endings.Ending.MESSENGER_WIN);
             }
         } else if (killer != null && game.isRole(killer, role)) {
             if (role == Roles.ASTRAL && DeathReasons.MAGIC.equals(reason)) count(killer, victim, Endings.Ending.ASTRAL_WIN);
@@ -37,6 +39,6 @@ public final class KillObjectives {
         if (!ids.add(victim.getUuidAsString())) return;
         state.objectiveVictims = String.join(",", ids);
         state.sync();
-        if (ids.size() >= REQUIRED) SoloWin.request(owner.getServerWorld(), ending, owner);
+        if (ids.size() >= required(dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(owner.getWorld()).getRole(owner))) SoloWin.request(owner.getServerWorld(), ending, owner);
     }
 }

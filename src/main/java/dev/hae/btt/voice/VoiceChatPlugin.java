@@ -29,6 +29,19 @@ public class VoiceChatPlugin implements VoicechatPlugin {
     private static boolean loudnessCleanupRegistered;
 
     private static final java.util.Map<java.util.UUID, de.maxhenkel.voicechat.api.Group> STOMACH_GROUPS = new java.util.HashMap<>();
+    private static final java.util.Map<java.util.UUID, de.maxhenkel.voicechat.api.Group> DREAM_GROUPS = new java.util.HashMap<>();
+
+    public static void joinDream(ServerPlayerEntity host, ServerPlayerEntity soul) {
+        if (serverApi == null) return;
+        var group = DREAM_GROUPS.get(host.getUuid());
+        if (group == null || serverApi.getGroup(group.getId()) == null) {
+            group = serverApi.groupBuilder().setPersistent(false).setHidden(true)
+                    .setType(de.maxhenkel.voicechat.api.Group.Type.NORMAL).setName("Lucid Dream").build();
+            DREAM_GROUPS.put(host.getUuid(), group);
+        }
+        var connection = serverApi.getConnectionOf(soul.getUuid());
+        if (connection != null) connection.setGroup(group);
+    }
 
     @Override
     public void initialize(VoicechatApi api) {
@@ -61,11 +74,6 @@ public class VoiceChatPlugin implements VoicechatPlugin {
         registration.registerEvent(LocationalSoundPacketEvent.class, this::mutedListenerEvent, 100);
         registration.registerEvent(de.maxhenkel.voicechat.api.events.StaticSoundPacketEvent.class, this::mutedListenerEvent, 100);
     }
-
-
-
-
-
 
 
 
@@ -105,11 +113,6 @@ public class VoiceChatPlugin implements VoicechatPlugin {
         if (connection != null) connection.setGroup(null);
     }
 
-
-
-
-
-
     private static void registerClientVoiceHooks(EventRegistration registration) {
         if (net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType()
                 != net.fabricmc.api.EnvType.CLIENT) return;
@@ -126,8 +129,6 @@ public class VoiceChatPlugin implements VoicechatPlugin {
 
 
 
-
-
     public void walkieTalkieEvent(MicrophonePacketEvent event) {
         ServerPlayerEntity speaker = serverPlayerOf(event.getSenderConnection());
         if (speaker == null) return;
@@ -137,13 +138,15 @@ public class VoiceChatPlugin implements VoicechatPlugin {
                 && !dev.hae.btt.role.BlackDeath.isBodylessPathogen(speaker)) return;
         if (!dev.hae.btt.item.WalkieTalkieItem.isHeld(speaker)) return;
         VoicechatServerApi api = event.getVoicechat();
+        boolean micro = dev.hae.btt.item.WalkieTalkieItem.microHeld(speaker);
+        if (micro) event.cancel();
         double near = api.getVoiceChatDistance();
         for (ServerPlayerEntity listener : speaker.getServerWorld().getPlayers()) {
             if (listener == speaker) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(listener)
                     && !dev.hae.btt.role.BlackDeath.isBodylessPathogen(listener)) continue;
             if (!dev.hae.btt.item.WalkieTalkieItem.isCarried(listener)) continue;
-            if (speaker.squaredDistanceTo(listener) <= near * near) continue;
+            if (!micro && speaker.squaredDistanceTo(listener) <= near * near) continue;
             VoicechatConnection con = api.getConnectionOf(listener.getUuid());
             if (con == null) continue;
             api.sendLocationalSoundPacketTo(con, event.getPacket().locationalSoundPacketBuilder()
@@ -174,7 +177,6 @@ public class VoiceChatPlugin implements VoicechatPlugin {
                     .build());
         }
     }
-
 
     public void mutedSpeakerEvent(MicrophonePacketEvent event) {
         ServerPlayerEntity speaker = serverPlayerOf(event.getSenderConnection());
@@ -213,7 +215,6 @@ public class VoiceChatPlugin implements VoicechatPlugin {
         }
     }
 
-
     public <T extends Packet> void mutedListenerEvent(SoundPacketEvent<T> event) {
         ServerPlayerEntity recipient = serverPlayerOf(event.getReceiverConnection());
         if (recipient == null) return;
@@ -222,6 +223,12 @@ public class VoiceChatPlugin implements VoicechatPlugin {
         if (event.getPacket() instanceof de.maxhenkel.voicechat.api.packets.SoundPacket sound) {
             var sender = recipient.getServerWorld().getPlayerByUuid(sound.getSender());
             if (sender instanceof ServerPlayerEntity speaker) {
+                if (dev.hae.btt.item.WalkieTalkieItem.microHeld(speaker) && !dev.hae.btt.item.WalkieTalkieItem.isCarried(recipient)) { event.cancel(); return; }
+                boolean dreaming = dev.hae.btt.role.LucidDream.captive(speaker);
+                boolean listeningDream = dev.hae.btt.role.LucidDream.captive(recipient);
+                if (dreaming != listeningDream || (dreaming && !PlayerState.KEY.get(speaker).attachedTo.equals(PlayerState.KEY.get(recipient).attachedTo))) {
+                    event.cancel(); return;
+                }
                 if (dev.hae.btt.role.Voodoo.isRemnant(speaker)
                         && !dev.hae.btt.role.Voodoo.hearsRemnant(recipient, speaker)) event.cancel();
                 if (dev.hae.btt.role.Voodoo.isRemnant(recipient)

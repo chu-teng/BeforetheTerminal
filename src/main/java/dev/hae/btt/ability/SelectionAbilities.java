@@ -28,7 +28,7 @@ public final class SelectionAbilities {
     }
 
     public static void select(ServerPlayerEntity user, java.util.UUID selectedTarget, String guess) {
-        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
+        try (var forcing = AbilityState.KEY.get(user).force(); var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
             selectBody(user, selectedTarget, guess);
         }
     }
@@ -72,8 +72,8 @@ public final class SelectionAbilities {
             return;
         }
 
-        if (Roles.effectiveRole(gwc, user) == Roles.SHOUJO) {
-            Actor.toggle(user, PlayerState.KEY.get(user), Roles.SHOUJO);
+        if (Roles.effectiveRole(gwc, user) == Roles.DEVUSHKA) {
+            Actor.toggle(user, PlayerState.KEY.get(user), Roles.DEVUSHKA);
             return;
         }
         if (!(user.getServerWorld().getPlayerByUuid(selectedTarget) instanceof ServerPlayerEntity target)) return;
@@ -98,12 +98,15 @@ public final class SelectionAbilities {
             interceptedCost(user, gwc);
             return;
         }
-        if (definition != null && definition.hasTargeted()) { definition.useTargeted(user, target, guess); return; }
+        if (definition != null && definition.hasTargeted()) {
+            Folklorist.targeted(user, java.util.List.of(target));
+            definition.useTargeted(user, target, guess); return;
+        }
 
     }
 
     public static void multi(ServerPlayerEntity user, java.util.List<java.util.UUID> picks) {
-        try (var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
+        try (var forcing = AbilityState.KEY.get(user).force(); var recording = dev.hae.btt.record.SkillUseRecording.begin(user)) {
             multiBody(user, picks);
         }
     }
@@ -137,6 +140,7 @@ public final class SelectionAbilities {
             if (!(recipient instanceof ServerPlayerEntity living) || appearance == null
                     || !GameFunctions.isPlayerAliveAndSurvival(living) || gwc.getRole(living) == null
                     || gwc.getRole(appearance) == null) return;
+            Folklorist.targeted(user, java.util.List.of(living));
             dev.hae.btt.api.event.BttEvents.SkillUsed.EVENT.invoker().onSkillUsed(user, living, Roles.ACTOR.identifier());
             AbilityState.KEY.get(user).setCooldown(60 * 20);
             if (Drunk.isDrunk(user)) return;
@@ -144,6 +148,8 @@ public final class SelectionAbilities {
             Folklorist.onAnyoneAbility(user, gwc);
             return;
         }
+        Folklorist.targeted(user, targets.stream().map(user.getServerWorld()::getPlayerByUuid)
+                .filter(p -> p instanceof ServerPlayerEntity).map(p -> (ServerPlayerEntity)p).toList());
 
         boolean btt$drunk = PlayerState.KEY.get(user).isDrunk()
                 && !Drunk.unaffectedByDrunk(Roles.effectiveRole(gwc, user));

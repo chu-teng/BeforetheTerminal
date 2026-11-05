@@ -6,7 +6,6 @@ import dev.hae.btt.item.BalloonItem;
 import dev.hae.btt.item.BombItem;
 import dev.hae.btt.item.DaggerItem;
 import dev.hae.btt.item.FireAxeItem;
-import dev.hae.btt.item.PipeItem;
 import dev.hae.btt.item.PoisonGasGrenadeItem;
 import dev.hae.btt.item.PoisonNeedleItem;
 import dev.hae.btt.item.SwordItem;
@@ -16,30 +15,22 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 
-
-
-
-
-
-
-
-
 public final class BttItems {
     private BttItems() {}
 
 
     public static void init() {
         registerCreativeTab();
+        GameConstants.ITEM_COOLDOWNS.put(AMULET, 2400);
+        GameConstants.ITEM_COOLDOWNS.put(BEAR_TRAP, 600);
         GameConstants.ITEM_COOLDOWNS.put(CAGE, 2400);
         GameConstants.ITEM_COOLDOWNS.put(DAGGER, GameConstants.getInTicks(1, 0));
         GameConstants.ITEM_COOLDOWNS.put(POISON_NEEDLE, GameConstants.getInTicks(0, 30));
         GameConstants.ITEM_COOLDOWNS.put(BOMB, GameConstants.getInTicks(0, 30));
         GameConstants.ITEM_COOLDOWNS.put(SWORD, GameConstants.getInTicks(2, 0));
         GameConstants.ITEM_COOLDOWNS.put(BALLOON, GameConstants.getInTicks(0, 30));
-        GameConstants.ITEM_COOLDOWNS.put(PIPE, GameConstants.getInTicks(2, 0));
 
-
-        GameConstants.ITEM_COOLDOWNS.put(FIRE_AXE, GameConstants.getInTicks(1, 0));
+        GameConstants.ITEM_COOLDOWNS.put(FIRE_AXE, GameConstants.getInTicks(2, 0));
 
         GameConstants.ITEM_COOLDOWNS.put(FAKE_REVOLVER, GameConstants.getInTicks(0, 8));
 
@@ -64,6 +55,8 @@ public final class BttItems {
                         .icon(() -> new net.minecraft.item.ItemStack(MASTER_KEY))
                         .displayName(net.minecraft.text.Text.translatable("itemGroup.btt.items"))
                         .entries((context, entries) -> {
+                            entries.add(AMULET);
+                            entries.add(BEAR_TRAP);
                             entries.add(MASTER_KEY);
                             entries.add(DAGGER);
                             entries.add(POISON_NEEDLE);
@@ -71,8 +64,8 @@ public final class BttItems {
                             entries.add(CAGE);
                             entries.add(POISON_GAS_GRENADE);
                             entries.add(WALKIE_TALKIE);
+                            entries.add(MICRO_WALKIE_TALKIE);
                             entries.add(SWORD);
-                            entries.add(PIPE);
                             entries.add(FIRE_AXE);
                             entries.add(BALLOON);
                             entries.add(SLIP);
@@ -96,6 +89,7 @@ public final class BttItems {
             new DaggerItem(new Item.Settings().maxCount(1)),
             "dagger"
     );
+    public static final Item AMULET = register(new dev.hae.btt.item.AmuletItem(new Item.Settings().maxCount(1)), "amulet");
     public static final Item CAGE = register(new dev.hae.btt.item.CageItem(new Item.Settings().maxCount(1)), "cage");
     public static final Item CAGE_CHOICE = register(new dev.hae.btt.item.CageChoiceItem(new Item.Settings().maxCount(1)), "cage_choice");
 
@@ -109,11 +103,13 @@ public final class BttItems {
             "bomb"
     );
 
+    public static final Item BEAR_TRAP = register(new dev.hae.btt.item.BearTrapItem(new Item.Settings().maxCount(1)), "bear_trap");
     public static final Item POISON_GAS_GRENADE = register(
             new PoisonGasGrenadeItem(new Item.Settings().maxCount(16)),
             "poison_gas_grenade"
     );
 
+    public static final Item MICRO_WALKIE_TALKIE = register(new WalkieTalkieItem(new Item.Settings().maxCount(1)), "micro_walkie_talkie");
     public static final Item WALKIE_TALKIE = register(
             new WalkieTalkieItem(new Item.Settings().maxCount(1)),
             "walkie_talkie"
@@ -124,28 +120,12 @@ public final class BttItems {
             "sword"
     );
 
-    public static final Item PIPE = register(
-            new PipeItem(new Item.Settings().maxCount(1)),
-            "pipe"
-    );
-
-
-
-
-
     public static final Item FIRE_AXE = register(
             new FireAxeItem(new Item.Settings().maxCount(1)
                     .attributeModifiers(net.minecraft.item.AxeItem.createAttributeModifiers(
                             net.minecraft.item.ToolMaterials.WOOD, 0.0F, -3.0F))),
             "fire_axe"
     );
-
-
-
-
-
-
-
 
     public static final Item FAKE_REVOLVER = register(
             new dev.doctor4t.wathe.item.RevolverItem(new Item.Settings().maxCount(1)),

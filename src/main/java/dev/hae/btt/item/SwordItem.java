@@ -82,7 +82,6 @@ public class SwordItem extends Item {
         thrower.incrementStat(net.minecraft.stat.Stats.USED.getOrCreateStat(this));
     }
 
-
     public static float getPowerForTime(int time) {
         float f = (float) time / 20.0F;
         f = (f * f + f * 2.0F) / 3.0F;

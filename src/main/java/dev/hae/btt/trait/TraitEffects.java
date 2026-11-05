@@ -27,9 +27,16 @@ public final class TraitEffects {
             if (!candidates.isEmpty()) dev.hae.btt.faction.Camps.joinCamp(candidates.get(owner.getRandom().nextInt(candidates.size())), owner);
         }
         for (ServerPlayerEntity player : players) {
-            if (Traits.has(player, Traits.TRUST)) PlayerState.KEY.get(player).traitTrustAt = world.getTime() + 100;
-            if (Traits.has(player, Traits.UPRISING))
-                dev.hae.btt.role.RoleDefs.giveWithInitialCd(player, WatheItems.KNIFE);
+            if (Traits.has(player, Traits.TRUST)) {
+                var candidates = players.stream().filter(p -> p != player && Roles.isPassengerCampFor(game, p)).toList();
+                if (!candidates.isEmpty()) dev.hae.btt.component.LetterState.KEY.get(candidates.get(player.getRandom().nextInt(candidates.size()))).setMark(player.getUuidAsString(), "PASSENGER");
+            }
+            if (Traits.has(player, Traits.PREMEDITATION)) for (var other : players)
+                if (other != player && Roles.isKillerCampFor(game, other)) mark(player, other, game);
+            if (Traits.has(player, Traits.WITNESS)) {
+                var candidates = players.stream().filter(p -> Roles.kindOfReal(game, p) == Roles.Kind.ACCOMPLICE || Roles.kindOfReal(game, p) == Roles.Kind.PRINCIPAL).toList();
+                if (!candidates.isEmpty()) dev.hae.btt.component.LetterState.KEY.get(player).setMark(candidates.get(player.getRandom().nextInt(candidates.size())).getUuidAsString(), "KILLER");
+            }
         }
     }
 
@@ -37,21 +44,9 @@ public final class TraitEffects {
         return PlayerState.KEY.get(player).speakingUntil > player.getWorld().getTime();
     }
 
-    public static void tick(ServerPlayerEntity player) {
-        if (!TraitRules.active(player)) return;
-        var pc = PlayerState.KEY.get(player);
-        if (pc.traitTrustAt <= 0 || player.getWorld().getTime() < pc.traitTrustAt) return;
-        pc.traitTrustAt = 0;
-        var game = GameWorldComponent.KEY.get(player.getWorld());
-        var candidates = player.getServerWorld().getPlayers().stream()
-                .filter(p -> p != player && game.getRole(p) != null && GameFunctions.isPlayerAliveAndSurvival(p)).toList();
-        var same = candidates.stream().filter(p -> dev.hae.btt.faction.Camps.sameCamp(game, p, player)).toList();
-        var pool = same.isEmpty() ? candidates : same;
-        if (!pool.isEmpty()) {
-            var recipient = pool.get(player.getRandom().nextInt(pool.size()));
-            recipient.sendMessage(Text.translatable("btt.trait.trust.notice", GameState.KEY.get(player.getWorld()).numberOf(player.getUuid())).withColor(Traits.TRUST.color()), true);
-        }
-        pc.sync();
+    private static void mark(ServerPlayerEntity viewer, ServerPlayerEntity target, GameWorldComponent game) {
+        var role = Roles.realRole(game, target);
+        if (role != null) dev.hae.btt.component.LetterState.KEY.get(viewer).setMark(target.getUuidAsString(), role.identifier().getPath());
     }
 
     public static void onDeath(ServerPlayerEntity victim, PlayerEntity killer, Identifier reason) {
@@ -67,7 +62,7 @@ public final class TraitEffects {
                 && GameFunctions.isPlayerAliveAndSurvival(p) && Roles.isPassengerCampFor(game, p)).toList();
         if (!targets.isEmpty()) {
             var target = targets.get(victim.getRandom().nextInt(targets.size()));
-            PlayerState.KEY.get(target).applyPermanentDrunk();
+            PlayerState.KEY.get(target).applyDrunk(2 * 60 * 20);
         }
     }
 
@@ -77,15 +72,40 @@ public final class TraitEffects {
 
     public static void tickWorld(ServerWorld world) {
         var state = GameState.KEY.get(world);
+        if (GameWorldComponent.KEY.get(world).getGameStatus() == GameWorldComponent.GameStatus.ACTIVE) {
+            dev.hae.btt.registry.Sounds.tickEpilogue(world);
+        }
         if (GameWorldComponent.KEY.get(world).getGameStatus() != GameWorldComponent.GameStatus.ACTIVE
-                || state.epilogueType.isEmpty()) return;
+                || state.epilogueType.isEmpty()) {
+            if (state.traitResonance) {
+                for (var player : world.getPlayers()) player.removeStatusEffect(StatusEffects.GLOWING);
+                state.traitResonance = false;
+                state.sync();
+            }
+            return;
+        }
+        for (var player : world.getPlayers()) {
+            String key = "uprising:" + player.getUuidAsString();
+            if (GameFunctions.isPlayerAliveAndSurvival(player) && Traits.has(player, Traits.UPRISING)
+                    && !state.roleEffects.getBoolean(key)) {
+                state.roleEffects.putBoolean(key, true);
+                PlayerState.KEY.get(player).monkShields += 3;
+                PlayerState.KEY.get(player).sync();
+            }
+        }
         if (!state.traitResonance && world.getPlayers().stream().anyMatch(p -> GameFunctions.isPlayerAliveAndSurvival(p)
                 && Traits.has(p, Traits.RESONANT))) {
             state.traitResonance = true;
             state.sync();
         }
-        if (state.traitResonance) for (var player : world.getPlayers())
-            if (GameFunctions.isPlayerAliveAndSurvival(player))
-                player.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, 40, 0, false, false));
+        if (state.traitResonance) for (var player : world.getPlayers()) {
+            if (GameFunctions.isPlayerAliveAndSurvival(player)) {
+                var effect = player.getStatusEffect(StatusEffects.GLOWING);
+                if (effect == null || effect.getDuration() <= 20)
+                    player.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, 40, 0, false, false));
+            } else {
+                player.removeStatusEffect(StatusEffects.GLOWING);
+            }
+        }
     }
 }

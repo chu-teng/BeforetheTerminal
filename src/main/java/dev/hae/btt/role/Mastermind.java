@@ -21,8 +21,10 @@ public final class Mastermind {
                 .filter(p -> Roles.hasCurrentRole(game, p, Roles.MASTERMIND) && !Drunk.isDrunk(p)).toList();
         if (owners.isEmpty()) return;
         if (effects.getBoolean("mastermindWindow") && clock.getTime() > 0
-                && Roles.isPassengerCampFor(game, victim) && TraitRules.passengerExecution(victim, killer, reason))
-            state.killerObjectiveMet = true;
+                && TraitRules.passengerExecution(victim, killer, reason)) {
+            effects.putBoolean("mastermindWindow", false);
+            dev.hae.btt.victory.EndingPipeline.factionLoss(victim);
+        }
         if (Roles.kindOfReal(game, victim) != Roles.Kind.PRINCIPAL) return;
         boolean triggered = false;
         for (var owner : owners) {

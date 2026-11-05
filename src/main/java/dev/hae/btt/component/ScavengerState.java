@@ -18,6 +18,8 @@ public class ScavengerState implements AutoSyncedComponent, ServerTickingCompone
     private final PlayerEntity player;
     public int bodiesEaten = 0;
     public int bodiesRequired = 0;
+    private int sentEaten = Integer.MIN_VALUE;
+    private int sentRequired = Integer.MIN_VALUE;
 
     public void reset() {
         this.bodiesEaten = 0;
@@ -33,6 +35,8 @@ public class ScavengerState implements AutoSyncedComponent, ServerTickingCompone
 
     public void sync() {
         KEY.sync(this.player);
+        sentEaten = bodiesEaten;
+        sentRequired = bodiesRequired;
     }
 
     @Override
@@ -50,7 +54,7 @@ public class ScavengerState implements AutoSyncedComponent, ServerTickingCompone
 
             bodiesRequired = (player.getWorld().getPlayers().size() + 2) / 3;
         }
-        sync();
+        if (bodiesEaten != sentEaten || bodiesRequired != sentRequired) sync();
     }
 
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {

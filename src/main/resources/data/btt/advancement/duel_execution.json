@@ -1,17 +1,17 @@
 {
   "display": {
     "icon": {
-      "id": "minecraft:spectral_arrow"
+      "id": "minecraft:target"
     },
     "title": {
-      "translate": "btt.advancement.self_execution.title"
+      "translate": "btt.advancement.duel_execution.title"
     },
     "description": {
-      "translate": "btt.advancement.self_execution.description"
+      "translate": "btt.advancement.duel_execution.description"
     },
-    "frame": "goal",
     "show_toast": true,
-    "hidden": false
+    "hidden": false,
+    "frame": "goal"
   },
   "criteria": {
     "done": {
@@ -19,5 +19,5 @@
     }
   },
   "sends_telemetry_event": false,
-  "parent": "btt:execution"
+  "parent": "btt:modes"
 }

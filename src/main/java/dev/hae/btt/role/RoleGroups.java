@@ -24,15 +24,15 @@ public final class RoleGroups {
             var branches = new ArrayList<ServerPlayerEntity>();
             if (participants.size() >= 12) {
                 for (var kind : List.of(Roles.Kind.CIVILIAN, Roles.Kind.ACCOMPLICE, Roles.Kind.LONE, Roles.Kind.OUTSIDER)) {
-                    pool.stream().filter(p -> Roles.kindOfReal(game, p) == kind).findFirst().ifPresent(p -> {
+                    pool.stream().filter(p -> Werewolf.kind(game, noble, p) == kind).findFirst().ifPresent(p -> {
                         branches.add(p);
                         pool.remove(p);
                     });
                 }
             }
             var main = new ArrayList<ServerPlayerEntity>();
-            main.addAll(pool.stream().filter(p -> Roles.isPassengerCampFor(game, p)).limit(2).toList());
-            main.addAll(pool.stream().filter(p -> !Roles.isPassengerCampFor(game, p)).limit(1).toList());
+            main.addAll(pool.stream().filter(p -> Werewolf.passenger(game, noble, p)).limit(2).toList());
+            main.addAll(pool.stream().filter(p -> !Werewolf.passenger(game, noble, p)).limit(1).toList());
             pool.removeAll(main);
             Collections.shuffle(pool, new java.util.Random(noble.getRandom().nextLong()));
             var state = PlayerState.KEY.get(noble);

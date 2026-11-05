@@ -20,15 +20,31 @@ import net.minecraft.util.hit.EntityHitResult;
 public final class PlayerObservation {
     private PlayerObservation() {}
     private static final int GREEN = 0x4EDD35;
+    private static final java.util.Map<ServerPlayerEntity, net.minecraft.entity.Entity> LOOKS = new java.util.HashMap<>();
+    private static boolean batching;
+    private static final java.util.Set<String> JESTER_TARGETS = new java.util.HashSet<>();
+    private static final java.util.Set<ServerPlayerEntity> POPPY_PLAYERS = new java.util.HashSet<>();
+    public static void beginBatch(net.minecraft.server.world.ServerWorld world) {
+        LOOKS.clear(); JESTER_TARGETS.clear(); POPPY_PLAYERS.clear(); batching = true;
+        var game = GameWorldComponent.KEY.get(world);
+        for (var player : world.getPlayers()) {
+            if (dev.doctor4t.wathe.cca.PlayerPsychoComponent.KEY.get(player).getPsychoTicks() > 0)
+                JESTER_TARGETS.add(PlayerState.KEY.get(player).jesterExecutioner);
+            if (player.isAlive() && game.isRole(player, Roles.POPPY_GROWER) && !Drunk.isDrunk(player))
+                POPPY_PLAYERS.add(player);
+        }
+    }
+    public static void endBatch() { LOOKS.clear(); JESTER_TARGETS.clear(); POPPY_PLAYERS.clear(); batching = false; }
 
     public static void append(NbtCompound view, ServerPlayerEntity target, ServerPlayerEntity viewer) {
         var game = GameWorldComponent.KEY.get(target.getWorld());
+        view.putBoolean("observedHideHeld", game.isRunning() && Traits.has(target, Traits.SLEIGHT));
         view.putInt("observedInstinctColor", instinctColor(game, target, viewer));
         view.putInt("observedPassiveColor", passiveColor(game, target, viewer));
         boolean chair = viewer.getVehicle() instanceof dev.doctor4t.wathe.block.entity.SeatEntity seat
                 && viewer.getWorld().getBlockState(seat.getBlockPos()).getBlock() == dev.hae.btt.registry.BttBlocks.LOOKOUT_CHAIR;
         var role = game.getRole(target);
-        boolean immune = (role == Roles.SHOUJO || role == Roles.AVIATEUR) && !Drunk.isDrunk(target);
+        boolean immune = (role == Roles.DEVUSHKA || role == Roles.AVIATEUR) && !Drunk.isDrunk(target);
         view.putBoolean("observedLookout", chair && game.isRunning() && !Voodoo.isRemnant(viewer)
                 && GameFunctions.isPlayerAliveAndSurvival(target) && viewer.canSee(target) && !immune);
         view.putString("observedVoters", dev.hae.btt.game.Debate.isVoting(viewer.getWorld())
@@ -36,86 +52,92 @@ public final class PlayerObservation {
         boolean looking = canInspect(target, viewer);
         view.putString("observedGroup", looking ? group(game, target, viewer) : "");
         view.putString("observedCohort", looking ? cohort(game, target, viewer) : "");
-        boolean profiling = Traits.has(viewer, Traits.PROFILING) && Roles.kindOf(Roles.realRole(game, target)) == Roles.Kind.LONE;
-        Role inspected = looking && (game.isRole(viewer, Roles.AGENT) || profiling)
+        Role inspected = looking && game.isRole(viewer, Roles.DUCE)
                 ? inspectRole(game, target, viewer) : null;
         view.putString("observedInspectRole", inspected == null ? "" : inspected.identifier().toString());
     }
 
     public static int passiveColor(GameWorldComponent game, ServerPlayerEntity target, ServerPlayerEntity viewer) {
         if (!game.isRunning() || Voodoo.isRemnant(viewer) || Memory.isBlind(viewer) || target.isSpectator()) return -1;
+        if (batching) {
+            if (JESTER_TARGETS.contains(target.getUuidAsString())) return Roles.JESTER.color();
+        } else for (var player : viewer.getServerWorld().getPlayers())
+            if (dev.doctor4t.wathe.cca.PlayerPsychoComponent.KEY.get(player).getPsychoTicks() > 0
+                    && PlayerState.KEY.get(player).jesterExecutioner.equals(target.getUuidAsString())) return Roles.JESTER.color();
         var poison = dev.doctor4t.wathe.cca.PlayerPoisonComponent.KEY.get(target);
         if (game.isRole(viewer, Roles.PHARMACIST) && poison.poisonTicks > 0) return 0xFFFF0000;
-        if (game.isRole(viewer, Roles.SUCCUBUS) && poison.poisonTicks > 0 && viewer.getUuid().equals(poison.poisoner))
-            return Roles.SUCCUBUS.color();
         if (game.isRole(viewer, Roles.NIGHT_WATCHMAN)
                 && dev.doctor4t.wathe.cca.PlayerPsychoComponent.KEY.get(target).getPsychoTicks() > 0)
             return Roles.NIGHT_WATCHMAN.color();
         if (game.isRole(viewer, Roles.EXECUTIONER)
-                && target.getUuid().equals(dev.hae.btt.component.ExecutionerState.KEY.get(viewer).target)) return 0xFFFFFF00;
+                && target.getUuidAsString().equals(PlayerState.KEY.get(viewer).executionerTarget)) return 0xFFFFFF00;
         return -1;
     }
 
     public static int instinctColor(GameWorldComponent game, ServerPlayerEntity target, ServerPlayerEntity viewer) {
         if (!game.isRunning() || Voodoo.isRemnant(viewer) || Memory.isBlind(viewer)) return -1;
+
+        if (dev.hae.btt.game.GameModes.modeOf(game) == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.MOB) {
+            int viewerTeam = dev.hae.btt.role.Mob.teamOf(viewer);
+            int targetTeam = dev.hae.btt.role.Mob.teamOf(target);
+            if (viewerTeam == 0 || targetTeam == 0 || !GameFunctions.isPlayerAliveAndSurvival(target)) return -1;
+            return viewerTeam == targetTeam ? dev.hae.btt.role.Mob.colorOf(viewerTeam) : -1;
+        }
         if (NativeRoleView.fullObserver(viewer)) {
             Role role = Roles.realRole(game, target);
             return GameFunctions.isPlayerAliveAndSurvival(target) && role != null ? role.color() : -1;
         }
-        if (game.isRole(viewer, Roles.WEREWOLF)) return -1;
-        if (dev.hae.btt.role.Werewolf.member(viewer)) {
-            return GameFunctions.isPlayerAliveAndSurvival(target) && !game.isRole(target, Roles.WEREWOLF)
-                    && dev.hae.btt.role.Werewolf.samePack(viewer, target) ? Roles.WEREWOLF.color() : -1;
-        }
+        if (Traits.greenInstinct(viewer)
+                && GameFunctions.isPlayerAliveAndSurvival(target)) return GREEN;
+        if (!Roles.isKillerCampFor(game, viewer) && dev.hae.btt.faction.Camps.sharesRoleCamp(game, viewer, Roles.GODFATHER))
+            return GameFunctions.isPlayerAliveAndSurvival(target) && dev.hae.btt.faction.Camps.sameCamp(game, viewer, target)
+                    ? Roles.realRole(game, target).color() : -1;
         if (game.isRole(viewer, Roles.VOODOO) && PlayerState.KEY.get(target).voodooPhase == 1)
             return Roles.VOODOO.color();
         if (!GameFunctions.isPlayerAliveAndSurvival(target)
-                || Roles.hasCurrentOrPriorRole(game, viewer, Roles.TRAITOR)
+                || Roles.hasCurrentOrPriorRole(game, viewer, Roles.DELINQUENT)
                 || Roles.hasCurrentOrPriorRole(game, viewer, Roles.MARIONETTE)) return -1;
         var own = PlayerState.KEY.get(viewer);
         var subject = PlayerState.KEY.get(target);
         if (game.isRole(viewer, Roles.COMEDIAN) && subject.voicePitchTicks > 0) return Roles.COMEDIAN.color();
         boolean messiahFollower = game.isRole(viewer, Roles.MESSIAH) || own.isMessiahFollower();
         boolean majo = game.isRole(viewer, Roles.MAJO) || own.isMajoRecruit();
-        if (messiahFollower && (game.isRole(target, Roles.MESSIAH) || subject.isMessiahFollower())) return 0xFFFF00FF;
-        if (majo && (game.isRole(target, Roles.MAJO) || subject.isMajoRecruit())) return Roles.MAJO.color();
+        if (!Roles.isKillerCampFor(game, viewer) && messiahFollower && (game.isRole(target, Roles.MESSIAH) || subject.isMessiahFollower())) return 0xFFFF00FF;
+        if (!Roles.isKillerCampFor(game, viewer) && majo && (game.isRole(target, Roles.MAJO) || subject.isMajoRecruit())) return Roles.MAJO.color();
         if ((messiahFollower || majo) && !Roles.isKillerCampFor(game, viewer)) return -1;
         if (game.isRole(viewer, Roles.ARSONIST) && GameFunctions.isPlayerAliveAndSurvival(viewer)
                 && subject.isDoused()) return Roles.ARSONIST.color();
         if (!GameFunctions.isPlayerAliveAndSurvival(viewer)
                 || !Roles.isKillerCampFor(game, viewer) && !Roles.hasCurrentOrPriorRole(game, viewer, Roles.LUNATIC)) return -1;
+        if (dev.hae.btt.game.GameModes.hasRule(viewer.getWorld(), dev.hae.btt.game.Rule.DUEL)
+                && Roles.isKillerCampFor(game, viewer)
+                && (Roles.realRole(game, target) == Roles.GODFATHER
+                    || Roles.kindOfReal(game, target) == Roles.Kind.LONE)
+                && PlayerState.KEY.get(target).joinedCampRole.equals(Roles.GODFATHER.identifier().toString()))
+            return Roles.realRole(game, target).color();
         Role role = game.getRole(target);
         if (role == null) return -1;
-        if ((role == Roles.SHOUJO || role == Roles.AVIATEUR) && !Drunk.isDrunk(target)) return -1;
+        if ((role == Roles.DEVUSHKA || role == Roles.AVIATEUR) && !Drunk.isDrunk(target)) return -1;
         if (Roles.hasCurrentOrPriorRole(game, viewer, Roles.LUNATIC)
                 && Roles.kindOfReal(game, target) == Roles.Kind.PRINCIPAL) return GREEN;
         if (Roles.hasCurrentOrPriorRole(game, target, Roles.MARIONETTE) && Roles.isKillerCampFor(game, viewer))
             return Roles.MARIONETTE.color();
         if (Roles.hasCurrentOrPriorRole(game, target, Roles.LUNATIC) && Roles.isKillerCampFor(game, viewer))
             return Roles.LUNATIC.color();
-        for (var other : viewer.getServerWorld().getPlayers())
+        if (batching) {
+            if (POPPY_PLAYERS.size() > (POPPY_PLAYERS.contains(viewer) ? 1 : 0)) return GREEN;
+        } else for (var other : viewer.getServerWorld().getPlayers())
             if (other != viewer && other.isAlive() && game.isRole(other, Roles.POPPY_GROWER) && !Drunk.isDrunk(other))
                 return GREEN;
-        if (Roles.hasCurrentOrPriorRole(game, target, Roles.TRAITOR)) return GREEN;
+        if (Roles.hasCurrentOrPriorRole(game, target, Roles.DELINQUENT) && !Roles.isKillerCampFor(game, target)) return GREEN;
         if (Roles.hasCurrentOrPriorRole(game, target, Roles.BLACKDEATH)) return Roles.BLACKDEATH.color();
         if (Roles.isKillerCampFor(game, target))
-            return Traits.has(viewer, Traits.PREMEDITATION)
-                    ? role == Roles.UNDERCOVER ? undercoverColor(game, target) : Roles.realRole(game, target).color() : 0xDD0000;
+            return 0xDD0000;
         if (Roles.campOf(game, target) == Roles.Faction.OUTSIDER && Roles.factionOf(role) != Roles.Faction.OUTSIDER)
             return 0xFF00FF;
-        return role == Roles.UNDERCOVER
-                ? Traits.has(viewer, Traits.PREMEDITATION) ? undercoverColor(game, target) : 0xDD0000 : GREEN;
+        return role == Roles.UNDERCOVER ? 0xDD0000 : GREEN;
     }
 
-    private static int undercoverColor(GameWorldComponent game, ServerPlayerEntity target) {
-        var present = new java.util.HashSet<String>(dev.hae.btt.component.GameState.KEY.get(target.getWorld()).openingRoles.values());
-        var absent = Roles.allRoles().stream().filter(r -> Roles.kindOf(r) == Roles.Kind.ACCOMPLICE)
-                .filter(r -> !present.contains(r.identifier().toString()))
-                .filter(r -> !game.getRoles().containsValue(r)).toList();
-        if (absent.isEmpty()) return 0xDD0000;
-        var random = new java.util.Random(target.getUuid().getMostSignificantBits() ^ target.getUuid().getLeastSignificantBits());
-        return absent.get(random.nextInt(absent.size())).color();
-    }
 
     private static boolean canInspect(ServerPlayerEntity target, ServerPlayerEntity viewer) {
         if (viewer == target || Voodoo.isRemnant(viewer) || Memory.isBlind(viewer)) return false;
@@ -128,14 +150,19 @@ public final class PlayerObservation {
         if (target == viewer || target.getWorld() != viewer.getWorld()) return false;
         double range = GameFunctions.isPlayerSpectatingOrCreative(viewer) ? 8 : 2;
         if (viewer.squaredDistanceTo(target) > (range + 1) * (range + 1)) return false;
+        if (!batching) return lookedAt(viewer, range) == target;
+        if (!LOOKS.containsKey(viewer)) LOOKS.put(viewer, lookedAt(viewer, range));
+        return LOOKS.get(viewer) == target;
+    }
+
+    private static net.minecraft.entity.Entity lookedAt(ServerPlayerEntity viewer, double range) {
         var hit = ProjectileUtil.getCollision(viewer, entity -> entity instanceof PlayerEntity, range);
-        return hit instanceof EntityHitResult entityHit && entityHit.getEntity() == target;
+        return hit instanceof EntityHitResult entityHit ? entityHit.getEntity() : null;
     }
 
     private static String cohort(GameWorldComponent game, ServerPlayerEntity target, ServerPlayerEntity viewer) {
-        if (!Roles.isKillerCampFor(game, viewer) || Roles.hasCurrentOrPriorRole(game, viewer, Roles.MARIONETTE) || Roles.hasCurrentOrPriorRole(game, viewer, Roles.TRAITOR)
-                || Roles.hasCurrentOrPriorRole(game, viewer, Roles.LUNATIC)
-                || Roles.hasCurrentOrPriorRole(game, target, Roles.TRAITOR)) return "";
+        if (!Roles.isKillerCampFor(game, viewer) || Roles.hasCurrentOrPriorRole(game, viewer, Roles.MARIONETTE) || Roles.hasCurrentOrPriorRole(game, viewer, Roles.DELINQUENT)
+                || Roles.hasCurrentOrPriorRole(game, viewer, Roles.LUNATIC)) return "";
         Role role = game.getRole(target);
         if (role == null) return "";
         if (Roles.hasCurrentOrPriorRole(game, target, Roles.MARIONETTE)) return "btt.hud.cohort.marionette";
@@ -143,8 +170,8 @@ public final class PlayerObservation {
         if (role == Roles.UNDERCOVER) return "btt.hud.cohort.accomplice";
         if (!Roles.isKillerCampFor(game, target) && !lunatic) return "";
         if (lunatic) return "btt.hud.cohort.lunatic";
-        if (Roles.isKillerCampFor(game, target) && role != Roles.TRAITOR
-                && !Roles.isKillerSeatFor(game, target) && role != Roles.BLACKDEATH) return "btt.hud.cohort.fellow";
+        if (Roles.isKillerCampFor(game, target) && !Roles.isKillerSeatFor(game, target)
+                && role != Roles.BLACKDEATH) return "btt.hud.cohort.fellow";
         if (role == Roles.BLACKDEATH) return "btt.hud.cohort.black_death";
         if (Roles.kindOf(role) == Roles.Kind.PRINCIPAL) return "btt.hud.cohort.principal";
         if (Roles.kindOf(role) == Roles.Kind.ACCOMPLICE) return "btt.hud.cohort.accomplice";

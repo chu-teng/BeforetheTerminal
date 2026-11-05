@@ -36,11 +36,6 @@
       "btt:skill/gasoline_drip"
     ]
   },
-  "btt_pipe_hit": {
-    "sounds": [
-      "btt:item/pipe_hit"
-    ]
-  },
   "btt_bomb_beep": {
     "sounds": [
       "btt:item/bomb_beep"
@@ -121,11 +116,6 @@
       "btt:skill/metal_announcement"
     ]
   },
-  "btt_public_notice": {
-    "sounds": [
-      "btt:skill/cold_wave_contamination"
-    ]
-  },
   "btt_meeting_bell": {
     "sounds": [
       "btt:skill/meeting_bell"
@@ -157,10 +147,10 @@
       }
     ]
   },
-  "epilogue_werewolf": {
+  "epilogue_godfather": {
     "sounds": [
       {
-        "name": "btt:epilogue/werewolf",
+        "name": "btt:epilogue/godfather",
         "stream": true
       }
     ]

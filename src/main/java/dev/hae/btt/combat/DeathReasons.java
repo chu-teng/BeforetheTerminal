@@ -16,9 +16,9 @@ public final class DeathReasons {
     public static final Identifier MAGIC = Identifier.of("btt", "magic");
 
 
-
-
     public static final Identifier FAILURE = Identifier.of("btt", "failure");
+
+    public static final Identifier BREACH = Identifier.of("btt", "breach");
 
     public static final Identifier AXE = Identifier.of("btt", "axe");
 
@@ -30,8 +30,6 @@ public final class DeathReasons {
     public static final Identifier LOVER_SUICIDE = Identifier.of("btt", "lover_suicide");
 
     public static final Identifier MARTYRDOM = Identifier.of("btt", "martyrdom");
-
-    public static final Identifier MONK_DEIFY = Identifier.of("btt", "monk_deify");
 
     public static final Identifier SELF_EXECUTION = Identifier.of("btt", "self_execution");
 
@@ -47,8 +45,6 @@ public final class DeathReasons {
 
     public static final Identifier JESTER_CURTAIN = Identifier.of("btt", "jester_curtain");
 
-    public static final Identifier PIPE = Identifier.of("btt", "pipe");
-
     public static final Identifier ARROW = Identifier.of("btt", "arrow");
 
     public static final Identifier BLACKDEATH_CURTAIN = Identifier.of("btt", "blackdeath_curtain");
@@ -57,7 +53,6 @@ public final class DeathReasons {
 
     public static final Identifier DAGGER = Identifier.of("btt", "dagger");
 
-    public static final Identifier REVENGE = Identifier.of("btt", "revenge");
 
 
 

@@ -44,15 +44,7 @@ public final class CampItems {
             state.weaponCamp = camp;
             state.sync();
         }
-        String host = TraitEffects.hostFor(dev.hae.btt.faction.Camps.campRole(game, player));
-        if (!state.epilogueCrowbarGiven && !host.isEmpty()
-                && Roles.campOf(game, player) == Roles.Faction.OUTSIDER
-                && host.equals(GameState.KEY.get(player.getWorld()).epilogueType)
-                && GameFunctions.isPlayerAliveAndSurvival(player)) {
-            state.epilogueCrowbarGiven = true;
-            if (!RoleDefs.hasItem(player, WatheItems.CROWBAR)) RoleDefs.giveWithInitialCd(player, WatheItems.CROWBAR);
-            state.sync();
-        }
+
     }
 
     private static void removeAll(ServerPlayerEntity player, Item item) {

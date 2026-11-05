@@ -13,13 +13,13 @@ import net.minecraft.util.Identifier;
 public final class Angel {
     private Angel() {}
     public static void initialize(ServerPlayerEntity player) {
-        var state = PlayerState.KEY.get(player); state.angelShields = 3; state.angelTarget = ""; state.sync();
+        var state = PlayerState.KEY.get(player); state.angelShields = 0; state.angelTarget = ""; state.sync();
     }
     public static boolean ready(ServerPlayerEntity player) { return PlayerState.KEY.get(player).angelTarget.isEmpty(); }
     public static void guard(ServerPlayerEntity player, ServerPlayerEntity target) {
         if (player == target || !ready(player)) return;
         dev.hae.btt.advancement.BttAdvancements.protection(player, target);
-        var state = PlayerState.KEY.get(player); state.angelTarget = target.getUuidAsString(); state.sync();
+        var state = PlayerState.KEY.get(player); state.angelShields = 2; state.angelTarget = target.getUuidAsString(); state.sync();
     }
     public static boolean protects(ServerPlayerEntity player, ServerPlayerEntity victim) {
         return victim.getUuidAsString().equals(PlayerState.KEY.get(player).angelTarget);
@@ -33,7 +33,7 @@ public final class Angel {
     }
     public static boolean allowLethal(ServerPlayerEntity player, PlayerEntity killer, Identifier reason) {
         var state = PlayerState.KEY.get(player);
-        if (state.isDrunk() || state.angelShields <= 0 || Gunslinger.unblockable(killer, reason)) return true;
+        if (state.isDrunk() || state.angelShields <= 0) return true;
         dev.hae.btt.combat.DeathResolution.blocked(player, killer, true);
         state.angelShields--;
         state.sync();

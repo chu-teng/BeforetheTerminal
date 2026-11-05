@@ -19,10 +19,15 @@ public final class ObservationRefresh {
 
     public static void tick(ServerWorld world) {
         if (!SeatAssignment.isBttMode(world)) { MAIDS.remove(world); ROLES.remove(world); PLAYERS.remove(world); OWNERS.remove(world); return; }
-        refreshPlayers(world);
+        if (world.getPlayers().isEmpty()) { MAIDS.remove(world); ROLES.remove(world); PLAYERS.remove(world); OWNERS.remove(world); return; }
+        PlayerObservation.beginBatch(world);
+        try { refreshPlayers(world); }
+        finally { PlayerObservation.endBatch(); }
         Set<UUID> now = new HashSet<>();
-        for (var viewer : world.getPlayers())
+        for (var viewer : world.getPlayers()) {
+            CorpseView.observe(viewer);
             if (canSeeNeedCondition(viewer)) now.add(viewer.getUuid());
+        }
         Set<UUID> previous = MAIDS.put(world, now);
         if (now.equals(previous)) return;
         for (var target : world.getPlayers()) NeedsState.KEY.get(target).sync();
@@ -34,6 +39,13 @@ public final class ObservationRefresh {
         var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world);
         var savedGame = new net.minecraft.nbt.NbtCompound();
         game.writeToNbt(savedGame, world.getRegistryManager());
+        var roleSource = new net.minecraft.nbt.NbtCompound();
+        for (String key : new String[]{"GameMode", "GameStatus", "PsychosActive"})
+            if (savedGame.contains(key)) roleSource.put(key, savedGame.get(key));
+        for (var role : dev.doctor4t.wathe.api.WatheRoles.ROLES) {
+            String key = role.identifier().toString();
+            if (savedGame.contains(key)) roleSource.put(key, savedGame.get(key));
+        }
         var oldRoles = ROLES.getOrDefault(world, java.util.Map.of());
         var oldPlayers = PLAYERS.getOrDefault(world, java.util.Map.of());
         var oldOwners = OWNERS.getOrDefault(world, java.util.Map.of());
@@ -43,8 +55,8 @@ public final class ObservationRefresh {
         var savedPlayers = new java.util.HashMap<UUID, net.minecraft.nbt.NbtCompound>();
         var tracking = new java.util.HashMap<UUID, Set<UUID>>();
         for (var target : world.getPlayers()) {
-            var saved = new net.minecraft.nbt.NbtCompound();
-            dev.hae.btt.component.PlayerState.KEY.get(target).writeToNbt(saved, world.getRegistryManager());
+            var saved = dev.hae.btt.component.PlayerStateSync.observationSource(
+                    dev.hae.btt.component.PlayerState.KEY.get(target));
             savedPlayers.put(target.getUuid(), saved);
             Set<UUID> recipients = new HashSet<>();
             for (var recipient : ((org.ladysnake.cca.api.v3.component.ComponentProvider) target).getRecipientsForComponentSync())
@@ -54,11 +66,12 @@ public final class ObservationRefresh {
         for (var viewer : world.getPlayers()) {
             var ownerView = dev.hae.btt.component.PlayerStateSync.forOwner(savedPlayers.get(viewer.getUuid()), viewer);
             var ownerSnapshot = new net.minecraft.nbt.NbtCompound();
-            for (String key : new String[]{"observedGuideRole", "priorRole", "campOverride", "observedPassiveColor"})
+            for (String key : new String[]{"observedGuideRole", "priorRole", "campOverride", "observedPassiveColor", "smugglerCaptives", "smugglerReadyAt", "barberReady", "novelistRequired"})
                 if (ownerView.contains(key)) ownerSnapshot.put(key, ownerView.get(key).copy());
             ownerSnapshot.putBoolean("fullObserver", NativeRoleView.fullObserver(viewer));
             nextOwners.put(viewer.getUuid(), ownerSnapshot);
             if (!ownerSnapshot.equals(oldOwners.get(viewer.getUuid()))) {
+
                 dev.hae.btt.component.PlayerState.KEY.syncWith(viewer,
                         (org.ladysnake.cca.api.v3.component.ComponentProvider) viewer);
                 var previousOwner = oldOwners.get(viewer.getUuid());
@@ -66,14 +79,7 @@ public final class ObservationRefresh {
                     org.agmas.harpymodloader.component.WorldModifierComponent.KEY.syncWith(viewer,
                             (org.ladysnake.cca.api.v3.component.ComponentProvider) world);
             }
-            var roleView = NativeRoleView.forPlayer(savedGame, game, viewer);
-            var roleSnapshot = new net.minecraft.nbt.NbtCompound();
-            for (String key : new String[]{"GameMode", "GameStatus", "PsychosActive"})
-                if (roleView.contains(key)) roleSnapshot.put(key, roleView.get(key).copy());
-            for (var role : dev.doctor4t.wathe.api.WatheRoles.ROLES) {
-                String key = role.identifier().toString();
-                if (roleView.contains(key)) roleSnapshot.put(key, roleView.get(key).copy());
-            }
+            var roleSnapshot = NativeRoleView.forPlayer(roleSource, game, viewer);
             nextRoles.put(viewer.getUuid(), roleSnapshot);
             if (!roleSnapshot.equals(oldRoles.get(viewer.getUuid())))
                 dev.doctor4t.wathe.cca.GameWorldComponent.KEY.syncWith(viewer,
@@ -84,8 +90,7 @@ public final class ObservationRefresh {
                 var view = dev.hae.btt.component.PlayerStateSync.forPlayer(savedPlayers.get(target.getUuid()), target, viewer);
                 nextPlayers.put(pair, view);
                 if (!view.equals(oldPlayers.get(pair)))
-                    dev.hae.btt.component.PlayerState.KEY.syncWith(viewer,
-                            (org.ladysnake.cca.api.v3.component.ComponentProvider) target);
+                    dev.hae.btt.component.PlayerState.KEY.get(target).syncProjection(viewer, view);
             }
         }
         ROLES.put(world, nextRoles);

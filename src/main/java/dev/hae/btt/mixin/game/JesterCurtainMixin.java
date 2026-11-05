@@ -26,7 +26,8 @@ public abstract class JesterCurtainMixin {
         if (SeatAssignment.isBttMode(player.getWorld())
                 && GameWorldComponent.KEY.get(player.getWorld()).isRunning()
                 && Roles.hasCurrentOrPriorRole(GameWorldComponent.KEY.get(player.getWorld()), player, Roles.JESTER)
-                && GameFunctions.isPlayerAliveAndSurvival(player))
+                && GameFunctions.isPlayerAliveAndSurvival(player)
+                && !dev.hae.btt.component.PlayerState.KEY.get(player).jesterExecutioner.isEmpty())
             GameFunctions.killPlayer(player, true, player, DeathReasons.JESTER_CURTAIN);
     }
 }

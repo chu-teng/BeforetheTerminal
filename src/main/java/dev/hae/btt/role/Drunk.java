@@ -36,7 +36,7 @@ public final class Drunk {
             state.sync();
         }
 
-        if ((role == Roles.ACTOR || role == Roles.SHOUJO) && state.isFakeDead()
+        if ((role == Roles.ACTOR || role == Roles.DEVUSHKA) && state.isFakeDead()
                 && state.tenaciousTicks <= 0) state.setFakeDead(false);
         if ((role == Roles.MUYUUBYOU || role == Roles.ASTRAL) && state.isProjecting()) {
             dev.hae.btt.mechanic.SpiritWalk.forceReturn(serverPlayer, null);
@@ -60,13 +60,15 @@ public final class Drunk {
         if (role == null) return 0;
         var definition = RoleDefs.get(role);
         if (definition != null && definition.fizzleCooldown() > 0) return definition.fizzleCooldown();
-        if (role == Roles.MAGICIAN || role == Roles.RIGGER || role == Roles.JUDGE || role == Roles.PROPHET
-                || role == Roles.PUPPETEER || role == Roles.ARCHITECT || role == Roles.LOCKSMITH
-                || role == Roles.SUCCUBUS || role == Roles.BARTENDER || role == Roles.IMP
+        if (role == Roles.MAGICIAN || role == Roles.RIGGER || role == Roles.JUDGE || role == Roles.DETECTIVE || role == Roles.PROPHET
+                || role == Roles.PUPPETEER || role == Roles.ARCHITECT || role == Roles.ENGINEER
+                || role == Roles.BARTENDER || role == Roles.IMP
                 || role == Roles.EXECUTIONER || role == Roles.CANNIBAL || role == Roles.BODYGUARD) {
             return 60 * 20;
         }
-        if (role == Roles.LAWYER || role == Roles.PROFESSOR) return 120 * 20;
+        if (role == Roles.HARLOT) return RoleDefs.CD_30S;
+        if (role == Roles.LAWYER) return 60 * 20;
+        if (role == Roles.PROFESSOR) return 120 * 20;
         return 0;
     }
 
@@ -79,7 +81,7 @@ public final class Drunk {
         return role == Roles.ENGINEER
                 || role == Roles.JOURNALIST
                 || role == Roles.DOCTOR
-                || role == Roles.AGENT
+                || role == Roles.DUCE
                 || role == Roles.DETECTIVE
                 || role == Roles.INVESTIGATOR
                 || role == Roles.PROPHET;

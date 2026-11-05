@@ -4,14 +4,17 @@ import dev.hae.btt.encounter.Memory;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 @Mixin(ServerPlayerEntity.class)
 public abstract class MemoryActionBarMixin {
-    @Inject(method = "sendMessageToClient", at = @At("HEAD"), cancellable = true)
-    private void bttMemorySilence(Text message, boolean overlay, CallbackInfo ci) {
-        if (overlay && Memory.isBlind((ServerPlayerEntity) (Object) this) && !Memory.isGuessFeedback(message)) ci.cancel();
+    @WrapMethod(method = "sendMessageToClient")
+    private void bttMemoryFeedback(Text message, boolean overlay, Operation<Void> original) {
+        if (overlay && Memory.isBlind((ServerPlayerEntity)(Object)this)) {
+            message = Memory.feedback(message);
+            if (message == null) return;
+        }
+        original.call(message, overlay);
     }
 }

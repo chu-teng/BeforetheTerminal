@@ -9,11 +9,6 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import dev.hae.btt.component.PlayerState;
 
-
-
-
-
-
 @Mixin(targets = "dev.doctor4t.wathe.client.gui.RoleNameRenderer")
 public abstract class FakeDeathNametagMixin {
 

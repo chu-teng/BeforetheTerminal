@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:golden_helmet"
+    },
+    "title": {
+      "translate": "btt.advancement.draft_hidden.title"
+    },
+    "description": {
+      "translate": "btt.advancement.draft_hidden.description"
+    },
+    "show_toast": true,
+    "hidden": false,
+    "frame": "task"
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "sends_telemetry_event": false,
+  "parent": "btt:modes"
+}

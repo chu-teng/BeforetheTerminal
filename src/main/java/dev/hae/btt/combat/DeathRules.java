@@ -43,6 +43,7 @@ public final class DeathRules {
                 }
             }
         }
+        dev.hae.btt.game.Debate.clearVote(dead);
         ColdWave.onConfirmedDeath(dead, spawnBody);
         EncounterRules.confirmedDeath(dead, reason);
         playConfirmedDeathSounds(dead, reason);
@@ -93,7 +94,7 @@ public final class DeathRules {
 
     private static void playConfirmedDeathSounds(ServerPlayerEntity dead, Identifier reason) {
         var world = dead.getServerWorld();
-        if (DeathReasons.MAGIC.equals(reason) || DeathReasons.FAILURE.equals(reason)) {
+        if (DeathReasons.MAGIC.equals(reason) || DeathReasons.FAILURE.equals(reason) || DeathReasons.BREACH.equals(reason)) {
             world.playSound(null, dead.getBlockPos(), Sounds.MAGIC_DEATH,
                     SoundCategory.PLAYERS, 1.0F, 1.0F);
         }
@@ -180,12 +181,6 @@ public final class DeathRules {
             shooterState.correctExecutions++;
         }
 
-        if (gwc.getRole(victim) != null
-                && dev.hae.btt.role.Roles.SOLO_NEUTRALS.contains(gwc.getRole(victim))) {
-            dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(shooter).addToBalance(100);
-        }
-
-
         if (victim instanceof ServerPlayerEntity serverVictim2 && Traits.isKillerSide(serverVictim2)
                 && Traits.has(shooter, Traits.GREED) && Traits.isKillerSide(shooter)) {
             var victimShop = dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(victim);
@@ -202,15 +197,14 @@ public final class DeathRules {
         if ("ARCHENEMY".equals(dev.hae.btt.trait.relationship.Relationships.typeOf(victim))
 
                 && dev.hae.btt.role.Roles.isCivilianPassenger(dev.hae.btt.role.Roles.realRole(gwc, victim))
-                && identifier == GameConstants.DeathReasons.GUN
-                && dev.hae.btt.role.Colonel.executionUser(shooter, identifier)) {
+                && dev.hae.btt.trait.TraitRules.passengerExecution(victim, shooter, identifier)) {
             java.util.UUID archenemy = dev.hae.btt.trait.relationship.Relationships.partnerOf(victim);
             ServerPlayerEntity archenemyPlayer = archenemy == null ? null : (ServerPlayerEntity) world.getPlayerByUuid(archenemy);
             if (archenemyPlayer != null) {
 
 
-                dev.hae.btt.victory.SoloWin.request(world, dev.hae.btt.victory.Endings.Ending.ARCHENEMY_WIN, archenemyPlayer);
-                return;
+                PlayerState.KEY.get(archenemyPlayer).monkShields += 2;
+                PlayerState.KEY.get(archenemyPlayer).sync();
             }
         }
 
@@ -231,9 +225,7 @@ public final class DeathRules {
 
 
         var mood = dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(shooter);
-        float beforeExecutionMood = mood.getMood();
         mood.setMood(Math.max(0f, mood.getMood() - 0.4f));
-        dev.hae.btt.advancement.BttAdvancements.executionSanity(shooter, beforeExecutionMood);
 
         if (!Roles.isPassengerCampFor(gwc, shooter)) return;
 
@@ -241,7 +233,7 @@ public final class DeathRules {
         boolean riotAlive = false;
         for (ServerPlayerEntity p : world.getPlayers()) {
 
-            if (gwc.isRole(p, dev.hae.btt.role.Roles.RIOT)
+            if (gwc.isRole(p, dev.hae.btt.role.Roles.REVOLUCIONARIO)
                     && GameFunctions.isPlayerAliveAndSurvival(p)
                     && !PlayerState.KEY.get(p).isDrunk()) {
                 riotAlive = true;
@@ -255,9 +247,9 @@ public final class DeathRules {
 
 
         boolean bowKill = identifier == DeathReasons.ARROW;
-        boolean ranger = bowKill && gwc.isRole(shooter, dev.hae.btt.role.Roles.RANGER);
+        boolean xia = bowKill && gwc.isRole(shooter, dev.hae.btt.role.Roles.XIA);
 
-        boolean judgment = dev.hae.btt.encounter.Backgrounds.isActive(world, dev.hae.btt.encounter.Backgrounds.JUDGMENT);
+        boolean judgment = dev.hae.btt.game.GameModes.hasRule(world, dev.hae.btt.game.Rule.JUDGMENT);
 
 
 
@@ -268,30 +260,30 @@ public final class DeathRules {
             var definition = dev.hae.btt.role.RoleDefs.get(gwc.getRole(shooter));
             if (definition != null) definition.onMisexecution(shooter);
 
-            if (!ranger && (riotAlive || bowKill || judgment)) {
-                GameFunctions.killPlayer(shooter, true, shooter, DeathReasons.SELF_EXECUTION);
-            }
-
-            if (!ranger && Traits.has(shooter, Traits.JUSTICE)) {
+            if (!xia && (riotAlive || bowKill || judgment)) {
                 GameFunctions.killPlayer(shooter, true, shooter, DeathReasons.SELF_EXECUTION);
             }
 
 
-            if (!ranger && PlayerState.KEY.get(shooter).virginHonored) {
+
+
+            if (!xia && PlayerState.KEY.get(shooter).virginHonored) {
                 GameFunctions.killPlayer(shooter, true, shooter, DeathReasons.SELF_EXECUTION);
             }
 
             dev.hae.btt.component.GameState.KEY.get(world).misfireCount++;
             if (!riotAlive) {
                 for (ServerPlayerEntity p : world.getPlayers()) {
-                    if (gwc.canUseKillerFeatures(p)) {
-                        dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(p).addToBalance(100);
+                    var rewardKind = dev.hae.btt.role.Roles.kindOf(dev.hae.btt.role.Roles.effectiveRole(gwc, p));
+                    if (gwc.canUseKillerFeatures(p) && rewardKind != null && rewardKind.isKillerSeat()
+                            && dev.hae.btt.role.Roles.realRole(gwc,p) != dev.hae.btt.role.Roles.MERCENARY) {
+                        dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(p).addToBalance(rewardKind == dev.hae.btt.role.Roles.Kind.PRINCIPAL ? 100 : 50);
                     }
                 }
             }
         } else {
 
-            if (ranger) {
+            if (xia) {
                 GameFunctions.killPlayer(shooter, true, shooter, DeathReasons.SELF_EXECUTION);
             } else if (riotAlive) {
                 for (ServerPlayerEntity p : world.getPlayers()) {
@@ -302,20 +294,7 @@ public final class DeathRules {
             }
         }
 
-        if (!ranger && Traits.has(victim, Traits.CHASTITY)) {
-            GameFunctions.killPlayer(shooter, true, shooter, DeathReasons.SELF_EXECUTION);
-        }
 
-        if (identifier == GameConstants.DeathReasons.GUN && shooter != victim
-                && Traits.has(shooter, Traits.RECKLESS) && !bttRecklessFiring) {
-            bttRecklessFiring = true;
-            try {
-                GameFunctions.killPlayer(shooter, true, shooter, DeathReasons.SELF_EXECUTION);
-            } finally {
-                bttRecklessFiring = false;
-            }
-        }
     }
 
-    private static boolean bttRecklessFiring;
 }

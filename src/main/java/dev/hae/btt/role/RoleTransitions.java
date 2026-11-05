@@ -37,7 +37,9 @@ public final class RoleTransitions {
         boolean ownsScope = CONVERTING.add(player.getUuid());
         try { org.agmas.harpymodloader.events.ModdedRoleAssigned.EVENT.invoker().assignModdedRole(player, role); }
         finally { if (ownsScope) CONVERTING.remove(player.getUuid()); }
-        if (role == Roles.EX_UNDERCOVER) {
+        var replacementDef = RoleDefs.get(role);
+        if (replacementDef != null && replacementDef.replaced(player)) return;
+        if (role == Roles.MERCENARY) {
             java.util.List<Role> free = Roles.allRoles().stream().filter(r -> Roles.kindOf(r) == Roles.Kind.ACCOMPLICE
                     && Roles.isImplemented(r) && player.getServerWorld().getPlayers().stream().noneMatch(p -> Roles.realRole(gwc, p) == r)).toList();
             if (!free.isEmpty()) {
@@ -110,6 +112,11 @@ public final class RoleTransitions {
         pc.clearPriorRole();
         if (prior == null) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(player.getWorld());
+        if (prior == Roles.CANNIBAL) {
+            var facts = dev.hae.btt.component.GameState.KEY.get(player.getWorld()).roleEffects;
+            String key = "cannibalCamp:" + player.getUuidAsString();
+            if (facts.contains(key)) { pc.setCampOverride(facts.getString(key)); facts.remove(key); }
+        }
         gwc.addRole(player, prior);
         gwc.sync();
         reannounce(player, prior);
@@ -157,6 +164,7 @@ public final class RoleTransitions {
         int killers = 0;
         int passengers = 0;
         for (Role r : gwc.getRoles().values()) {
+            if (r == null) continue;
             if (r.canUseKiller()) killers++;
             else if (r.isInnocent()) passengers++;
         }

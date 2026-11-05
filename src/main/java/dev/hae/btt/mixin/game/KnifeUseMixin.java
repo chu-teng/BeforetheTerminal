@@ -17,6 +17,21 @@ public abstract class KnifeUseMixin {
     @WrapMethod(method = "receive")
     private void bttKnifeUse(KnifeStabPayload payload, ServerPlayNetworking.Context context, Operation<Void> original) {
         var player = context.player();
+        if (SeatAssignment.isBttMode(player.getWorld())
+                && player.getServerWorld().getEntityById(payload.target()) instanceof dev.hae.btt.entity.BloomEntity bloom) {
+            if ((!player.isCreative() && !GameFunctions.isPlayerAliveAndSurvival(player))
+                    || !player.getMainHandStack().isOf(WatheItems.KNIFE)
+                    || player.getItemCooldownManager().isCoolingDown(WatheItems.KNIFE) || !bloom.hitBy(player, 3)) return;
+            var definition = RoleDefs.get(GameWorldComponent.KEY.get(player.getWorld()).getRole(player));
+            dev.hae.btt.advancement.BttAdvancements.knifeUsed(player);
+            if (definition != null) definition.useKnife(player);
+            player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
+            player.getServerWorld().playSound(null, bloom.getBlockPos(), dev.doctor4t.wathe.index.WatheSounds.ITEM_KNIFE_STAB,
+                    net.minecraft.sound.SoundCategory.PLAYERS, 1, 1);
+            if (!player.isCreative()) player.getItemCooldownManager().set(WatheItems.KNIFE,
+                    dev.doctor4t.wathe.game.GameConstants.ITEM_COOLDOWNS.getOrDefault(WatheItems.KNIFE, 1200));
+            return;
+        }
         if (SeatAssignment.isBttMode(player.getWorld())) {
             if (!GameFunctions.isPlayerAliveAndSurvival(player) || !player.getMainHandStack().isOf(WatheItems.KNIFE)
                     || player.getItemCooldownManager().isCoolingDown(WatheItems.KNIFE)
@@ -25,6 +40,7 @@ public abstract class KnifeUseMixin {
                     || !GameFunctions.isPlayerAliveAndSurvival(target)) return;
             if (dev.hae.btt.role.Comedian.executionAttempt(player, dev.doctor4t.wathe.game.GameConstants.DeathReasons.KNIFE)) return;
             var definition = RoleDefs.get(GameWorldComponent.KEY.get(player.getWorld()).getRole(player));
+            dev.hae.btt.advancement.BttAdvancements.knifeUsed(player);
             if (definition != null) definition.useKnife(player);
         }
         original.call(payload, context);

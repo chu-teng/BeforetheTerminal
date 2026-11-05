@@ -1,13 +1,13 @@
 {
   "display": {
     "icon": {
-      "id": "minecraft:bone"
+      "id": "minecraft:iron_bars"
     },
     "title": {
-      "translate": "btt.advancement.werewolf_survivors.title"
+      "translate": "btt.advancement.cops_and_robbers.title"
     },
     "description": {
-      "translate": "btt.advancement.werewolf_survivors.description"
+      "translate": "btt.advancement.cops_and_robbers.description"
     },
     "frame": "task",
     "show_toast": true,

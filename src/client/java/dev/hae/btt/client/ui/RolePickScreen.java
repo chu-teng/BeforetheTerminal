@@ -222,7 +222,7 @@ public class RolePickScreen extends Screen {
             case ACCOMPLICE -> "btt.guide.killers.从犯凶手.title";
             case LONE -> "btt.guide.neutrals.独行中立.title";
             case OUTSIDER -> "btt.guide.neutrals.外人中立.title";
-            case MAD -> "btt.guide.neutrals.狂人中立.title";
+            case MAD -> "btt.guide.neutrals.旅人中立.title";
         };
     }
 

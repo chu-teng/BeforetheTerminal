@@ -7,7 +7,6 @@ import dev.hae.btt.role.Roles;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 
 
 public final class ActionRewards {
@@ -64,15 +63,12 @@ public final class ActionRewards {
     }
 
     public static void grantRecoveredItem(ServerPlayerEntity player) {
-        Item reward = switch (player.getRandom().nextInt(3)) {
-            case 0 -> WatheItems.LOCKPICK;
-            case 1 -> BttItems.REMOTE;
-            default -> BttItems.WALKIE_TALKIE;
-        };
+        var effects = dev.hae.btt.component.GameState.KEY.get(player.getWorld()).roleEffects;
+        var pool = java.util.List.of(WatheItems.LOCKPICK, WatheItems.CROWBAR, BttItems.REMOTE, BttItems.WALKIE_TALKIE).stream()
+                .filter(item -> !effects.getBoolean("initialItem:" + player.getUuidAsString() + ":" + net.minecraft.registry.Registries.ITEM.getId(item))).toList();
+        if (pool.isEmpty()) return;
+        Item reward = pool.get(player.getRandom().nextInt(pool.size()));
         dev.hae.btt.advancement.BttAdvancements.fact(player, "recovery");
         player.giveItemStack(new ItemStack(reward));
-        player.sendMessage(Text.translatable("btt.action.reward.task",
-                        Text.translatable(reward.getTranslationKey()))
-                .withColor(BeforeTheTerminalGameMode.FACTION_PASSENGER_COLOR), true);
     }
 }

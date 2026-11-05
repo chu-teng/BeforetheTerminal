@@ -195,8 +195,8 @@ public final class Relationships {
         }
 
         if ("TWINS".equals(type)) {
-            onCampChanged(a);
-            onCampChanged(b);
+            var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world);
+            onCampChanged(campPriority(currentCamp(a, game)) >= campPriority(currentCamp(b, game)) ? a : b);
         }
     }
 
@@ -223,15 +223,6 @@ public final class Relationships {
     }
 
 
-
-
-
-
-
-
-
-
-
     public static void onCampChanged(ServerPlayerEntity player) {
         if (player == null) return;
         PlayerState pc = PlayerState.KEY.get(player);
@@ -241,13 +232,11 @@ public final class Relationships {
         UUID partnerId = partnerOf(player);
         if (partnerId == null
                 || !(player.getServerWorld().getPlayerByUuid(partnerId) instanceof ServerPlayerEntity other)) return;
-        String mine = currentCamp(player, gwc);
-        String theirs = currentCamp(other, gwc);
-        String shared = campPriority(mine) >= campPriority(theirs) ? mine : theirs;
-        if (shared == null || shared.isEmpty()) return;
-        ServerPlayerEntity source = shared.equals(mine) ? player : other;
-        if (!shared.equals(mine)) dev.hae.btt.faction.Camps.joinCamp(player, source);
-        if (!shared.equals(theirs)) dev.hae.btt.faction.Camps.joinCamp(other, source);
+        if (!dev.hae.btt.faction.Camps.sameCamp(gwc, player, other)) {
+            if (campPriority(currentCamp(player, gwc)) >= campPriority(currentCamp(other, gwc)))
+                dev.hae.btt.faction.Camps.joinCamp(other, player);
+            else dev.hae.btt.faction.Camps.joinCamp(player, other);
+        }
     }
 
 

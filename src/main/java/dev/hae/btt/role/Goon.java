@@ -17,7 +17,8 @@ public final class Goon {
         var state = PlayerState.KEY.get(target);
         long now = target.getServerWorld().getTime();
         boolean ready = now >= state.goonNextChange;
-        PlayerState.KEY.get(caster).applyDrunk(ready ? 60 * 20 : 20);
+        if (!ready) return false;
+        PlayerState.KEY.get(caster).applyDrunk(60 * 20);
         if (ready) {
             dev.hae.btt.faction.Camps.joinCamp(target, caster);
             state.goonNextChange = now + 60 * 20;

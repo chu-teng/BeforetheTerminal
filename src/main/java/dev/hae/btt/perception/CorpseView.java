@@ -29,7 +29,6 @@ public final class CorpseView {
             dev.hae.btt.combat.DeathReasons.BOMB,
             dev.hae.btt.combat.DeathReasons.FLYING_SWORD,
             dev.hae.btt.combat.DeathReasons.COLLAPSE,
-            dev.hae.btt.combat.DeathReasons.PIPE,
             dev.hae.btt.combat.DeathReasons.DAGGER,
     };
 
@@ -38,49 +37,59 @@ public final class CorpseView {
         NbtCompound view = new NbtCompound();
         var body = corpse.playerBodyEntity;
         var game = GameWorldComponent.KEY.get(body.getWorld());
-        boolean blind = dev.hae.btt.encounter.Memory.isBlind(viewer);
-        boolean autopsy = !blind && (game.isRole(viewer, Roles.DOCTOR) || game.isRole(viewer, Roles.AGENT)
+        boolean observer = NativeRoleView.fullObserver(viewer);
+        boolean blind = !observer && dev.hae.btt.encounter.Memory.isBlind(viewer);
+        boolean autopsy = !blind && (game.isRole(viewer, Roles.DOCTOR) || game.isRole(viewer, Roles.DUCE)
                 || Traits.has(viewer, Traits.ANATOMY) || GameFunctions.isPlayerSpectatingOrCreative(viewer));
         boolean faction = !blind && game.isRole(viewer, Roles.MORTICIAN);
         boolean escape = dev.hae.btt.combat.DeathReasons.ESCAPE.equals(corpse.deathReason);
-        boolean drunk = PlayerState.KEY.get(viewer).isDrunk();
+        boolean drunk = !observer && PlayerState.KEY.get(viewer).isDrunk();
         Identifier reason = escape ? corpse.deathReason : GameConstants.DeathReasons.GENERIC;
         Role role = WatheRoles.CIVILIAN, first = role;
         int ageOffset = 0;
-        if (autopsy && !escape && !corpse.scavenged) {
+        if (autopsy && !escape && (observer || !corpse.scavenged)) {
             reason = corpse.deathReason;
             role = Roles.byId(corpse.technicalRole.toString());
             if (role == null) role = WatheRoles.CIVILIAN;
             first = Roles.byId(corpse.initialRole.toString());
-            if (first == null) first = role;
+            if (first == null || Roles.kindOf(first) == null) first = role;
             if (drunk) {
                 reason = BTT_DECOY_REASONS[decoy(body, "reason", BTT_DECOY_REASONS.length)];
                 ageOffset = decoy(body, "age", 121) - 60;
-                var pool = new java.util.ArrayList<>(WatheRoles.ROLES);
+                var pool = new java.util.ArrayList<>(Roles.allRoles());
                 pool.remove(role);
                 if (!pool.isEmpty()) role = pool.get(decoy(body, "role", pool.size()));
-                pool = new java.util.ArrayList<>(WatheRoles.ROLES);
+                pool = new java.util.ArrayList<>(Roles.allRoles());
                 pool.remove(role);
                 if (!pool.isEmpty()) first = pool.get(decoy(body, "firstrole", pool.size()));
             }
         }
-        var actual = Roles.byId(corpse.technicalRole.toString());
-        boolean passenger = actual != null && Roles.isPassengerCamp(actual);
+        boolean passenger = corpse.passengerAtDeath
+                && !(!observer && corpse.neutralAtDeath && dev.hae.btt.role.Werewolf.active(game, viewer));
         if (drunk) passenger = decoy(body, "corpse", 2) == 1;
         view.putString("deathReason", reason.toString());
         view.putString("technicalRole", role.identifier().toString());
         view.putString("initialRole", first.identifier().toString());
-        view.putBoolean("scavenged", corpse.scavenged);
+        view.putBoolean("scavenged", !observer && corpse.scavenged);
         view.putBoolean("observedAutopsy", autopsy);
         view.putBoolean("observedPassengerKnown", faction);
         view.putBoolean("observedPassenger", faction && passenger);
         int age = body.age / 20;
         if (drunk) age = Math.max(1, age + ageOffset);
-        view.putInt("observedAgeSeconds", autopsy && !escape && !corpse.scavenged ? age : 0);
-        if (game.getRole(viewer) == Roles.DOCTOR && (role == Roles.HERETIC || first == Roles.HERETIC)
-                && dev.hae.btt.ability.CorpseTargets.aimed(viewer) == body)
-            dev.hae.btt.advancement.BttAdvancements.fact(viewer, "heretic_hint");
+        view.putInt("observedAgeSeconds", autopsy && !escape && (observer || !corpse.scavenged) ? age : 0);
         return view;
+    }
+
+
+    public static void observe(ServerPlayerEntity viewer) {
+        var game = GameWorldComponent.KEY.get(viewer.getWorld());
+        if (!game.isRunning() || game.getRole(viewer) != Roles.DOCTOR) return;
+        var body = dev.hae.btt.ability.CorpseTargets.aimed(viewer);
+        if (body == null) return;
+        var view = forPlayer(CorpseState.KEY.get(body), viewer);
+        String heretic = Roles.HERETIC.identifier().toString();
+        if (heretic.equals(view.getString("technicalRole")) || heretic.equals(view.getString("initialRole")))
+            dev.hae.btt.advancement.BttAdvancements.fact(viewer, "heretic_hint");
     }
 
     private static int decoy(PlayerBodyEntity body, String salt, int bound) {

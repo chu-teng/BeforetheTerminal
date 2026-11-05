@@ -31,11 +31,31 @@ public final class ServerSettings {
     private ServerSettings() {}
     private static final Set<UUID> ADMINS = new LinkedHashSet<>();
     private static final Map<ServerWorld, RoundSettings> PENDING = new HashMap<>();
-    private static final List<String> CATEGORIES = List.of("mode", "script", "encounter");
-    public record RoundSettings(String script, String encounter) {}
+    private static final List<String> CATEGORIES = List.of("mode", "encounter", "script");
+    public record RoundSettings(String script, String encounter, java.util.Set<Rule> rules) {}
+
+
+    public static java.util.Set<Rule> customRules() {
+        BttConfig config = BttConfig.HANDLER.instance();
+        Rule base = Rule.byKey(config.serverBase);
+        if (base == null || !base.base()) base = Rule.SCRIPT;
+        java.util.Set<Rule> set = new java.util.LinkedHashSet<>(Rule.parse(config.serverRules));
+        set.removeIf(rule -> rule.base());
+        set.add(base);
+        return Rule.normalize(set);
+    }
+
+
+    public static java.util.Set<Rule> rulesFor(BeforeTheTerminalGameMode.Mode mode) {
+        return mode == BeforeTheTerminalGameMode.Mode.CUSTOM ? customRules() : mode.rules();
+    }
 
     public static BeforeTheTerminalGameMode.Mode configuredMode() {
-        try { var mode = BeforeTheTerminalGameMode.Mode.valueOf(BttConfig.HANDLER.instance().serverMode); return mode; }
+        String raw = BttConfig.HANDLER.instance().serverMode;
+
+
+        if ("DEBATE".equalsIgnoreCase(raw)) return BeforeTheTerminalGameMode.Mode.SCRIPT;
+        try { return BeforeTheTerminalGameMode.Mode.valueOf(raw); }
         catch (RuntimeException ex) { return BeforeTheTerminalGameMode.Mode.DRAFT; }
     }
     public static boolean isAdmin(UUID uuid) { return ADMINS.contains(uuid); }
@@ -52,6 +72,24 @@ public final class ServerSettings {
             if (AdminEquipment.category(stack).isEmpty()) return net.minecraft.util.TypedActionResult.pass(stack);
             if (player instanceof ServerPlayerEntity serverPlayer) useAdminControl(serverPlayer, stack);
             return net.minecraft.util.TypedActionResult.success(stack);
+        });
+
+        net.fabricmc.fabric.api.event.player.UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+            if (world.isClient()) return net.minecraft.util.ActionResult.PASS;
+            if (!(player instanceof ServerPlayerEntity from) || !(entity instanceof ServerPlayerEntity to)) return net.minecraft.util.ActionResult.PASS;
+            if (AdminEquipment.category(from.getStackInHand(hand)).isEmpty()) return net.minecraft.util.ActionResult.PASS;
+            if (!lobby(from)) return net.minecraft.util.ActionResult.PASS;
+            if (!isAdmin(from.getUuid())) {
+                from.sendMessage(Text.translatable("btt.admin.denied"), true);
+                return net.minecraft.util.ActionResult.SUCCESS;
+            }
+            if (isAdmin(to.getUuid()) || from == to) {
+                from.sendMessage(Text.translatable("btt.admin.transfer_failed"), true);
+                return net.minecraft.util.ActionResult.SUCCESS;
+            }
+            boolean ok = transfer(from, to);
+            from.sendMessage(Text.translatable(ok ? "btt.admin.transferred" : "btt.admin.transfer_failed"), true);
+            return net.minecraft.util.ActionResult.SUCCESS;
         });
         ServerLifecycleEvents.SERVER_STARTING.register(server -> { ADMINS.clear(); PENDING.clear(); });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> { ADMINS.clear(); PENDING.clear(); });
@@ -124,14 +162,44 @@ public final class ServerSettings {
         BttConfig config = BttConfig.HANDLER.instance();
         Text value = switch (category) {
             case "mode" -> Text.translatable("btt.mode." + configuredMode().name().toLowerCase(Locale.ROOT));
-            case "script" -> !configuredMode().usesScript()
+            case "script" -> configuredMode() == BeforeTheTerminalGameMode.Mode.CUSTOM
+                    ? rulesLabel(customRules())
+                    : !rulesFor(configuredMode()).contains(Rule.SCRIPT)
                     ? Text.translatable("btt.admin.no_script") : scriptName(config.serverScript);
             case "encounter" -> encounterName(config.serverEncounter);
             default -> throw new IllegalArgumentException(category);
         };
-        return Text.translatable("btt.admin.setting", Text.translatable("btt.admin." + category), value);
+        String labelKey = "script".equals(category) ? "other" : category;
+        return Text.translatable("btt.admin.setting", Text.translatable("btt.admin." + labelKey), value);
     }
     private static Text scriptName(String id) { return "random".equals(id) ? Text.translatable("btt.admin.random") : Text.translatable("btt.script." + id); }
+
+    private static Text rulesLabel(java.util.Collection<Rule> rules) {
+        Text out = Text.empty();
+        boolean first = true;
+        for (Rule rule : Rule.displayOrder()) {
+            if (!rules.contains(rule)) continue;
+            if (!first) out = out.copy().append(Text.literal("＋"));
+            out = out.copy().append(Text.translatable("btt.rule." + rule.key()));
+            first = false;
+        }
+        return first ? Text.translatable("btt.admin.none") : out;
+    }
+
+    private static void saveCustomRule(BttConfig config, String value) {
+        if (value == null || value.length() < 6) return;
+        boolean base = value.startsWith("base:");
+        Rule rule = Rule.byKey(value.substring(5));
+        if (rule == null || rule.base() != base) return;
+        if (base) {
+            config.serverBase = rule.name();
+            return;
+        }
+        java.util.Set<Rule> current = new java.util.LinkedHashSet<>(Rule.parse(config.serverRules));
+        current.removeIf(candidate -> candidate.base());
+        if (!current.remove(rule)) current.add(rule);
+        config.serverRules = Rule.toCsv(current);
+    }
     private static Text encounterName(String id) {
         return switch (id) {
             case "random" -> Text.translatable("btt.admin.random");
@@ -161,7 +229,10 @@ public final class ServerSettings {
                 config.serverMode = value;
                 if (!modeAllows(configuredMode(), config.serverEncounter)) config.serverEncounter = "random";
             }
-            case "script" -> { if (configuredMode().usesScript()) config.serverScript = value; }
+            case "script" -> {
+                if (configuredMode() == BeforeTheTerminalGameMode.Mode.CUSTOM) saveCustomRule(config, value);
+                else if (rulesFor(configuredMode()).contains(Rule.SCRIPT)) config.serverScript = value;
+            }
             case "encounter" -> { if (modeAllows(configuredMode(), value)) config.serverEncounter = value; }
             default -> { return; }
         }
@@ -180,12 +251,14 @@ public final class ServerSettings {
         var config = BttConfig.HANDLER.instance();
         String selected = switch (category) {
             case "mode" -> configuredMode().name();
-            case "script" -> configuredMode().usesScript() ? config.serverScript : "none";
+            case "script" -> configuredMode() == BeforeTheTerminalGameMode.Mode.CUSTOM
+                    ? Rule.toCsv(customRules()) : rulesFor(configuredMode()).contains(Rule.SCRIPT) ? config.serverScript : "none";
             case "encounter" -> config.serverEncounter;
             default -> "";
         };
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player,
-                new dev.hae.btt.network.AdminMenuS2CPacket(category, selected, configuredMode().name()));
+                new dev.hae.btt.network.AdminMenuS2CPacket(category, selected, configuredMode().name(),
+                        config.serverScript, config.serverEncounter, Rule.toCsv(customRules())));
     }
 
     private static void choose(ServerPlayerEntity player, String category, String value) {
@@ -197,9 +270,13 @@ public final class ServerSettings {
                 for (var mode : BeforeTheTerminalGameMode.Mode.displayOrder()) choices.add(mode.name());
             }
             case "script" -> {
-                if (!configuredMode().usesScript()) return;
-                choices.add("random");
-                for (var script : Scripts.ALL) choices.add(script.id());
+                if (configuredMode() == BeforeTheTerminalGameMode.Mode.CUSTOM) {
+                    for (Rule rule : Rule.displayOrder()) choices.add((rule.base() ? "base:" : "rule:") + rule.name());
+                } else {
+                    if (!rulesFor(configuredMode()).contains(Rule.SCRIPT)) return;
+                    choices.add("random");
+                    for (var script : Scripts.ALL) choices.add(script.id());
+                }
             }
             case "encounter" -> {
                 choices.addAll(List.of("random", "none"));
@@ -214,6 +291,7 @@ public final class ServerSettings {
     }
 
     public static boolean modeAllows(BeforeTheTerminalGameMode.Mode mode, String encounter) {
+        if (mode == BeforeTheTerminalGameMode.Mode.MOB) return encounter == null || encounter.isEmpty() || "none".equals(encounter);
         return encounter != null && (encounter.isEmpty() || Set.of("random", "none").contains(encounter)
                 || Backgrounds.IMPLEMENTED.contains(encounter));
     }
@@ -223,14 +301,16 @@ public final class ServerSettings {
         if (PENDING.containsKey(world)) return true;
         BttConfig config = BttConfig.HANDLER.instance();
         String configured = config.serverEncounter;
+        if (mode.mode == BeforeTheTerminalGameMode.Mode.MOB) configured = "none";
         if (Set.of("memory", "opposition", "admiration").contains(configured)) {
             configured = "none";
             config.serverEncounter = configured;
             BttConfig.HANDLER.save();
         }
         boolean valid = "random".equals(configured) || "none".equals(configured) || Backgrounds.IMPLEMENTED.contains(configured);
+        java.util.Set<Rule> rules = rulesFor(mode.mode);
         if (!valid || !modeAllows(mode.mode, configured)
-                || mode.mode.usesScript()
+                || rules.contains(Rule.SCRIPT)
                 && !"random".equals(config.serverScript) && Scripts.byId(config.serverScript) == null) return refuse(world);
         List<Role> fixed = new ArrayList<>(org.agmas.harpymodloader.Harpymodloader.FORCED_MODDED_ROLE_FLIP.values());
         String encounter = "random".equals(configured) ? Backgrounds.draw(world, fixed, mode.mode)
@@ -252,14 +332,14 @@ public final class ServerSettings {
             return false;
         }
         String script = "";
-        if (mode.mode.usesScript()) {
+        if (rules.contains(Rule.SCRIPT)) {
             var candidates = Scripts.ALL.stream()
                     .filter(candidate -> "random".equals(config.serverScript) || candidate.id().equals(config.serverScript))
                     .toList();
             if (candidates.isEmpty()) return refuse(world);
             script = candidates.get(world.getRandom().nextInt(candidates.size())).id();
         }
-        PENDING.put(world, new RoundSettings(script, encounter));
+        PENDING.put(world, new RoundSettings(script, encounter, rules));
         SeatAssignment.setOpposed(opposed);
         SeatAssignment.setDuplicates(Backgrounds.DUPLICATES.equals(encounter));
         return true;

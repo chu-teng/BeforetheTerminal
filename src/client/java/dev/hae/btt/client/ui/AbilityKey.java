@@ -13,14 +13,6 @@ import dev.hae.btt.network.ActionReceiver;
 import dev.hae.btt.network.AbilityC2SPacket;
 import dev.hae.btt.network.DisguiseC2SPacket;
 
-
-
-
-
-
-
-
-
 public final class AbilityKey {
     private AbilityKey() {}
 
@@ -61,7 +53,7 @@ public final class AbilityKey {
 
 
 
-            if (Roles.effectiveRole(gwc, client.player) == Roles.SHOUJO) {
+            if (Roles.effectiveRole(gwc, client.player) == Roles.DEVUSHKA) {
                 net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                         new dev.hae.btt.network.SelectC2SPacket(client.player.getUuid(), ""));
             }
@@ -84,49 +76,40 @@ public final class AbilityKey {
             return;
         }
 
-
         if (def.role == Roles.GARDENER || def.role == Roles.ENGINEER
-                || def.role == Roles.ARCHITECT || def.role == Roles.LOCKSMITH
-                || def.role == Roles.ARSONIST || def.role == Roles.ACTOR || def.role == Roles.SHOUJO
+                || def.role == Roles.ARCHITECT
+                || def.role == Roles.ARSONIST || def.role == Roles.ACTOR || def.role == Roles.DEVUSHKA
                 || def.role == Roles.PROFESSOR
                 || def.role == Roles.COLLECTOR
-                || def.role == Roles.CLEANER) {
+                || def.role == Roles.CLEANER
+                || def.role == Roles.MUYUUBYOU) {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new dev.hae.btt.network.SelectC2SPacket(client.player.getUuid(), ""));
             return;
         }
-
         if (def.role == Roles.STOWAWAY) {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new dev.hae.btt.network.AbilityC2SPacket());
             return;
         }
-
-        if (def.role == Roles.MUYUUBYOU || def.role == Roles.ASTRAL) {
+        if (def.role == Roles.ASTRAL) {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new dev.hae.btt.network.SelectC2SPacket(client.player.getUuid(), ""));
             return;
         }
-
-
         if (def.role == Roles.PHILOSOPHER) {
             dev.hae.btt.client.ui.RolePickScreen.openForAbility(client, def.role, client.player.getUuid(), null);
             return;
         }
-
-
         if (def.role == Roles.BARTENDER) {
             dev.hae.btt.client.ui.RolePickScreen.openForAbility(client, def.role, client.player.getUuid(), null);
             return;
         }
-
         if (isNearbyRole(def.role)) {
             sendAimed(client);
             return;
         }
-
     }
-
 
     public static boolean isNearbyRole(dev.doctor4t.wathe.api.Role role) {
         return RoleDefs.isNearbySkill(role);
@@ -135,18 +118,19 @@ public final class AbilityKey {
 
     public static boolean hasTip(dev.doctor4t.wathe.api.Role role) {
 
-        return (RoleDefs.get(role) != null && (RoleDefs.get(role).hasRoleChoice() || RoleDefs.get(role).hasSelf())) || isNearbyRole(role) || role == Roles.MUYUUBYOU
-                || role == Roles.GARDENER || role == Roles.AMNESIAC
-                || role == Roles.ARCHITECT || role == Roles.LOCKSMITH || role == Roles.ENGINEER
+        return (RoleDefs.get(role) != null && (RoleDefs.get(role).hasRoleChoice() || RoleDefs.get(role).hasSelf())) || isNearbyRole(role)
+                || role == Roles.GARDENER || role == Roles.AMNESIAC || role == Roles.STOWAWAY
+                || role == Roles.ARCHITECT || role == Roles.ENGINEER
 
                 || role == Roles.BARTENDER
-                || role == Roles.ARSONIST || role == Roles.ACTOR || role == Roles.SHOUJO || role == Roles.CANNIBAL
+                || role == Roles.ARSONIST || role == Roles.ACTOR || role == Roles.DEVUSHKA || role == Roles.CANNIBAL
                 || role == Roles.PROFESSOR
 
 
                 || role == Roles.PHILOSOPHER
                 || role == Roles.COLLECTOR
                 || role == Roles.ASTRAL
+                || role == Roles.MUYUUBYOU
                 || role == Roles.CLEANER;
 
     }
@@ -223,7 +207,6 @@ public final class AbilityKey {
         RoleDef def = RoleDefs.get(Roles.effectiveRole(gwc, p));
         return def != null && isUiRole(def.role);
     }
-
 
     public static boolean isUiRole(dev.doctor4t.wathe.api.Role role) {
         return isAnyRole(role);

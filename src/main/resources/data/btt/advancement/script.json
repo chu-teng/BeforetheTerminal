@@ -1,7 +1,7 @@
 {
   "display": {
     "icon": {
-      "id": "minecraft:writable_book"
+      "id": "minecraft:wooden_sword"
     },
     "title": {
       "translate": "btt.advancement.script.title"

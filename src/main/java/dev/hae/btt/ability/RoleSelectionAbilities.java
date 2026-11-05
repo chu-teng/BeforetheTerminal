@@ -21,6 +21,25 @@ import dev.hae.btt.role.Roles;
 public final class RoleSelectionAbilities {
     private RoleSelectionAbilities() {}
 
+    public static void stowawayCorpse(ServerPlayerEntity user, ServerPlayerEntity target, String ignored) {
+        var ability = dev.hae.btt.component.AbilityState.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        var game = GameWorldComponent.KEY.get(user.getWorld());
+        var role = game.getRole(target);
+        if (role == null) return;
+        ability.setCooldown(RoleDefs.CD_1MIN);
+        if (dev.hae.btt.role.Drunk.isDrunk(user)) return;
+        var body = new dev.doctor4t.wathe.entity.PlayerBodyEntity(dev.doctor4t.wathe.index.WatheEntities.PLAYER_BODY, user.getWorld());
+        body.setPlayerUuid(target.getUuid());
+        body.refreshPositionAndAngles(user.getX(), user.getY(), user.getZ(), user.getYaw(), 0);
+        var corpse = dev.hae.btt.component.CorpseState.KEY.get(body);
+        corpse.deathReason = dev.doctor4t.wathe.game.GameConstants.DeathReasons.KNIFE;
+        corpse.technicalRole = role.identifier(); corpse.initialRole = role.identifier();
+        corpse.passengerAtDeath = dev.hae.btt.role.Roles.isPassengerCampFor(game, target);
+        corpse.neutralAtDeath = dev.hae.btt.role.Roles.kindOfReal(game, target).isNeutralKind();
+        user.getServerWorld().spawnEntity(body); corpse.sync();
+    }
+
 
 
     public static void novelist(ServerPlayerEntity user, ServerPlayerEntity target, String guess) {
@@ -155,7 +174,7 @@ public final class RoleSelectionAbilities {
                     .withColor(AbilityRules.roleColor(user)), true);
             return;
         }
-        String camp = Roles.campNameOf(targetRole);
+        String camp = Roles.campName(Roles.campOf(gwc, target));
         RoleTransitions.takeOver(target, chosen);
         if (!camp.isEmpty()) {
             PlayerState tc = PlayerState.KEY.get(target);

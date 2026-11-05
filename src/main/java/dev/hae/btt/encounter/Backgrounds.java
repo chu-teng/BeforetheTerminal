@@ -48,9 +48,6 @@ public final class Backgrounds {
 
     public static final String INSIGHT = "insight";
 
-    public static final String JUDGMENT = "judgment";
-
-
     public static final String EXPRESS = "express";
     public static final String RESONANCE = "resonance";
     public static final String WHIRLPOOL = "whirlpool";
@@ -61,8 +58,11 @@ public final class Backgrounds {
     public static final String STORM = "storm";
     public static final String REBIRTH = "rebirth";
     public static final String DUPLICATES = "duplicates";
-    public static final String HYPOCRISY = "hypocrisy";
-    public static final List<String> IMPLEMENTED = List.of(ZHISHAN, JUDGMENT, EXPRESS, LIFE, DREAM, STORM, REBIRTH, DUPLICATES, HYPOCRISY);
+
+    public static final String SKIN = "skin";
+
+    public static final String COMPLICITY = "complicity";
+    public static final List<String> IMPLEMENTED = List.of(DREAM, STORM, LIFE, SKIN, COMPLICITY, REBIRTH, DUPLICATES, ZHISHAN);
 
 
     private static final int PER_LINE = 6;
@@ -90,8 +90,6 @@ public final class Backgrounds {
         return switch (id) {
 
             case ZHISHAN -> java.util.Set.of("heretic", "black_death");
-
-            case JUDGMENT -> java.util.Set.of("virgin");
             case EXPRESS -> java.util.Set.of("attendant");
             case LIFE -> java.util.Set.of("monk");
             case INTRIGUE -> java.util.Set.of("ex_undercover", "ex_traitor");
@@ -136,6 +134,7 @@ public final class Backgrounds {
         applyMode(world, players);
         if (!IMPLEMENTED.contains(id)) return;
         if (ZHISHAN.equals(id)) zhishan(world, players);
+        else if (SKIN.equals(id)) skin(world, players);
         else if (EXPRESS.equals(id)) dev.doctor4t.wathe.cca.GameTimeComponent.KEY.get(world).setTime(4 * 60 * 20);
 
     }
@@ -144,14 +143,7 @@ public final class Backgrounds {
         var game = GameWorldComponent.KEY.get(world);
         var mode = GameModes.modeOf(game);
         if (mode == BeforeTheTerminalGameMode.Mode.MEMORY) players.forEach(Memory::restoreSlip);
-        if (mode != BeforeTheTerminalGameMode.Mode.SCRIPT) return;
-        for (var player : players) {
-            var faction = dev.hae.btt.role.Roles.factionOf(dev.hae.btt.role.Roles.realRole(game, player));
-            if (faction == dev.hae.btt.role.Roles.Faction.OUTSIDER)
-                dev.hae.btt.component.PlayerState.KEY.get(player).setCampOverride(dev.hae.btt.role.Roles.CAMP_KILLER);
-            else if (faction == dev.hae.btt.role.Roles.Faction.SOLO)
-                dev.hae.btt.component.PlayerState.KEY.get(player).setCampOverride(dev.hae.btt.role.Roles.CAMP_PASSENGER);
-        }
+
     }
 
 
@@ -161,6 +153,33 @@ public final class Backgrounds {
 
 
 
+
+
+    private static void skin(ServerWorld world, List<ServerPlayerEntity> players) {
+        GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
+        Set<String> present = new java.util.HashSet<>();
+        for (ServerPlayerEntity player : players) {
+            Role role = gwc.getRole(player);
+            if (role != null) present.add(role.identifier().toString());
+        }
+        List<Role> absent = new ArrayList<>();
+        for (Role role : dev.hae.btt.role.Roles.allRoles()) {
+            if (!dev.hae.btt.role.Roles.isImplemented(role)) continue;
+            if (dev.hae.btt.role.Roles.kindOf(role) != dev.hae.btt.role.Roles.Kind.CIVILIAN
+                    && dev.hae.btt.role.Roles.kindOf(role) != dev.hae.btt.role.Roles.Kind.ENFORCER) continue;
+            if (present.contains(role.identifier().toString())) continue;
+            absent.add(role);
+        }
+        if (absent.isEmpty()) return;
+        for (ServerPlayerEntity player : players) {
+            if (dev.hae.btt.role.Roles.kindOfReal(gwc, player) != dev.hae.btt.role.Roles.Kind.PRINCIPAL) continue;
+            java.util.Collections.shuffle(absent, new java.util.Random(player.getRandom().nextLong()));
+            List<String> names = new ArrayList<>();
+            for (int i = 0; i < Math.min(3, absent.size()); i++)
+                names.add(SeatAssignment.displayName(absent.get(i)).getString());
+            player.sendMessage(Text.translatable("btt.background.skin.roles", String.join("、", names)), true);
+        }
+    }
 
     private static void zhishan(ServerWorld world, List<ServerPlayerEntity> players) {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(world);

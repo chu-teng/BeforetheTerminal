@@ -30,7 +30,6 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import dev.hae.btt.BeforeTheTerminal;
 import dev.hae.btt.network.AbilityC2SPacket;
-import dev.hae.btt.network.CorpseEatC2SPacket;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
@@ -47,13 +46,22 @@ public class BttClient implements ClientModInitializer {
     public static KeyBinding instinctModeBind;
 
     public static int lastDebatePhase = 0;
-    public static PlayerEntity target;
     public static PlayerBodyEntity targetBody;
 
     public static Map<UUID, UUID> SHUFFLED_PLAYER_ENTRIES_CACHE = Maps.newHashMap();
 
     @Override
     public void onInitializeClient() {
+        ClientPlayNetworking.registerGlobalReceiver(dev.hae.btt.network.DreamRestoreS2CPacket.ID, (payload, context) -> context.client().execute(() -> {
+            var client = context.client();
+            if (client.player != null) { client.player.deathTime = 0; client.player.hurtTime = 0; }
+            if (client.currentScreen instanceof net.minecraft.client.gui.screen.DeathScreen) client.setScreen(null);
+        }));
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            SHUFFLED_PLAYER_ENTRIES_CACHE.clear();
+            insanityTime = 0;
+            lastDebatePhase = 0;
+        });
         EntityRendererRegistry.register(BttEntities.BLOOM, net.minecraft.client.render.entity.ZombieEntityRenderer::new);
         ClientPlayNetworking.registerGlobalReceiver(dev.hae.btt.network.AdminMenuS2CPacket.ID,
                 (payload, context) -> context.client().execute(() -> context.client().setScreen(
@@ -83,8 +91,12 @@ public class BttClient implements ClientModInitializer {
             insanityTime++;
             if (insanityTime >= 20*6) {
                 insanityTime = 0;
-                List<UUID> keys = new ArrayList<UUID>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
-                List<UUID> originalkeys = new ArrayList<UUID>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
+                List<UUID> keys = new ArrayList<>();
+                if (client.world != null) for (var player : client.world.getPlayers()) {
+                    if (WatheClient.PLAYER_ENTRIES_CACHE.get(player.getUuid()) != null) keys.add(player.getUuid());
+                }
+                List<UUID> originalkeys = new ArrayList<>(keys);
+                SHUFFLED_PLAYER_ENTRIES_CACHE.clear();
                 Collections.shuffle(keys);
                 int i = 0;
                 for (UUID o : originalkeys) {

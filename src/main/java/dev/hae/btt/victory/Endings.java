@@ -48,7 +48,7 @@ public final class Endings {
 
         ASTRAL_WIN,
 
-        COLD_WAVE_WIN,
+        MESSENGER_WIN,
 
         LOVERS_WIN,
 
@@ -57,7 +57,9 @@ public final class Endings {
         HERETIC_KILLER,
 
         HERETIC_PASSENGER,
-        ANGEL_WIN, LEGION_WIN, VOODOO_WIN, WEREWOLF_WIN
+        ANGEL_WIN, LEGION_WIN, VOODOO_WIN, GODFATHER_WIN, JESTER_WIN,
+
+        MOB_PINK_WIN, MOB_AZURE_WIN, MOB_DRAW
     }
 
 
@@ -114,7 +116,7 @@ public final class Endings {
         if (name == null || name.isEmpty()) return Ending.NONE;
         try {
             Ending ending = Ending.valueOf(name);
-            return ending == Ending.RESERVED_11 ? Ending.NONE : ending;
+            return (ending == Ending.RESERVED_11 || isRelationEnding(ending)) ? Ending.NONE : ending;
         } catch (IllegalArgumentException e) {
             return Ending.NONE;
         }
@@ -150,6 +152,7 @@ public final class Endings {
             case "JOURNEY_END" -> "journey";
             case "BLOOD_EXPRESS" -> "blood";
             case "THIEF_WIN" -> "thief";
+            case "JESTER_WIN" -> "jester";
             case "NOVELIST_WIN" -> "novelist";
             case "NAKU_KORO" -> "naku";
             case "BLACKDEATH_KILLER" -> "blackdeath_killer";
@@ -164,12 +167,13 @@ public final class Endings {
             case "ANGEL_WIN" -> "angel";
             case "LEGION_WIN" -> "legion";
             case "VOODOO_WIN" -> "voodoo";
-            case "WEREWOLF_WIN" -> "werewolf";
+            case "GODFATHER_WIN" -> "godfather";
             case "EXECUTIONER_WIN" -> "executioner";
             case "ASTRAL_WIN" -> "astral";
-            case "COLD_WAVE_WIN" -> "cold_wave";
-            case "LOVERS_WIN" -> "lovers";
-            case "ARCHENEMY_WIN" -> "archenemy";
+            case "MESSENGER_WIN" -> "messenger";
+            case "MOB_PINK_WIN" -> "mob_pink";
+            case "MOB_AZURE_WIN" -> "mob_azure";
+            case "MOB_DRAW" -> "mob_draw";
             default -> null;
         };
     }
@@ -189,6 +193,7 @@ public final class Endings {
             case "blackdeath_passenger", "heretic_passenger" ->
                     0xFF000000 | BeforeTheTerminalGameMode.FACTION_PASSENGER_COLOR;
             case "thief" -> 0xFF000000 | Roles.THIEF.color();
+            case "jester" -> 0xFF000000 | Roles.JESTER.color();
             case "novelist" -> 0xFF000000 | Roles.NOVELIST.color();
             case "majo" -> 0xFF000000 | Roles.MAJO.color();
             case "messiah" -> 0xFF000000 | Roles.MESSIAH.color();
@@ -199,11 +204,12 @@ public final class Endings {
             case "legion" -> 0xFF000000 | Roles.LEGION.color();
             case "voodoo" -> 0xFF000000 | Roles.VOODOO.color();
             case "executioner" -> 0xFF000000 | Roles.EXECUTIONER.color();
-            case "werewolf" -> 0xFF000000 | Roles.WEREWOLF.color();
+            case "godfather" -> 0xFF000000 | Roles.GODFATHER.color();
             case "astral" -> 0xFF000000 | Roles.ASTRAL.color();
-            case "cold_wave" -> 0xFF000000 | Roles.COLD_WAVE.color();
-            case "lovers" -> 0xFF000000 | dev.hae.btt.trait.relationship.Relationships.COLOR_LOVERS;
-            case "archenemy" -> 0xFF000000 | dev.hae.btt.trait.relationship.Relationships.COLOR_ARCHENEMY;
+            case "messenger" -> 0xFF000000 | Roles.MESSENGER.color();
+            case "mob_pink" -> 0xFF000000 | dev.hae.btt.role.Mob.PINK_COLOR;
+            case "mob_azure" -> 0xFF000000 | dev.hae.btt.role.Mob.AZURE_COLOR;
+            case "mob_draw" -> 0xFFB0B0B0;
             default -> 0xFFFFFFFF;
         };
     }

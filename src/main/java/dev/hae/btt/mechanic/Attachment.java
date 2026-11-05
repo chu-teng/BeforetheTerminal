@@ -31,6 +31,7 @@ public final class Attachment {
 
     public static void attach(ServerPlayerEntity attached, ServerPlayerEntity host, String kind) {
         if (attached == null || host == null) return;
+        if (!"LUCID_DREAM".equals(kind) && dev.hae.btt.role.LucidDream.dreamDead(attached)) return;
         PlayerState.KEY.get(attached).setAttached(host.getUuidAsString(), kind);
         attached.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, INVISIBILITY_TICKS, 0, false, false, false));
         if (attached.getCameraEntity() != host) attached.setCameraEntity(host);
@@ -39,6 +40,7 @@ public final class Attachment {
 
     public static void detach(ServerPlayerEntity attached) {
         if (attached == null) return;
+        if (dev.hae.btt.role.LucidDream.captive(attached) && dev.hae.btt.role.LucidDream.dreamDead(attached)) return;
         PlayerState.KEY.get(attached).clearAttached();
         attached.removeStatusEffect(StatusEffects.INVISIBILITY);
         attached.setCameraEntity(attached);

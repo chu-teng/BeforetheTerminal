@@ -117,8 +117,7 @@ public final class BttMaps {
 
 
     public static boolean playableRange(BttMapEntry e) {
-        return e.maxPlayers() >= dev.hae.btt.game.SeatAssignment.MIN_PLAYERS
-                && e.minPlayers() <= dev.hae.btt.game.SeatAssignment.MAX_PLAYERS;
+        return e.maxPlayers() >= dev.hae.btt.game.SeatAssignment.MIN_PLAYERS;
     }
 
 
@@ -127,6 +126,7 @@ public final class BttMaps {
         for (BttMapEntry e : MAPS.values()) {
             if (playableRange(e)) out.add(e);
         }
+        out.sort(java.util.Comparator.comparingInt(BttMapEntry::minPlayers).thenComparingInt(BttMapEntry::maxPlayers).thenComparing(BttMapEntry::id));
         return out;
     }
 
@@ -157,7 +157,7 @@ public final class BttMaps {
         List<String> out = new ArrayList<>();
         for (BttMapEntry e : MAPS.values()) {
             if (!playableRange(e)) {
-                out.add(e.id() + " (人数区间 " + e.minPlayers() + "~" + e.maxPlayers() + " 与 BTT 6~22 无交集)");
+                out.add(e.id() + " (人数区间 " + e.minPlayers() + "~" + e.maxPlayers() + " 低于 BTT 最低6人要求)");
                 continue;
             }
             if (e.isEligible(playerCount)) continue;

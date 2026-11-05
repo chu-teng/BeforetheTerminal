@@ -9,10 +9,6 @@ import net.minecraft.util.Identifier;
 import java.util.UUID;
 import dev.hae.btt.game.GameModes;
 
-
-
-
-
 public record CorpseActionC2SPacket(UUID body, int action) implements CustomPayload {
     public static final Identifier ID_RAW = Identifier.of(GameModes.BEFORE_THE_TERMINAL.ID.getNamespace(), "corpse_action");
     public static final Id<CorpseActionC2SPacket> ID = new Id<>(ID_RAW);

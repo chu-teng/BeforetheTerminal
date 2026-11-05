@@ -25,14 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-
-
-
-
-
-
-
-
 public class PoisonGasCloudEntity extends Entity {
 
     private static final int MAX_LIFETIME = 600;

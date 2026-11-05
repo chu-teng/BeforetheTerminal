@@ -28,13 +28,13 @@ public final class MultiTargetAbilities {
         AbilityState ability = AbilityState.KEY.get(user);
         if (ability.cooldown > 0) return;
         java.util.List<java.util.UUID> chosen = picks.stream().distinct().toList();
-        if (picks.size() != 3 || chosen.size() < 2) return;
+        if (picks.size() != 3 || chosen.size() < 2 || chosen.contains(user.getUuid())) return;
         AbilityRules.setCooldown(ability, RoleDefs.CD_1MIN);
         if (chosen.size() == 2) {
             var first = user.getServerWorld().getPlayerByUuid(chosen.get(0));
             var second = user.getServerWorld().getPlayerByUuid(chosen.get(1));
             if (!(first instanceof ServerPlayerEntity a) || !(second instanceof ServerPlayerEntity b)) return;
-            boolean same = Drunk.invertIfDrunk(user, Roles.isPassengerCampFor(gwc, a) == Roles.isPassengerCampFor(gwc, b));
+            boolean same = Drunk.invertIfDrunk(user, dev.hae.btt.role.Werewolf.passenger(gwc, user, a) == dev.hae.btt.role.Werewolf.passenger(gwc, user, b));
             user.sendMessage(Text.translatable(same ? "btt.action.prophet.same" : "btt.action.prophet.different", targetNames(user, chosen))
                     .withColor(AbilityRules.roleColor(user)), true);
             return;
@@ -43,7 +43,7 @@ public final class MultiTargetAbilities {
         for (java.util.UUID uuid : chosen) {
             if (!(user.getServerWorld().getPlayerByUuid(uuid) instanceof ServerPlayerEntity p)) continue;
 
-            if (Roles.kindOfReal(gwc, p) == Roles.Kind.PRINCIPAL) {
+            if (dev.hae.btt.role.Werewolf.matchesKind(gwc, user, p, Roles.Kind.PRINCIPAL)) {
                 found = true;
                 break;
             }
@@ -72,8 +72,6 @@ public final class MultiTargetAbilities {
         }
 
     }
-
-
 
     public static void magician(ServerPlayerEntity user, java.util.List<java.util.UUID> picks) {
         AbilityState ability = AbilityState.KEY.get(user);
@@ -107,15 +105,6 @@ public final class MultiTargetAbilities {
     }
 
 
-
-
-
-
-
-
-
-
-
     public static void judge(ServerPlayerEntity user, GameWorldComponent gwc, java.util.List<java.util.UUID> picks) {
         AbilityState ability = AbilityState.KEY.get(user);
         if (ability.cooldown > 0) return;
@@ -123,21 +112,17 @@ public final class MultiTargetAbilities {
         java.util.Set<java.util.UUID> killers = new java.util.LinkedHashSet<>();
         for (ServerPlayerEntity p : user.getServerWorld().getPlayers()) {
 
-            if (Roles.isKillerSeatFor(gwc, p)) killers.add(p.getUuid());
+            if (dev.hae.btt.role.Werewolf.kind(gwc, user, p) != null && dev.hae.btt.role.Werewolf.kind(gwc, user, p).isKillerSeat()) killers.add(p.getUuid());
         }
+        boolean principalFirst = !picks.isEmpty() && user.getServerWorld().getPlayerByUuid(picks.getFirst()) instanceof ServerPlayerEntity first
+                && dev.hae.btt.role.Werewolf.matchesKind(gwc, user, first, Roles.Kind.PRINCIPAL);
         AbilityRules.setCooldown(ability, GameConstants.getInTicks(1, 0));
-        if (killers.isEmpty() || !accused.equals(killers)) {
+        if (!principalFirst || killers.isEmpty() || !accused.equals(killers)) {
             user.sendMessage(Text.translatable("btt.action.judge.rejected").withColor(Roles.JUDGE.color()), true);
             return;
         }
-        int executed = 0;
-        for (java.util.UUID uuid : killers) {
-            if (!(user.getServerWorld().getPlayerByUuid(uuid) instanceof ServerPlayerEntity victim)) continue;
-            if (!GameFunctions.isPlayerAliveAndSurvival(victim)) continue;
-            GameFunctions.killPlayer(victim, true, user, DeathReasons.MAGIC);
-            if (!GameFunctions.isPlayerAliveAndSurvival(victim)) executed++;
-        }
-        user.sendMessage(Text.translatable("btt.action.judge.success", executed)
+        dev.hae.btt.victory.EndingPipeline.requestFactionWin(user);
+        user.sendMessage(Text.translatable("btt.action.judge.success")
                 .withColor(Roles.JUDGE.color()), true);
     }
 

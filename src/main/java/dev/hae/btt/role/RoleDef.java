@@ -21,6 +21,15 @@ import dev.hae.btt.mixin.game.KillHookMixin;
 
 
 public final class RoleDef {
+    private java.util.function.Consumer<ServerPlayerEntity> wake;
+    RoleDef wake(java.util.function.Consumer<ServerPlayerEntity> handler) { wake = handler; return this; }
+    public void dispatchWake(ServerPlayerEntity player) { if (wake != null) wake.accept(player); }
+    private java.util.function.BiPredicate<ServerPlayerEntity, ServerPlayerEntity> outgoingInteraction;
+    RoleDef outgoingInteraction(java.util.function.BiPredicate<ServerPlayerEntity, ServerPlayerEntity> handler) { outgoingInteraction = handler; return this; }
+    public boolean interactWith(ServerPlayerEntity user, ServerPlayerEntity target) { return outgoingInteraction != null && outgoingInteraction.test(user, target); }
+    private java.util.function.BiPredicate<ServerPlayerEntity, ServerPlayerEntity> interaction;
+    RoleDef interaction(java.util.function.BiPredicate<ServerPlayerEntity, ServerPlayerEntity> handler) { interaction = handler; return this; }
+    public boolean interacted(ServerPlayerEntity user, ServerPlayerEntity owner) { return interaction != null && interaction.test(user, owner); }
 
     public interface Kit {
         void give(ServerPlayerEntity player);
@@ -116,8 +125,17 @@ public final class RoleDef {
         return poisonRecruit != null && poisonRecruit.test(source, victim);
     }
 
+    private java.util.function.Predicate<ServerPlayerEntity> replacement;
+    RoleDef replacement(java.util.function.Predicate<ServerPlayerEntity> handler) { replacement = handler; return this; }
+    public boolean replaced(ServerPlayerEntity player) { return replacement != null && replacement.test(player); }
+
     private dev.hae.btt.api.event.BttEvents.Death onDeath;
     private LethalHandler lethal;
+    private LethalHandler deathGate;
+    RoleDef deathGate(LethalHandler handler) { deathGate = handler; return this; }
+    public boolean allowDeath(ServerPlayerEntity victim, PlayerEntity killer, Identifier reason) {
+        return deathGate == null || deathGate.allow(victim, killer, reason);
+    }
     private java.util.function.BiPredicate<ServerPlayerEntity, ServerPlayerEntity> protects;
     private ProtectionHandler protection;
     public interface LethalHandler {

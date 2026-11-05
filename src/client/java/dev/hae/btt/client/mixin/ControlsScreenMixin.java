@@ -19,13 +19,9 @@ import java.util.List;
 
 
 
+
 @Mixin(ControlsOptionsScreen.class)
 public abstract class ControlsScreenMixin {
-
-
-
-
-
 
     @Inject(method = "getOptions", at = @At("RETURN"), cancellable = true)
     private static void btt$appendInstinctOption(GameOptions options,

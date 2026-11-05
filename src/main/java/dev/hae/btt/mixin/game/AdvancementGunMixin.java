@@ -18,6 +18,10 @@ public abstract class AdvancementGunMixin {
                 && !Boolean.TRUE.equals(stack.get(WatheDataComponentTypes.USED));
         boolean hit = player.getWorld().getEntityById(payload.target()) instanceof PlayerEntity target
                 && GameFunctions.isPlayerAliveAndSurvival(target) && target.distanceTo(player) < 65;
+        if (stack.isIn(dev.doctor4t.wathe.index.tag.WatheItemTags.GUNS)
+                && !player.getItemCooldownManager().isCoolingDown(stack.getItem())
+                && !Boolean.TRUE.equals(stack.get(WatheDataComponentTypes.USED))
+                && dev.hae.btt.trait.TraitRules.weaponAttempt(player)) return;
         original.call(payload, context);
         if (ready && (player.isCreative() || Boolean.TRUE.equals(stack.get(WatheDataComponentTypes.USED))
                 || player.getItemCooldownManager().isCoolingDown(WatheItems.DERRINGER))) BttAdvancements.derringer(player, hit);

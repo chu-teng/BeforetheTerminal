@@ -27,7 +27,7 @@ public class DebateState implements AutoSyncedComponent {
     public static final int PHASE_MEETING = 1;
     public static final int PHASE_VOTING = 2;
 
-    public static final int MEETING_TICKS = 20 * 60;
+    public static final int MEETING_TICKS = 20 * 30;
     public static final int VOTING_TICKS = 20 * 30;
 
     private final World world;

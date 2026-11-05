@@ -75,10 +75,23 @@ public final class Imp {
             successor = null;
         }
         if (successor == null || !GameFunctions.isPlayerAliveAndSurvival(successor)) return;
-        Role role = GameWorldComponent.KEY.get(deadImp.getWorld()).getRole(successor);
+        Role role = Roles.realRole(GameWorldComponent.KEY.get(deadImp.getWorld()), successor);
         if (!isNeutral(role)) return;
+        PlayerState inherited = PlayerState.KEY.get(successor);
+
+        inherited.clearPriorRole();
+        inherited.decoyRole = "";
+        inherited.moodOverride = "";
+        if (role == Roles.MARIONETTE) {
+            String selfSource = successor.getUuidAsString();
+            inherited.philosopherSources = java.util.Arrays.stream(inherited.philosopherSources.split(","))
+                    .filter(id -> !id.equals(selfSource))
+                    .collect(java.util.stream.Collectors.joining(","));
+        }
         RoleTransitions.takeOver(successor, Roles.IMP);
+        inherited.setCampOverride(Roles.CAMP_KILLER);
         PlayerState.KEY.get(successor).impMark = "";
+        inherited.sync();
         successor.sendMessage(Text.translatable("btt.action.imp.succession")
                 .withColor(Roles.IMP.color()), true);
     }

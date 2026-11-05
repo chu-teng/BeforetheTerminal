@@ -13,18 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
 
-
-
-
-
-
-
-
-
-
-
-
-
 @Mixin(WatheClient.class)
 public abstract class InstinctMixin {
 
@@ -39,19 +27,20 @@ public abstract class InstinctMixin {
             if (dev.hae.btt.role.Voodoo.isRemnant(bttClient.player)) { cir.setReturnValue(false); return; }
             GameWorldComponent gwc = GameWorldComponent.KEY.get(bttClient.player.getWorld());
             boolean eligible = gwc.getRole(bttClient.player) != null
-                    && !Roles.isPlayingAs(gwc, bttClient.player, Roles.WEREWOLF)
-                    && (!Roles.isPlayingAs(gwc, bttClient.player, Roles.TRAITOR) || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).werewolfAlly)
-                    && (Roles.isKillerCampFor(gwc, bttClient.player)
+                    && !Roles.isPlayingAs(gwc, bttClient.player, Roles.DELINQUENT)
+                    && (Roles.campOf(gwc, bttClient.player) == Roles.Faction.OUTSIDER
+                        || Roles.isKillerCampFor(gwc, bttClient.player)
                         || Roles.isPlayingAs(gwc, bttClient.player, Roles.LUNATIC)
                         || Roles.isPlayingAs(gwc, bttClient.player, Roles.ARSONIST)
                         || Roles.isPlayingAs(gwc, bttClient.player, Roles.THIEF)
-                        || dev.hae.btt.trait.Traits.has(bttClient.player, dev.hae.btt.trait.Traits.INSIGHT)
+                        || dev.hae.btt.trait.Traits.greenInstinct(bttClient.player)
                         || gwc.getRole(bttClient.player) == Roles.VOODOO
                         || gwc.getRole(bttClient.player) == Roles.MESSIAH
                         || gwc.getRole(bttClient.player) == Roles.MAJO
                         || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).isMessiahFollower()
                         || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).isMajoRecruit()
-                        || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).werewolfAlly);
+                        || dev.hae.btt.component.PlayerState.KEY.get(bttClient.player).mobTeam > 0
+                        );
             boolean allowed = dev.doctor4t.wathe.game.GameFunctions.isPlayerSpectatingOrCreative(bttClient.player)
                     || (eligible && WatheClient.isPlayerAliveAndInSurvival())
 ;

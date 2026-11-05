@@ -6,12 +6,27 @@ import net.minecraft.nbt.NbtCompound;
 public final class PlayerStateSync {
     private PlayerStateSync() {}
 
+
+    public static NbtCompound observationSource(PlayerState state) {
+        NbtCompound source = new NbtCompound();
+        source.putInt("voicePitchTicks", state.voicePitchTicks);
+        source.putBoolean("fakeDead", state.fakeDead);
+        source.putString("swallowedBy", state.swallowedBy);
+        source.putInt("voodooPhase", state.voodooPhase);
+        source.putString("voodooOwner", state.voodooOwner);
+        source.putString("priorRole", state.priorRole);
+        source.putString("campOverride", state.campOverride);
+        source.putInt("starGlowTicks", state.starGlowTicks);
+        source.putInt("mobTeam", state.mobTeam);
+        return source;
+    }
+
     public static NbtCompound forOwner(NbtCompound saved) {
         NbtCompound view = saved.copy();
+        view.remove("openingMessages"); view.remove("openingMessageAt");
         view.remove("tenaciousKiller");
         view.remove("priestKnifeUses");
         view.remove("jesterExecutioner");
-        view.remove("werewolfOwner");
         view.remove("smugglerHost");
         view.remove("smugglerReleaseAt");
         view.remove("objectiveVictims");
@@ -40,7 +55,20 @@ public final class PlayerStateSync {
         NbtCompound view = forOwner(saved);
         view.putInt("novelistRequired", (viewer.getServerWorld().getPlayers().size() + 2) / 3);
         var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(viewer.getWorld());
-        view.putBoolean("werewolfAlly", dev.hae.btt.role.Werewolf.member(viewer));
+        view.putBoolean("barberReady", dev.hae.btt.component.GameState.KEY.get(viewer.getWorld()).roleEffects.getBoolean("barber:" + viewer.getUuidAsString()));
+        int captives = 0;
+        long readyAt = Long.MAX_VALUE;
+        if (dev.hae.btt.role.Roles.hasCurrentRole(game, viewer, dev.hae.btt.role.Roles.SMUGGLER)) {
+            for (var player : viewer.getServerWorld().getPlayers()) {
+                var state = PlayerState.KEY.get(player);
+                if (state.isSwallowed() && state.smugglerHost.equals(viewer.getUuidAsString())) {
+                    captives++;
+                    readyAt = Math.min(readyAt, state.smugglerReleaseAt);
+                }
+            }
+        }
+        view.putInt("smugglerCaptives", captives);
+        view.putLong("smugglerReadyAt", captives == 0 ? 0 : readyAt);
         view.putInt("observedPassiveColor", dev.hae.btt.perception.PlayerObservation.passiveColor(game, viewer, viewer));
         var role = dev.hae.btt.role.Decoy.displayRole(viewer, dev.hae.btt.role.Roles.realRole(game, viewer));
         view.putString("observedGuideRole", game.getGameStatus() == dev.doctor4t.wathe.cca.GameWorldComponent.GameStatus.STARTING
@@ -56,7 +84,7 @@ public final class PlayerStateSync {
     public static NbtCompound forTracking(NbtCompound saved) {
         NbtCompound view = new NbtCompound();
 
-        for (String key : new String[]{"voicePitchTicks", "fakeDead", "swallowedBy"}) {
+        for (String key : new String[]{"voicePitchTicks", "fakeDead", "swallowedBy", "mobTeam"}) {
             if (saved.contains(key)) view.put(key, saved.get(key).copy());
         }
         if (view.contains("voicePitchTicks")) view.putInt("voicePitchTicks", saved.getInt("voicePitchTicks") > 0 ? 1 : 0);

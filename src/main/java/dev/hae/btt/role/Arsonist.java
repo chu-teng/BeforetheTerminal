@@ -15,27 +15,12 @@ import dev.hae.btt.network.ActionReceiver;
 import dev.hae.btt.registry.Sounds;
 import dev.hae.btt.mechanic.DelayedAbility;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 public final class Arsonist {
     private Arsonist() {}
-
 
     private static final double RANGE_SQUARED = 9.0;
 
     static final int INITIAL_CD_TICKS = 10 * 20;
-
 
     public static int baseCooldownTicks(int playerCount) {
 

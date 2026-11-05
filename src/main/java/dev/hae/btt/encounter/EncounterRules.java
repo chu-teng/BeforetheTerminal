@@ -169,9 +169,9 @@ public final class EncounterRules {
         if (world.getTime() < state.dreamDeadline) return true;
         state.dreamDeadline = 0;
         int no = state.dreamNo.isEmpty() ? 0 : state.dreamNo.split(",").length;
-        if (no < 2) for (String id : state.dreamVoters.split(",")) {
-            try { var voter = world.getPlayerByUuid(java.util.UUID.fromString(id));
-                if (voter instanceof net.minecraft.server.network.ServerPlayerEntity p && !java.util.Arrays.asList(state.dreamNo.split(",")).contains(id)) dev.hae.btt.advancement.BttAdvancements.fact(p, "dream_restart");
+        if (no < 2) for (UUID uuid : state.openingRoles.keySet()) {
+            try { var voter = world.getPlayerByUuid(uuid);
+                if (voter instanceof net.minecraft.server.network.ServerPlayerEntity p) dev.hae.btt.advancement.BttAdvancements.fact(p, "dream_restart");
             } catch (IllegalArgumentException ignored) {}
         }
         if (no >= 2) return false;

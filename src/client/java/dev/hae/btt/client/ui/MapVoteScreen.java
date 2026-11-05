@@ -31,8 +31,6 @@ public class MapVoteScreen extends Screen {
     private static final int BAR_GOLD = 0xFFF2B84B;
     private static final int BAR_GOLD_TRACK = 0x33F2B84B;
 
-    private static final int ROW_ROLLING = 0xCC4A3A16;
-
     private static final int ROULETTE_TICKS = 6 * 20;
 
     private static final int ROULETTE_SNAP_TICKS = 12;
@@ -154,15 +152,8 @@ public class MapVoteScreen extends Screen {
             boolean rolled = i == rolling;
 
             int bg = !ok ? 0xFF2B2118
-                    : rolled ? ROW_ROLLING
-                    : selected && landed ? 0xCC745329 : 0xAA49351F;
+                    : mine && !st.roulette ? 0xCC745329 : 0xAA49351F;
             ctx.fill(x0, y, x0 + MAX_WIDTH, y + ROW_HEIGHT, bg);
-            if (mine) {
-                ctx.fill(x0 - 1, y - 1, x0 + MAX_WIDTH + 1, y, BAR_GOLD);
-                ctx.fill(x0 - 1, y + ROW_HEIGHT, x0 + MAX_WIDTH + 1, y + ROW_HEIGHT + 1, BAR_GOLD);
-                ctx.fill(x0 - 1, y - 1, x0, y + ROW_HEIGHT + 1, BAR_GOLD);
-                ctx.fill(x0 + MAX_WIDTH, y - 1, x0 + MAX_WIDTH + 1, y + ROW_HEIGHT + 1, BAR_GOLD);
-            }
             if (rolled) {
 
                 ctx.fill(x0, y, x0 + MAX_WIDTH, y + 1, BAR_GOLD);

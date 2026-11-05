@@ -125,13 +125,12 @@ public final class MapVoting {
             }
         }
         if (okCount == 0) {
-            boolean headcountOk = playerCount >= dev.hae.btt.game.SeatAssignment.MIN_PLAYERS
-                    && playerCount <= dev.hae.btt.game.SeatAssignment.MAX_PLAYERS;
+            boolean headcountOk = playerCount >= dev.hae.btt.game.SeatAssignment.MIN_PLAYERS;
             BeforeTheTerminalGameMode.LOGGER.warn(
                     "[BTT] map vote not started: no eligible map for {} player(s){}; unavailable: {}",
                     playerCount,
                     headcountOk ? "" : " (BTT 开局需要 " + dev.hae.btt.game.SeatAssignment.MIN_PLAYERS
-                            + "–" + dev.hae.btt.game.SeatAssignment.MAX_PLAYERS + " 人)",
+                            + " 人以上)",
                     BttMaps.unavailableReasons(playerCount));
             return;
         }

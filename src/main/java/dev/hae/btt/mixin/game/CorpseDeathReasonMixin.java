@@ -26,6 +26,9 @@ public abstract class CorpseDeathReasonMixin {
         Identifier reason = identifier;
         CorpseState corpse = CorpseState.KEY.get(playerBodyEntity);
         corpse.deathReason = reason;
+        corpse.passengerAtDeath = dev.hae.btt.role.Roles.isPassengerCampFor(gameWorldComponent, victim);
+        var kind = dev.hae.btt.role.Roles.kindOfReal(gameWorldComponent, victim);
+        corpse.neutralAtDeath = kind != null && (kind.isNeutralKind() || kind.isKillerSeat());
         corpse.technicalRole = gameWorldComponent.getRole(victim).identifier();
 
         dev.hae.btt.component.PlayerState victimState = dev.hae.btt.component.PlayerState.KEY.get(victim);

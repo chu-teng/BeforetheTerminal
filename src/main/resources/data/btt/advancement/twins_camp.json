@@ -19,5 +19,5 @@
     }
   },
   "sends_telemetry_event": false,
-  "parent": "btt:modes"
+  "parent": "btt:lovers"
 }

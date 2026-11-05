@@ -11,6 +11,18 @@ import java.util.Deque;
 
 
 public final class DeathResolution implements AutoCloseable {
+    private static final ThreadLocal<java.util.Set<java.util.UUID>> FINAL_DEATH = new ThreadLocal<>();
+    public static boolean finalDeath(PlayerEntity player) {
+        var forced = FINAL_DEATH.get(); return forced != null && forced.contains(player.getUuid());
+    }
+    public static void forceFinalDeath(ServerPlayerEntity player, ServerPlayerEntity killer, Identifier reason, boolean body) {
+        var forced = FINAL_DEATH.get();
+        if (forced == null) { forced = new java.util.HashSet<>(); FINAL_DEATH.set(forced); }
+        boolean owns = forced.add(player.getUuid());
+        try { dev.doctor4t.wathe.game.GameFunctions.killPlayer(player, body, killer, reason); }
+        finally { if (owns) forced.remove(player.getUuid()); if (forced.isEmpty()) FINAL_DEATH.remove(); }
+    }
+
     private static final ThreadLocal<Deque<DeathResolution>> CALLS = ThreadLocal.withInitial(ArrayDeque::new);
     private final PlayerEntity victim;
     private final PlayerEntity killer;
@@ -72,9 +84,11 @@ public final class DeathResolution implements AutoCloseable {
                 || !GameWorldComponent.KEY.get(dead.getWorld()).isRunning()) return;
         confirmed = false;
         var source = killer instanceof ServerPlayerEntity player ? player : null;
+        if (dev.hae.btt.role.LucidDream.beforeDeathReactions(dead, source, reason)) return;
         notifyDeath(dead, source, reason, body);
         DeathRules.resolve(dead, killer, reason);
         BttEvents.DeathReaction.EVENT.invoker().onDeath(dead, source, reason);
+        dev.hae.btt.role.LucidDream.afterDeath(dead);
     }
 
 

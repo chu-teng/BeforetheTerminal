@@ -165,7 +165,6 @@ public abstract class EndColumnsMixin {
         return size == 0 ? 0 : Math.min(MAX_ROWS, (size + perRow - 1) / perRow);
     }
 
-
     private static void renderCard(DrawContext context, TextRenderer renderer, GameRoundEndComponent.RoundEndData entry, int x, int y) {
         PlayerListEntry ple = WatheClient.PLAYER_ENTRIES_CACHE.get(entry.player().getId());
         Identifier texture = ple == null ? null : ple.getSkinTextures().texture();

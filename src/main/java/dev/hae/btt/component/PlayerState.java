@@ -26,7 +26,7 @@ import dev.hae.btt.mechanic.DelayedAbility;
 
 
 
-public class PlayerState implements AutoSyncedComponent {
+public class PlayerState implements AutoSyncedComponent, org.ladysnake.cca.api.v3.component.tick.ClientTickingComponent {
     public static final ComponentKey<PlayerState> KEY =
             ComponentRegistry.getOrCreate(Identifier.of(BeforeTheTerminal.MOD_ID, "player"), PlayerState.class);
 
@@ -39,10 +39,15 @@ public class PlayerState implements AutoSyncedComponent {
     public transient String observedCohort = "";
     public transient String observedGroup = "";
     public transient String observedVoters = "";
+    public transient int smugglerCaptives;
+    public transient long smugglerReadyAt;
     public transient String observedGuideRole = "";
     public transient String observedInspectRole = "";
+    public transient int lateJoinTicks;
+    public transient boolean observedHideHeld;
     public transient boolean observedLookout;
 
+    public int mobTeam = 0;
     public int voodooPhase = 0;
     public String voodooOwner = "";
     public long voodooUntil = 0;
@@ -76,6 +81,8 @@ public class PlayerState implements AutoSyncedComponent {
     public int novelistRequired = 0;
 
 
+    public final java.util.List<String> openingMessages = new java.util.ArrayList<>();
+    public long openingMessageAt = 0;
     public int hunterShot = 0;
 
     public int drunkTicks = 0;
@@ -140,7 +147,7 @@ public class PlayerState implements AutoSyncedComponent {
 
     public int executionerExecuted = 0;
 
-    public int pipeTicks = 0;
+    public int axeTicks = 0;
 
     public boolean consoleOpen = false;
 
@@ -164,7 +171,7 @@ public class PlayerState implements AutoSyncedComponent {
                 player.getWorld().getRegistryKey().getValue().toString());
     }
 
-    public boolean pipeHeld = false;
+    public boolean axeHeld = false;
 
 
     public String redirectTarget = "";
@@ -237,6 +244,8 @@ public class PlayerState implements AutoSyncedComponent {
 
 
     public String initialRole = "";
+    public boolean trapped = false;
+    public boolean guruSheltered = false;
     public net.minecraft.item.ItemStack craftItem = net.minecraft.item.ItemStack.EMPTY;
     public long craftReadyAt = 0;
     public String initialWeapon = "";
@@ -273,20 +282,15 @@ public class PlayerState implements AutoSyncedComponent {
 
     public String kins = "";
 
-    public String werewolfOwner = "";
-    public boolean werewolfAlly = false;
     public String objectiveVictims = "";
     public String branchKins = "";
-    public boolean holdingFireAxe = false;
     public String drunkKins = "";
     public String drunkBranchKins = "";
 
     public String campOverride = "";
 
-
-
-
     public boolean deified = false;
+    public transient boolean barberReady;
 
     public boolean soloObjectiveComplete = false;
     public boolean memorySolved = false;
@@ -359,6 +363,9 @@ public class PlayerState implements AutoSyncedComponent {
     public int folkTicks = 0;
 
     public boolean projecting = false;
+    public int sleepwalkTicks = 0;
+    public double dreamX, dreamY, dreamZ;
+    public boolean lucidActive = false;
 
     public int gasolineHintTicks = 0;
 
@@ -374,7 +381,6 @@ public class PlayerState implements AutoSyncedComponent {
     public boolean aviateurUsed = false;
     public String smugglerHost = "";
     public long smugglerReleaseAt = 0;
-    public long traitTrustAt = 0;
     public long openingNoticeAt = 0;
     public String openingNoticeRole = "";
     public String openingNoticeLabel = "";
@@ -394,16 +400,41 @@ public class PlayerState implements AutoSyncedComponent {
 
     @Override
     public void writeSyncPacket(RegistryByteBuf buf, ServerPlayerEntity recipient) {
+        if (!player.getUuid().equals(recipient.getUuid())) {
+            var source = PlayerStateSync.observationSource(this);
+            buf.writeNbt(player instanceof ServerPlayerEntity target
+                    ? PlayerStateSync.forPlayer(source, target, recipient)
+                    : PlayerStateSync.forTracking(source));
+            return;
+        }
         NbtCompound saved = new NbtCompound();
         writeToNbt(saved, buf.getRegistryManager());
         saved.putInt("engineerCameraStatus", engineerCameraStatus);
         saved.remove("philosopherSources");
-        var ownerView = dev.hae.btt.game.SeatAssignment.isBttMode(player.getWorld())
-                && player instanceof ServerPlayerEntity owner ? PlayerStateSync.forOwner(saved, owner) : saved;
-        var view = player.getUuid().equals(recipient.getUuid()) ? ownerView
+        var view = player.getUuid().equals(recipient.getUuid())
+                ? dev.hae.btt.game.SeatAssignment.isBttMode(player.getWorld()) && player instanceof ServerPlayerEntity owner
+                    ? PlayerStateSync.forOwner(saved, owner) : saved
                 : player instanceof ServerPlayerEntity target ? PlayerStateSync.forPlayer(saved, target, recipient)
                 : PlayerStateSync.forTracking(saved);
         buf.writeNbt(view);
+    }
+
+
+    public void syncProjection(ServerPlayerEntity recipient, NbtCompound view) {
+        KEY.syncWith(recipient, (org.ladysnake.cca.api.v3.component.ComponentProvider) player,
+                (buf, receiver) -> buf.writeNbt(view), this);
+    }
+
+
+    public void syncDisplayTimers() {
+        if (player instanceof ServerPlayerEntity owner)
+            KEY.syncWith(owner, (org.ladysnake.cca.api.v3.component.ComponentProvider) player);
+    }
+
+    @Override
+    public void clientTick() {
+        if (engineerScanTicks > 0) engineerScanTicks--;
+        if (thiefRevealTicks > 0) thiefRevealTicks--;
     }
 
 
@@ -413,6 +444,11 @@ public class PlayerState implements AutoSyncedComponent {
 
     public void setMessiahFollower(boolean value) {
         this.messiahFollower = value;
+        if (value) {
+            this.majoRecruit = false;
+            this.joinedCampRole = Roles.MESSIAH.identifier().toString();
+            setCampOverride(Roles.CAMP_OUTSIDER);
+        }
         this.sync();
 
         if (value && this.player instanceof net.minecraft.server.network.ServerPlayerEntity sp) {
@@ -443,7 +479,11 @@ public class PlayerState implements AutoSyncedComponent {
 
     public void joinMajo() {
         this.majoRecruit = true;
+        this.messiahFollower = false;
+        this.joinedCampRole = Roles.MAJO.identifier().toString();
         setCampOverride(Roles.CAMP_OUTSIDER);
+        if (this.player instanceof ServerPlayerEntity owner)
+            dev.hae.btt.trait.relationship.Relationships.onCampChanged(owner);
     }
 
 
@@ -533,7 +573,6 @@ public class PlayerState implements AutoSyncedComponent {
         this.sync();
     }
 
-
     public boolean isMuted() {
         return muteTicks > 0 || cageDeadline > player.getWorld().getTime();
     }
@@ -548,8 +587,6 @@ public class PlayerState implements AutoSyncedComponent {
     public void decrementMute() {
         if (this.muteTicks > 0) this.muteTicks--;
     }
-
-
 
 
 
@@ -687,10 +724,14 @@ public class PlayerState implements AutoSyncedComponent {
         observedCohort = "";
         observedGroup = "";
         observedVoters = "";
+        smugglerCaptives = 0; smugglerReadyAt = 0;
         observedGuideRole = "";
         observedInspectRole = "";
+        observedHideHeld = false;
         observedLookout = false;
         dev.hae.btt.trait.TraitStatusEffects.clear(player);
+        if (player instanceof ServerPlayerEntity serverPlayer)
+            dev.hae.btt.trait.Traits.clearPhysicalEffects(serverPlayer);
         bttSlowFalling = false;
         bttNightVision = false;
         voodooPhase = 0; voodooOwner = ""; voodooUntil = 0;
@@ -704,8 +745,7 @@ public class PlayerState implements AutoSyncedComponent {
         roomZ = 0;
         aviateurUsed = false;
         smugglerHost = ""; smugglerReleaseAt = 0;
-        traitTrustAt = 0;
-        openingNoticeAt = 0; openingNoticeRole = ""; openingNoticeLabel = "";
+        openingNoticeAt = 0; openingNoticeRole = ""; openingNoticeLabel = ""; mobTeam = 0;
         monkShields = 0; coldWaveSanity = false;
         afterlifeShieldUsed = false;
         speakingUntil = 0;
@@ -715,6 +755,7 @@ public class PlayerState implements AutoSyncedComponent {
         hasKilled = 0;
         novelistHits = 0;
         novelistRequired = 0;
+        openingMessages.clear(); openingMessageAt = 0;
         hunterShot = 0;
         advancementRound = new NbtCompound();
         drunkTicks = 0;
@@ -747,8 +788,8 @@ public class PlayerState implements AutoSyncedComponent {
         sculptorUsed = false;
         executionerTarget = "";
         executionerExecuted = 0;
-        pipeTicks = 0;
-        pipeHeld = false;
+        axeTicks = 0;
+        axeHeld = false;
         consoleOpen = false;
         consoleDimension = "";
         redirectTarget = "";
@@ -770,6 +811,8 @@ public class PlayerState implements AutoSyncedComponent {
         priorRole = "";
         priorRoleTicks = 0;
         initialRole = "";
+        trapped = false;
+        guruSheltered = false;
         craftItem = net.minecraft.item.ItemStack.EMPTY;
         craftReadyAt = 0;
         initialWeapon = "";
@@ -781,12 +824,11 @@ public class PlayerState implements AutoSyncedComponent {
         guardedBy = "";
         guardedTicks = 0;
         parasiteHost = "";
-        holdingFireAxe = false;
         kins = "";
-        werewolfOwner = ""; werewolfAlly = false; objectiveVictims = "";
+        objectiveVictims = "";
         branchKins = ""; drunkKins = ""; drunkBranchKins = "";
         campOverride = "";
-        deified = false;
+        deified = false; barberReady = false;
         soloObjectiveComplete = false;
         memorySolved = false;
         memoryNextGuess = 0;
@@ -817,6 +859,9 @@ public class PlayerState implements AutoSyncedComponent {
         folkTicks = 0;
         swallowedMoodOk = false;
         projecting = false;
+        sleepwalkTicks = 0;
+        lucidActive = false;
+        dreamX = dreamY = dreamZ = 0;
         gasolineHintTicks = 0;
         bodyX = 0;
         bodyY = 0;
@@ -847,6 +892,9 @@ public class PlayerState implements AutoSyncedComponent {
         tag.putInt("witchUses", witchUses);
         tag.putInt("hasKilled", hasKilled);
         tag.putInt("novelistHits", novelistHits);
+        var opening = new net.minecraft.nbt.NbtList();
+        openingMessages.forEach(value -> opening.add(net.minecraft.nbt.NbtString.of(value)));
+        tag.put("openingMessages", opening); tag.putLong("openingMessageAt", openingMessageAt);
         tag.putInt("hunterShot", hunterShot);
         tag.put("advancementRound", advancementRound.copy());
         tag.putInt("drunkTicks", drunkTicks);
@@ -878,8 +926,8 @@ public class PlayerState implements AutoSyncedComponent {
         tag.putBoolean("sculptorUsed", sculptorUsed);
         tag.putString("executionerTarget", executionerTarget);
         tag.putInt("executionerExecuted", executionerExecuted);
-        tag.putInt("pipeTicks", pipeTicks);
-        tag.putBoolean("pipeHeld", pipeHeld);
+        tag.putInt("axeTicks", axeTicks);
+        tag.putBoolean("axeHeld", axeHeld);
         tag.putBoolean("consoleOpen", consoleOpen);
         tag.putString("redirectTarget", redirectTarget);
         tag.putString("redirectOwner", redirectOwner);
@@ -900,6 +948,8 @@ public class PlayerState implements AutoSyncedComponent {
         tag.putString("priorRole", priorRole);
         tag.putInt("priorRoleTicks", priorRoleTicks);
         tag.putString("initialRole", initialRole);
+        tag.putBoolean("trapped", trapped);
+        tag.putBoolean("guruSheltered", guruSheltered);
         tag.put("craftItem", craftItem.encodeAllowEmpty(registryLookup));
         tag.putLong("craftReadyAt", craftReadyAt);
         tag.putString("initialWeapon", initialWeapon);
@@ -912,7 +962,6 @@ public class PlayerState implements AutoSyncedComponent {
         tag.putInt("guardedTicks", guardedTicks);
         tag.putString("parasiteHost", parasiteHost);
         tag.putString("kins", kins);
-        tag.putString("werewolfOwner", werewolfOwner);
         tag.putString("objectiveVictims", objectiveVictims);
         tag.putString("branchKins", branchKins);
         tag.putString("drunkKins", drunkKins);
@@ -929,13 +978,13 @@ public class PlayerState implements AutoSyncedComponent {
         tag.putString("joinedCampRole", joinedCampRole);
         tag.putString("deifiedBy", deifiedBy);
         tag.putString("moodOverride", moodOverride);
+        tag.putInt("mobTeam", mobTeam);
         tag.putInt("tenaciousTicks", tenaciousTicks);
         tag.putBoolean("tenaciousUsed", tenaciousUsed);
         tag.putString("tenaciousReason", tenaciousReason);
         tag.putString("tenaciousKiller", tenaciousKiller);
         tag.putString("jesterExecutioner", jesterExecutioner);
         tag.putString("mediumRetain", mediumRetain);
-        tag.putLong("traitTrustAt", traitTrustAt);
         tag.putLong("openingNoticeAt", openingNoticeAt);
         tag.putString("openingNoticeRole", openingNoticeRole);
         tag.putString("openingNoticeLabel", openingNoticeLabel);
@@ -962,6 +1011,9 @@ public class PlayerState implements AutoSyncedComponent {
         tag.putInt("folkTicks", folkTicks);
         tag.putBoolean("swallowedMoodOk", swallowedMoodOk);
         tag.putBoolean("projecting", projecting);
+        tag.putInt("sleepwalkTicks", sleepwalkTicks);
+        tag.putDouble("dreamX", dreamX); tag.putDouble("dreamY", dreamY); tag.putDouble("dreamZ", dreamZ);
+        tag.putBoolean("lucidActive", lucidActive);
         tag.putInt("gasolineHintTicks", gasolineHintTicks);
         tag.putDouble("bodyX", bodyX);
         tag.putDouble("bodyY", bodyY);
@@ -973,13 +1025,17 @@ public class PlayerState implements AutoSyncedComponent {
         aviateurUsed = tag.getBoolean("aviateurUsed");
         smugglerHost = tag.getString("smugglerHost");
         smugglerReleaseAt = tag.getLong("smugglerReleaseAt");
+        barberReady = tag.getBoolean("barberReady");
         observedInstinctColor = tag.contains("observedInstinctColor") ? tag.getInt("observedInstinctColor") : -1;
         observedPassiveColor = tag.contains("observedPassiveColor") ? tag.getInt("observedPassiveColor") : -1;
         observedCohort = tag.getString("observedCohort");
         observedGroup = tag.getString("observedGroup");
         observedVoters = tag.getString("observedVoters");
+        smugglerCaptives = tag.getInt("smugglerCaptives");
+        smugglerReadyAt = tag.getLong("smugglerReadyAt");
         observedGuideRole = tag.getString("observedGuideRole");
         observedInspectRole = tag.getString("observedInspectRole");
+        observedHideHeld = tag.getBoolean("observedHideHeld");
         observedLookout = tag.getBoolean("observedLookout");
         bttSlowFalling = tag.getBoolean("bttSlowFalling");
         bttNightVision = tag.getBoolean("bttNightVision");
@@ -994,6 +1050,9 @@ public class PlayerState implements AutoSyncedComponent {
         this.hasKilled = tag.getInt("hasKilled");
         this.novelistHits = tag.getInt("novelistHits");
         this.novelistRequired = tag.getInt("novelistRequired");
+        openingMessages.clear();
+        for (var value : tag.getList("openingMessages", net.minecraft.nbt.NbtElement.STRING_TYPE)) openingMessages.add(value.asString());
+        openingMessageAt = tag.getLong("openingMessageAt");
         this.hunterShot = tag.getInt("hunterShot");
         advancementRound = tag.getCompound("advancementRound").copy();
         this.drunkTicks = tag.getInt("drunkTicks");
@@ -1026,8 +1085,8 @@ public class PlayerState implements AutoSyncedComponent {
         this.sculptorUsed = tag.contains("sculptorUsed") && tag.getBoolean("sculptorUsed");
         this.executionerTarget = tag.contains("executionerTarget") ? tag.getString("executionerTarget") : "";
         this.executionerExecuted = tag.getInt("executionerExecuted");
-        this.pipeTicks = tag.getInt("pipeTicks");
-        this.pipeHeld = tag.contains("pipeHeld") && tag.getBoolean("pipeHeld");
+        this.axeTicks = tag.getInt("axeTicks");
+        this.axeHeld = tag.contains("axeHeld") && tag.getBoolean("axeHeld");
         this.consoleOpen = tag.contains("consoleOpen") && tag.getBoolean("consoleOpen");
         this.redirectTarget = tag.contains("redirectTarget") ? tag.getString("redirectTarget") : "";
         this.redirectOwner = tag.contains("redirectOwner") ? tag.getString("redirectOwner") : "";
@@ -1047,6 +1106,8 @@ public class PlayerState implements AutoSyncedComponent {
         this.digestible = tag.contains("digestible") && tag.getBoolean("digestible");
         this.priorRole = tag.contains("priorRole") ? tag.getString("priorRole") : "";
         this.priorRoleTicks = tag.getInt("priorRoleTicks");
+        this.trapped = tag.getBoolean("trapped");
+        this.guruSheltered = tag.getBoolean("guruSheltered");
         this.initialRole = tag.contains("initialRole") ? tag.getString("initialRole") : "";
         this.craftItem = net.minecraft.item.ItemStack.fromNbtOrEmpty(registryLookup, tag.getCompound("craftItem"));
         this.craftReadyAt = tag.getLong("craftReadyAt");
@@ -1060,8 +1121,6 @@ public class PlayerState implements AutoSyncedComponent {
         this.guardedTicks = tag.getInt("guardedTicks");
         this.parasiteHost = tag.contains("parasiteHost") ? tag.getString("parasiteHost") : "";
         this.kins = tag.contains("kins") ? tag.getString("kins") : "";
-        this.werewolfOwner = tag.getString("werewolfOwner");
-        this.werewolfAlly = tag.getBoolean("werewolfAlly");
         this.objectiveVictims = tag.getString("objectiveVictims");
         this.branchKins = tag.getString("branchKins");
         this.drunkKins = tag.getString("drunkKins");
@@ -1078,13 +1137,13 @@ public class PlayerState implements AutoSyncedComponent {
         joinedCampRole = tag.getString("joinedCampRole");
         this.deifiedBy = tag.contains("deifiedBy") ? tag.getString("deifiedBy") : "";
         this.moodOverride = tag.contains("moodOverride") ? tag.getString("moodOverride") : "";
+        this.mobTeam = tag.contains("mobTeam") ? tag.getInt("mobTeam") : 0;
         this.tenaciousTicks = tag.getInt("tenaciousTicks");
         this.tenaciousUsed = tag.contains("tenaciousUsed") && tag.getBoolean("tenaciousUsed");
         this.tenaciousReason = tag.contains("tenaciousReason") ? tag.getString("tenaciousReason") : "";
         this.tenaciousKiller = tag.getString("tenaciousKiller");
         this.jesterExecutioner = tag.getString("jesterExecutioner");
         this.mediumRetain = tag.contains("mediumRetain") ? tag.getString("mediumRetain") : "";
-        traitTrustAt = tag.getLong("traitTrustAt");
         openingNoticeAt = tag.getLong("openingNoticeAt");
         openingNoticeRole = tag.getString("openingNoticeRole");
         openingNoticeLabel = tag.getString("openingNoticeLabel");
@@ -1112,6 +1171,9 @@ public class PlayerState implements AutoSyncedComponent {
         this.folkTicks = tag.getInt("folkTicks");
         this.swallowedMoodOk = tag.contains("swallowedMoodOk") && tag.getBoolean("swallowedMoodOk");
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
+        sleepwalkTicks = tag.getInt("sleepwalkTicks");
+        dreamX = tag.getDouble("dreamX"); dreamY = tag.getDouble("dreamY"); dreamZ = tag.getDouble("dreamZ");
+        lucidActive = tag.getBoolean("lucidActive");
         this.gasolineHintTicks = tag.getInt("gasolineHintTicks");
         this.bodyX = tag.contains("bodyX") ? tag.getDouble("bodyX") : 0;
         this.bodyY = tag.contains("bodyY") ? tag.getDouble("bodyY") : 0;

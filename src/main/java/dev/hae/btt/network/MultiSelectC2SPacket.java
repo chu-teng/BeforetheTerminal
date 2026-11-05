@@ -30,7 +30,7 @@ public record MultiSelectC2SPacket(List<UUID> picks) implements CustomPayload {
 
     private static MultiSelectC2SPacket read(PacketByteBuf buf) {
         int n = buf.readVarInt();
-        if (n < 0 || n > SeatAssignment.MAX_PLAYERS || n > buf.readableBytes() / 16) {
+        if (n < 0 || n > buf.readableBytes() / 16) {
             throw new DecoderException("Invalid BTT selection size: " + n);
         }
         List<UUID> picks = new ArrayList<>(n);

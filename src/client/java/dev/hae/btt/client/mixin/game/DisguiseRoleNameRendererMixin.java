@@ -35,7 +35,7 @@ public abstract class DisguiseRoleNameRendererMixin {
             if (instance.getWorld().getPlayerByUuid(DisguiseState.KEY.get(instance).disguise) != null) {
                 return instance.getWorld().getPlayerByUuid((DisguiseState.KEY.get(instance)).disguise).getDisplayName();
             } else {
-                Log.info(LogCategory.GENERAL, "Morphling disguise is null!!!");
+                Log.info(LogCategory.GENERAL, "[BTT] Disguise target is not available");
             }
             if (DisguiseState.KEY.get(instance).disguise.equals(MinecraftClient.getInstance().player.getUuid())) {
                 return MinecraftClient.getInstance().player.getDisplayName();

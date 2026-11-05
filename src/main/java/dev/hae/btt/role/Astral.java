@@ -72,7 +72,7 @@ public final class Astral {
             if (p == user || !GameFunctions.isPlayerAliveAndSurvival(p)) continue;
             var role = gwc.getRole(p);
             if (role == null) continue;
-            if (Roles.isKillerCampFor(gwc, p)) killers.add(p);
+            if (Roles.kindOfReal(gwc, p) == Roles.Kind.ACCOMPLICE) killers.add(p);
             else if (Roles.isPassengerCampFor(gwc, p)) passengers.add(p);
         }
         if (alive(user, pc.astralPassenger) && alive(user, pc.astralPassenger2) && alive(user, pc.astralKiller)) {

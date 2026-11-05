@@ -8,10 +8,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import dev.hae.btt.BeforeTheTerminal;
 
-
-
-
-
 public record DoorHighlightS2CPacket(BlockPos pos, boolean blasted) implements CustomPayload {
     public static final Id<DoorHighlightS2CPacket> ID =
             new Id<>(Identifier.of(BeforeTheTerminal.MOD_ID, "door_highlight"));

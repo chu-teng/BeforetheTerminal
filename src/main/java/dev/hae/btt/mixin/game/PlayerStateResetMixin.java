@@ -4,22 +4,12 @@ import dev.doctor4t.wathe.game.GameFunctions;
 import dev.hae.btt.component.AbilityState;
 import dev.hae.btt.component.CurseState;
 import dev.hae.btt.component.DisguiseState;
-import dev.hae.btt.component.ExecutionerState;
 import dev.hae.btt.component.ScavengerState;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-
-
-
-
-
-
-
-
 
 @Mixin(GameFunctions.class)
 public abstract class PlayerStateResetMixin {
@@ -29,7 +19,6 @@ public abstract class PlayerStateResetMixin {
         DisguiseState.KEY.get(player).reset();
         CurseState.KEY.get(player).reset();
         ScavengerState.KEY.get(player).reset();
-        ExecutionerState.KEY.get(player).reset();
         AbilityState.KEY.get(player).reset();
 
 

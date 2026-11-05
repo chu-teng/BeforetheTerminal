@@ -37,6 +37,6 @@ public final class AggressionTint {
         if (PlayerPsychoComponent.KEY.get(p).getPsychoTicks() > 0) return true;
         if (p.getMainHandStack().isOf(BttItems.FIRE_AXE)
                 || p.getOffHandStack().isOf(BttItems.FIRE_AXE)) return true;
-        return PlayerState.KEY.get(p).pipeTicks > 0;
+        return PlayerState.KEY.get(p).axeTicks > 0;
     }
 }

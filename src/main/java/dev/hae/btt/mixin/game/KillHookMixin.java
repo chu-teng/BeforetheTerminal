@@ -27,12 +27,27 @@ import dev.hae.btt.trait.Traits;
 
 @Mixin(GameFunctions.class)
 public abstract class KillHookMixin {
+    @com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V",
+            at = @At(value = "INVOKE", target = "Ldev/doctor4t/wathe/api/event/AllowPlayerDeath;allowDeath(Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)Z"))
+    private static boolean btt$finalDreamDeath(dev.doctor4t.wathe.api.event.AllowPlayerDeath event, PlayerEntity victim,
+                                              PlayerEntity killer, Identifier reason,
+                                              com.llamalad7.mixinextras.injector.wrapoperation.Operation<Boolean> original) {
+        return dev.hae.btt.combat.DeathResolution.finalDeath(victim) || original.call(event, victim, killer, reason);
+    }
+
+    @com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V",
+            at = @At(value = "INVOKE", target = "Ldev/doctor4t/wathe/cca/PlayerPsychoComponent;getPsychoTicks()I"))
+    private static int btt$finalDreamArmour(dev.doctor4t.wathe.cca.PlayerPsychoComponent state,
+                                          com.llamalad7.mixinextras.injector.wrapoperation.Operation<Integer> original,
+                                          @com.llamalad7.mixinextras.sugar.Local(argsOnly = true, ordinal = 0) PlayerEntity victim) {
+        return dev.hae.btt.combat.DeathResolution.finalDeath(victim) ? 0 : original.call(state);
+    }
 
 
     @com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V")
     private static void bttResolveDeath(PlayerEntity victim, boolean body, PlayerEntity killer, Identifier reason,
                                        com.llamalad7.mixinextras.injector.wrapoperation.Operation<Void> original) {
-        if (dev.hae.btt.role.Priest.protects(victim, killer, reason)) {
+        if (!dev.hae.btt.combat.DeathResolution.finalDeath(victim) && dev.hae.btt.role.Priest.protects(victim, killer, reason)) {
             if (victim instanceof ServerPlayerEntity player)
                 dev.hae.btt.combat.DeathResolution.shieldBreak(player, killer);
             return;
@@ -60,6 +75,7 @@ public abstract class KillHookMixin {
             at = @At("HEAD"), cancellable = true)
     private static void bttVirginShield(PlayerEntity victim, boolean spawnBody, PlayerEntity killer,
                                       Identifier reason, CallbackInfo ci) {
+        if (dev.hae.btt.combat.DeathResolution.finalDeath(victim)) return;
         if (!SeatAssignment.isBttMode(victim.getWorld())) return;
 
         if (reason != GameConstants.DeathReasons.GUN && reason != dev.hae.btt.combat.DeathReasons.ARROW
@@ -68,17 +84,11 @@ public abstract class KillHookMixin {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
         if (!gwc.isRole(victim, dev.hae.btt.role.Roles.VIRGIN)) return;
 
-        if (dev.hae.btt.role.Gunslinger.unblockable(killer, reason)) {
-            dev.hae.btt.combat.DeathResolution.shieldSound(virgin, killer);
-            dev.hae.btt.record.GameRecordManager.recordTalentUse(virgin, "virgin_shield", null);
-            return;
-        }
-
         if (PlayerState.KEY.get(virgin).isDrunk()) return;
 
         for (PlayerEntity p : victim.getWorld().getPlayers()) {
 
-            if (gwc.isRole(p, dev.hae.btt.role.Roles.RIOT)
+            if (gwc.isRole(p, dev.hae.btt.role.Roles.REVOLUCIONARIO)
                     && GameFunctions.isPlayerAliveAndSurvival(p)
                 && !PlayerState.KEY.get(p).isDrunk()) return;
         }
@@ -170,6 +180,7 @@ public abstract class KillHookMixin {
             at = @At("HEAD"), cancellable = true)
     private static void bttLawyerShield(PlayerEntity victim, boolean spawnBody, PlayerEntity killer,
                                         Identifier reason, CallbackInfo ci) {
+        if (dev.hae.btt.combat.DeathResolution.finalDeath(victim)) return;
         if (!SeatAssignment.isBttMode(victim.getWorld())) return;
         if (reason != GameConstants.DeathReasons.GUN) return;
         if (!(victim instanceof ServerPlayerEntity shielded)) return;

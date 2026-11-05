@@ -21,6 +21,13 @@ public final class Harpy {
         dev.hae.btt.api.event.BttEvents.Death.EVENT.register((victim, killer, reason) -> {
             var effects = GameState.KEY.get(victim.getWorld()).roleEffects;
             for (String key : List.copyOf(effects.getKeys())) {
+                if (!key.startsWith(PREFIX) || !effects.getCompound(key).getString("second").equals(victim.getUuidAsString())) continue;
+                var caster = resolve(victim.getServerWorld(), key.substring(PREFIX.length()));
+                if (caster != null && !Drunk.isDrunk(caster)
+                        && dev.hae.btt.trait.TraitRules.passengerExecution(victim, killer, reason))
+                    dev.hae.btt.victory.EndingPipeline.requestFactionWin(caster);
+            }
+            for (String key : List.copyOf(effects.getKeys())) {
                 if (key.startsWith(PREFIX) && effects.getCompound(key).getString("first").equals(victim.getUuidAsString()))
                     effects.remove(key);
             }
@@ -69,7 +76,7 @@ public final class Harpy {
                 Kidnapper.release(victim, dev.hae.btt.component.PlayerState.KEY.get(victim),
                         dev.hae.btt.mechanic.Attachment.hostOf(victim, world));
             if (victim != null && GameFunctions.isPlayerAliveAndSurvival(victim))
-                GameFunctions.killPlayer(victim, true, caster, dev.hae.btt.combat.DeathReasons.MAGIC);
+                GameFunctions.killPlayer(victim, true, caster, dev.hae.btt.combat.DeathReasons.BREACH);
         }
     }
 

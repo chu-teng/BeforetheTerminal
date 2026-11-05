@@ -12,7 +12,6 @@ import org.ladysnake.cca.api.v3.component.ComponentRegistry;
 import org.ladysnake.cca.api.v3.component.sync.AutoSyncedComponent;
 import dev.hae.btt.game.BeforeTheTerminalGameMode;
 import dev.hae.btt.victory.Endings;
-import dev.hae.btt.role.Locksmith;
 import dev.hae.btt.role.RoleDefs;
 
 
@@ -25,6 +24,8 @@ public class GameState implements AutoSyncedComponent {
     public NbtCompound serverLastRound = new NbtCompound();
     public boolean roundResultBtt = false;
     public NbtCompound roleEffects = new NbtCompound();
+    public NbtCompound lucidSnapshot = new NbtCompound();
+    public NbtCompound lucidReturns = new NbtCompound();
     public NbtCompound advancementRound = new NbtCompound();
 
     public String lastEnding = "NONE";
@@ -65,6 +66,11 @@ public class GameState implements AutoSyncedComponent {
 
 
     public String background = "";
+
+
+
+
+    public String rules = "";
 
 
 
@@ -117,7 +123,12 @@ public class GameState implements AutoSyncedComponent {
     }
 
     @Override
-    public void writeToNbt(@NotNull NbtCompound tag, @NotNull RegistryWrapper.WrapperLookup registryLookup) {
+    public void writeToNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
+        writePublicAndRules(tag, registryLookup);
+        tag.put("lucidSnapshot", lucidSnapshot.copy()); tag.put("lucidReturns", lucidReturns.copy());
+    }
+
+    private void writePublicAndRules(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         tag.put("serverLastRound", serverLastRound.copy());
         tag.putBoolean("roundResultBtt", roundResultBtt);
         tag.put("roleEffects", roleEffects.copy());
@@ -138,6 +149,7 @@ public class GameState implements AutoSyncedComponent {
         tag.putLong("lastExecutionAt", this.lastExecutionAt);
 
         tag.putString("background", this.background);
+        tag.putString("rules", this.rules);
         tag.putString("script", this.script);
         NbtCompound roster = new NbtCompound();
         openingRoles.forEach((uuid, role) -> roster.putString(uuid.toString(), role));
@@ -160,7 +172,7 @@ public class GameState implements AutoSyncedComponent {
     public void writeSyncPacket(net.minecraft.network.RegistryByteBuf buf,
                                 net.minecraft.server.network.ServerPlayerEntity recipient) {
         NbtCompound saved = new NbtCompound();
-        writeToNbt(saved, buf.getRegistryManager());
+        writePublicAndRules(saved, buf.getRegistryManager());
         buf.writeNbt(dev.hae.btt.perception.RoundView.publicState(saved));
     }
 
@@ -169,6 +181,7 @@ public class GameState implements AutoSyncedComponent {
         serverLastRound = tag.getCompound("serverLastRound").copy();
         roundResultBtt = tag.getBoolean("roundResultBtt");
         roleEffects = tag.getCompound("roleEffects").copy();
+        lucidSnapshot = tag.getCompound("lucidSnapshot").copy(); lucidReturns = tag.getCompound("lucidReturns").copy();
         killerObjectiveMet = tag.getBoolean("killerObjectiveMet");
         advancementRound = tag.getCompound("advancementRound").copy();
         if (tag.contains("lastEnding")) this.lastEnding = tag.getString("lastEnding");
@@ -186,6 +199,7 @@ public class GameState implements AutoSyncedComponent {
         if (tag.contains("misfireCount")) this.misfireCount = tag.getInt("misfireCount");
 
         this.background = tag.contains("background") ? tag.getString("background") : "";
+        this.rules = tag.contains("rules") ? tag.getString("rules") : "";
         this.script = tag.contains("script") ? tag.getString("script") : "";
         openingRoles.clear();
         NbtCompound roster = tag.getCompound("openingRoles");

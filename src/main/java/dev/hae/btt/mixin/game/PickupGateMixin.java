@@ -63,7 +63,7 @@ public abstract class PickupGateMixin {
     private static boolean btt$hasWeaponOfTheThree(PlayerEntity player) {
         for (int i = 0; i < player.getInventory().size(); i++) {
             ItemStack s = player.getInventory().getStack(i);
-            if (s.isOf(WatheItems.KNIFE) && !dev.hae.btt.role.Colonel.hypocrisy(player) || s.isOf(WatheItems.REVOLVER)
+            if (s.isOf(WatheItems.KNIFE) || s.isOf(WatheItems.REVOLVER)
                     || s.isOf(net.minecraft.item.Items.BOW)) {
                 return true;
             }

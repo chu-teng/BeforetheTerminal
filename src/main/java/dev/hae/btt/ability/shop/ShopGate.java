@@ -29,43 +29,11 @@ public final class ShopGate {
 
 
 
-    public static final List<String> EXCLUSIVE_POOL =
-
-
-            List.of("gun", "gas", "crossbow");
-
-
-    public static String drawExclusive(net.minecraft.world.World world) {
-
-        if (dev.hae.btt.game.GameModes.isDebate(world)) return "";
-        return EXCLUSIVE_POOL.get(world.getRandom().nextInt(EXCLUSIVE_POOL.size()));
-    }
-
-
-    public static ShopEntry exclusiveEntry(String id) {
-        if (id == null) return null;
-        return switch (id) {
-
-            case "gun" -> new ShopEntry(WatheItems.REVOLVER.getDefaultStack(), 400, ShopEntry.Type.WEAPON);
-
-
-            case "crossbow" -> new ShopEntry(net.minecraft.item.Items.CROSSBOW.getDefaultStack(), 400, ShopEntry.Type.WEAPON);
-
-            case "gas" -> new ShopEntry(new ItemStack(BttItems.POISON_GAS_GRENADE), 200, ShopEntry.Type.WEAPON);
-            default -> null;
-        };
-    }
-
-
-
-
-
 
 
 
     public static List<ShopEntry> build(net.minecraft.world.World world, @Nullable PlayerEntity buyer) {
-        ShopBuilder builder = new ShopBuilder(world, buyer, BTT_ENTRIES);
-        builder.add(exclusiveEntry(dev.hae.btt.component.ShopState.KEY.get(world).exclusive));
+        ShopBuilder builder = new ShopBuilder(world, buyer, catalogue(world, buyer));
         BttEvents.BuildShopEntries.EVENT.invoker().onBuild(world, buyer, builder);
         List<ShopEntry> entries = builder.build();
 
@@ -77,7 +45,7 @@ public final class ShopGate {
 
 
     public static final List<ShopEntry> BTT_ENTRIES = List.of(
-            new ShopEntry(WatheItems.GRENADE.getDefaultStack(), 250, ShopEntry.Type.WEAPON),
+            new ShopEntry(BttItems.POISON_GAS_GRENADE.getDefaultStack(), 200, ShopEntry.Type.WEAPON),
 
             new ShopEntry(WatheItems.PSYCHO_MODE.getDefaultStack(), 350, ShopEntry.Type.WEAPON) {
                 @Override
@@ -105,10 +73,46 @@ public final class ShopGate {
             }
     );
 
+    public static boolean canAccess(dev.doctor4t.wathe.cca.GameWorldComponent game, PlayerEntity player) {
+        var identity = Roles.realRole(game, player);
+        if (identity == Roles.DELINQUENT || identity == Roles.MARIONETTE || identity == Roles.TRAITOR || identity == Roles.BLACKDEATH) return false;
+        var role = Roles.effectiveRole(game, player);
+        var kind = Roles.kindOf(role);
+        return role == Roles.CHESS_PLAYER || kind != null && (kind.isKillerSeat() || kind == Roles.Kind.LONE || kind == Roles.Kind.OUTSIDER);
+    }
+    private static ShopEntry entry(net.minecraft.item.Item item, int price, ShopEntry.Type type) { return new ShopEntry(item.getDefaultStack(), price, type); }
+    private static ShopEntry potion(net.minecraft.registry.entry.RegistryEntry<net.minecraft.potion.Potion> potion, int price) {
+        return new ShopEntry(net.minecraft.component.type.PotionContentsComponent.createStack(net.minecraft.item.Items.POTION, potion), price, ShopEntry.Type.TOOL);
+    }
+    private static List<ShopEntry> catalogue(net.minecraft.world.World world, PlayerEntity buyer) {
+        if (buyer == null) return List.of();
+        var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world);
+        if (!canAccess(game, buyer)) return List.of();
+        var role = Roles.effectiveRole(game, buyer); var kind = Roles.kindOf(role);
+        var tool = ShopEntry.Type.TOOL; var weapon = ShopEntry.Type.WEAPON; var poison = ShopEntry.Type.POISON;
+        var blackout = BTT_ENTRIES.getLast();
+        if (kind == Roles.Kind.LONE) return List.of(entry(BttItems.MASTER_KEY,50,tool),entry(net.minecraft.item.Items.WIND_CHARGE,150,tool),entry(net.minecraft.item.Items.ENDER_PEARL,150,tool),potion(net.minecraft.potion.Potions.NIGHT_VISION,50),potion(net.minecraft.potion.Potions.STRONG_SWIFTNESS,150),potion(net.minecraft.potion.Potions.INVISIBILITY,300));
+        if (kind == Roles.Kind.OUTSIDER) return List.of(entry(WatheItems.LOCKPICK,25,tool),entry(WatheItems.CROWBAR,25,tool),entry(WatheItems.POISON_VIAL,25,poison),entry(WatheItems.SCORPION,25,poison),entry(BttItems.REMOTE,100,poison),entry(BttItems.FAKE_REVOLVER,25,tool),entry(net.minecraft.item.Items.WIND_CHARGE,150,tool),entry(net.minecraft.item.Items.ENDER_PEARL,200,tool));
+        if (kind == Roles.Kind.PRINCIPAL) return List.of(entry(net.minecraft.item.Items.CROSSBOW,250,weapon),entry(WatheItems.GRENADE,350,weapon),entry(WatheItems.REVOLVER,400,weapon),entry(WatheItems.CROWBAR,25,tool),entry(BttItems.FAKE_REVOLVER,25,tool),entry(BttItems.MASTER_KEY,50,tool),entry(BttItems.MICRO_WALKIE_TALKIE,50,tool),entry(WatheItems.BODY_BAG,50,tool),potion(net.minecraft.potion.Potions.STRONG_SWIFTNESS,150),blackout);
+        return BTT_ENTRIES;
+    }
+
 
     public static void init() {
-        BeforeTheTerminalGameMode.LOGGER.info(
-                "[BTT] shop builder: base entries = {} + 1 exclusive {} (bolt + master key; crowbar off-shelf)",
-                BTT_ENTRIES.size(), EXCLUSIVE_POOL);
+        dev.hae.btt.api.event.BttEvents.TaskCompleted.EVENT.register((player, task) -> {
+            var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(player.getWorld());
+            if (game.isRunning() && Roles.hasCurrentRole(game, player, Roles.CHESS_PLAYER)) PlayerShopComponent.KEY.get(player).addToBalance(50);
+        });
+        dev.hae.btt.api.event.BttEvents.Death.EVENT.register((victim, killer, reason) -> {
+            if (killer == null || killer == victim) return;
+            var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(victim.getWorld());
+            if (!game.isRunning() || !canAccess(game,killer)) return;
+            boolean chess = Roles.hasCurrentRole(game,killer,Roles.CHESS_PLAYER);
+            if (chess) {
+                var kind = Roles.kindOfReal(game,victim);
+                if (kind != null && kind.isNeutralKind() && dev.hae.btt.trait.TraitRules.passengerExecution(victim,killer,reason)) PlayerShopComponent.KEY.get(killer).addToBalance(200);
+            } else if (!game.canUseKillerFeatures(killer)) PlayerShopComponent.KEY.get(killer).addToBalance(100);
+        });
+        BeforeTheTerminalGameMode.LOGGER.info("[BTT] fixed role shop catalogues registered");
     }
 }

@@ -66,6 +66,8 @@ public abstract class RoundEndRoleMixin {
 
 
     private Role btt$initialRole(java.util.UUID uuid) {
+        Role snapshot = dev.hae.btt.role.Roles.byId(dev.hae.btt.component.GameState.KEY.get(world).roleEffects.getString("initialRole:" + uuid));
+        if (snapshot != null) return snapshot;
         Role current = GameWorldComponent.KEY.get(world).getRole(uuid);
         net.minecraft.entity.player.PlayerEntity p = world.getPlayerByUuid(uuid);
         if (p != null) {

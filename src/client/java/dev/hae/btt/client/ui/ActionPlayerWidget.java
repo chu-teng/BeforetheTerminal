@@ -9,15 +9,10 @@ import dev.hae.btt.client.ui.select.SelectPlayerWidget;
 
 import java.util.UUID;
 
-
-
-
-
-
 public class ActionPlayerWidget extends SelectPlayerWidget {
     public ActionPlayerWidget(LimitedInventoryScreen screen, int x, int y, UUID targetUUID, PlayerListEntry targetPlayerEntry) {
         super(screen, x, y, targetUUID, targetPlayerEntry, a -> {
-            if (AbilityState.KEY.get(screen.player).cooldown > 0) return;
+            if (AbilityState.KEY.get(screen.player).cooldown > 0 && !AbilityState.KEY.get(screen.player).canForce()) return;
 
             screen.player.playSound(dev.hae.btt.registry.Sounds.UI_KEY_E, 1.0F, 1.0F);
 
@@ -25,6 +20,8 @@ public class ActionPlayerWidget extends SelectPlayerWidget {
 
             GameWorldComponent gwc = GameWorldComponent.KEY.get(screen.player.getWorld());
             dev.doctor4t.wathe.api.Role actingRole = dev.hae.btt.role.Roles.effectiveRole(gwc, screen.player);
+            if (actingRole == dev.hae.btt.role.Roles.BARBER
+                    && !dev.hae.btt.component.PlayerState.KEY.get(screen.player).barberReady) return;
             if (AbilityKey.isMorphRole(actingRole)) {
                 if (MultiSelectState.picks().isEmpty()) {
                     var target = screen.player.getWorld().getPlayerByUuid(targetUUID);

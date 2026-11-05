@@ -33,7 +33,7 @@ public abstract class InfiniteMoodMixin {
     }
 
 
-    @Redirect(method = "serverTick",
+    @Redirect(method = {"serverTick", "clientTick"},
             at = @At(value = "INVOKE", ordinal = 0,
                     target = "Ldev/doctor4t/wathe/cca/PlayerMoodComponent;setMood(F)V"))
     private void btt$redirectFirstSetMood(PlayerMoodComponent self, float value) {
@@ -41,6 +41,6 @@ public abstract class InfiniteMoodMixin {
             self.setMood(1f);
             return;
         }
-        self.setMood(value);
+        if (!dev.hae.btt.role.Guru.sheltered(player)) self.setMood(value);
     }
 }

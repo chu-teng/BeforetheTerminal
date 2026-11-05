@@ -108,6 +108,8 @@ public final class Flowers {
                 bloom.refreshPositionAndAngles(f.pos.getX() + 0.5, f.pos.getY(), f.pos.getZ() + 0.5, 0, 0);
                 world.spawnEntity(bloom);
                 f.entity = bloom;
+                if (world.getPlayerByUuid(f.gardener) instanceof ServerPlayerEntity gardener)
+                    dev.hae.btt.advancement.BttAdvancements.flowerMatured(gardener);
                 world.playSound(null, f.pos, Sounds.FLOWER_GROW,
                         net.minecraft.sound.SoundCategory.BLOCKS, 1.0F, 0.8F);
             }

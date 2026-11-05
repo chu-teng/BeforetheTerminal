@@ -43,12 +43,19 @@ public abstract class AbilityHudMixin {
             Role effective = dev.hae.btt.role.Roles.effectiveRole(gwc, client.player);
             if (effective == null || !(AbilityKey.hasTip(effective) || AbilityKey.isAnyRole(effective)
                     || effective == dev.hae.btt.role.Roles.STOWAWAY || effective == dev.hae.btt.role.Roles.THIEF)) return;
-            if (AbilityKey.isAnyRole(effective)) return;
+            if (AbilityKey.isAnyRole(effective) && !AbilityKey.hasTip(effective)) return;
             int cooldown = AbilityState.KEY.get(client.player).cooldown;
-            Text bind = AbilityKey.isAnyRole(effective) ? client.options.inventoryKey.getBoundKeyLocalizedText()
-                    : BttClient.abilityBind.getBoundKeyLocalizedText();
+            Text bind = BttClient.abilityBind.getBoundKeyLocalizedText();
+            var definition = dev.hae.btt.role.RoleDefs.get(effective);
+            boolean self = definition != null && definition.hasSelf()
+                    || effective == dev.hae.btt.role.Roles.ACTOR || effective == dev.hae.btt.role.Roles.DEVUSHKA
+                    || effective == dev.hae.btt.role.Roles.ASTRAL
+                    || effective == dev.hae.btt.role.Roles.STOWAWAY;
             Text generic = cooldown > 0 ? Text.translatable("btt.memory.cooldown", (cooldown + 19) / 20)
-                    : Text.translatable(AbilityKey.isNearbyRole(effective) ? "btt.memory.nearby" : "btt.memory.use", bind);
+                    : Text.translatable(effective == dev.hae.btt.role.Roles.AMNESIAC || effective == dev.hae.btt.role.Roles.CANNIBAL
+                            || effective == dev.hae.btt.role.Roles.THIEF ? "btt.memory.corpse"
+                            : AbilityKey.isNearbyRole(effective) ? "btt.memory.nearby"
+                            : self ? "btt.memory.self" : "btt.memory.use", bind);
             TextRenderer renderer = getTextRenderer();
             context.drawTextWithShadow(renderer, generic, context.getScaledWindowWidth() - renderer.getWidth(generic),
                     context.getScaledWindowHeight() - renderer.fontHeight, 0xFFFFFF);
@@ -70,6 +77,15 @@ public abstract class AbilityHudMixin {
         }
 
         var ownState = dev.hae.btt.component.PlayerState.KEY.get(client.player);
+        if (role == dev.hae.btt.role.Roles.SMUGGLER) {
+            Text ready = Text.translatable("btt.tip.smuggler", bind, aimedName);
+            if (AbilityKey.aimedPlayer(client) == null && ownState.smugglerCaptives > 0) {
+                long seconds = Math.max(0, (ownState.smugglerReadyAt - client.world.getTime() + 19) / 20);
+                ready = seconds > 0 ? Text.translatable("btt.hud.smuggler.wait", seconds, ownState.smugglerCaptives)
+                        : Text.translatable("btt.hud.smuggler.release", bind, ownState.smugglerCaptives);
+            }
+            line = dev.hae.btt.client.ui.SkillText.prompt(ready, ability.cooldown, null);
+        }
         if (role == dev.hae.btt.role.Roles.KIDNAPPER) {
             long count = client.world.getPlayers().stream().filter(p ->
                     dev.hae.btt.component.PlayerState.KEY.get(p).swallowedBy.equals(client.player.getUuidAsString())).count();
@@ -94,10 +110,8 @@ public abstract class AbilityHudMixin {
             line = remaining > 0 ? Text.translatable("btt.hud.craftsman.preparing", (remaining + 19) / 20)
                     : Text.translatable("btt.hud.craftsman.gift", bind, aimedName);
         }
-        if (role == dev.hae.btt.role.Roles.MUYUUBYOU && ownState.isProjecting()) {
-            line = Text.translatable("btt.hud.muyuubyou.wake", BttClient.abilityBind.getBoundKeyLocalizedText());
-        }
-        if ((role == dev.hae.btt.role.Roles.ACTOR || role == dev.hae.btt.role.Roles.SHOUJO)
+
+        if ((role == dev.hae.btt.role.Roles.ACTOR || role == dev.hae.btt.role.Roles.DEVUSHKA)
                 && ownState.isFakeDead()) {
             line = Text.translatable("btt.hud.fake_dead.stand", BttClient.abilityBind.getBoundKeyLocalizedText());
         }
@@ -124,17 +138,17 @@ public abstract class AbilityHudMixin {
             for (int i = 0; i < dream.size(); i++) args[i + 1] = dream.get(i);
             line = Text.translatable("btt.hud.astral."
                     + (astral.isProjecting() ? "wake" : "dream") + dream.size(), args);
+            if (ability.cooldown > 0) line = dev.hae.btt.client.ui.SkillText.ongoing(line, ability.cooldown);
         }
 
 
 
         if (role == dev.hae.btt.role.Roles.EXECUTIONER) {
             var ex = dev.hae.btt.component.PlayerState.KEY.get(client.player);
-            String suffix = ex.executionerExecuted >= 1 ? "1" : "2";
+            int remaining = Math.max(0, 2 - ex.executionerExecuted);
             line = ex.executionerTarget.isEmpty()
-                    ? Text.translatable("btt.hud.executioner.idle" + suffix, bind, aimedName)
-                    : Text.translatable("btt.hud.executioner.target" + suffix,
-                            bttPlayerName(client, ex.executionerTarget));
+                    ? Text.translatable("btt.tip.executioner", bind, remaining)
+                    : Text.translatable("btt.hud.executioner.target", bttPlayerName(client, ex.executionerTarget), remaining);
             if (ability.cooldown > 0) {
                 line = line.copy().append(Text.translatable("btt.hud.cooldown_suffix", ability.cooldown / 20));
             }

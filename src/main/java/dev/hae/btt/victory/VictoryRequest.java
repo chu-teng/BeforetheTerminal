@@ -21,7 +21,6 @@ public record VictoryRequest(Endings.Ending ending, UUID actor) {
     }
 
     public static VictoryRequest choose(List<VictoryRequest> requests) {
-        return requests.stream().filter(r -> Endings.isRelationEnding(r.ending())).findFirst()
-                .orElseGet(() -> requests.isEmpty() ? null : requests.getFirst());
+        return requests.stream().filter(r -> !Endings.isRelationEnding(r.ending())).findFirst().orElse(null);
     }
 }

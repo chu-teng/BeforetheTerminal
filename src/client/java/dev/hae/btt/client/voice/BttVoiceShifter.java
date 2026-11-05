@@ -1,20 +1,5 @@
 package dev.hae.btt.client.voice;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 public final class BttVoiceShifter {
 
     private static final int MAX_WINDOW = 960;

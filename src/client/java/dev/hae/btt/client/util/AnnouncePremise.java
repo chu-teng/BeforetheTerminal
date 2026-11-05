@@ -88,7 +88,8 @@ public final class AnnouncePremise {
         }
         Modifier trait = traitOf(client);
         if (trait != null) {
-            return Text.translatable("btt.trait.intro", trait.getName()).withColor(trait.color());
+            return Text.translatable("btt.trait.intro", Text.translatable("announcement.modifier."
+                    + trait.identifier().getNamespace() + "." + trait.identifier().getPath())).withColor(trait.color());
         }
         return Text.empty();
     }

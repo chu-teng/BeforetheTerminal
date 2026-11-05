@@ -24,19 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static org.spongepowered.asm.mixin.injection.callback.LocalCapture.CAPTURE_FAILHARD;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 @Mixin(WorldRenderer.class)
 public abstract class SpiritWorldRendererMixin {
 

@@ -22,7 +22,6 @@ import dev.hae.btt.BeforeTheTerminal;
 public class ConfigState implements AutoSyncedComponent, ServerTickingComponent {
     public static final ComponentKey<ConfigState> KEY = ComponentRegistry.getOrCreate(Identifier.of(BeforeTheTerminal.MOD_ID, "config"), ConfigState.class);
     public boolean insaneSeesMorphs = true;
-    public boolean naturalCursesAllowed = false;
     private final World world;
 
     public void reset() {
@@ -39,15 +38,12 @@ public class ConfigState implements AutoSyncedComponent, ServerTickingComponent 
 
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         insaneSeesMorphs = BttConfig.HANDLER.instance().insanePlayersSeeMorphs;
-        naturalCursesAllowed = BttConfig.HANDLER.instance().curseNonKillerDeaths;
 
         tag.putBoolean("insaneSeesMorphs", this.insaneSeesMorphs);
-        tag.putBoolean("naturalCursesAllowed", this.naturalCursesAllowed);
     }
 
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         if (tag.contains("insaneSeesMorphs"))   this.insaneSeesMorphs = tag.getBoolean("insaneSeesMorphs");
-        if (tag.contains("naturalCursesAllowed"))   this.naturalCursesAllowed = tag.getBoolean("naturalCursesAllowed");
     }
 
     @Override

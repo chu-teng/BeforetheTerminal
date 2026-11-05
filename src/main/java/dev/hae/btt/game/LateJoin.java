@@ -25,7 +25,11 @@ public final class LateJoin {
             if (active(world)) { destination = world; break; }
         }
         if (destination == null || GameWorldComponent.KEY.get(destination).getRole(player) != null) return;
+        player.setCameraEntity(player);
         player.changeGameMode(GameMode.SPECTATOR);
+        player.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.GameStateChangeS2CPacket(
+                net.minecraft.network.packet.s2c.play.GameStateChangeS2CPacket.GAME_MODE_CHANGED, GameMode.SPECTATOR.getId()));
+        player.sendAbilitiesUpdate();
         var spawn = MapVariablesWorldComponent.KEY.get(destination).getSpectatorSpawnPos();
         player.teleport(destination, spawn.pos.x, spawn.pos.y, spawn.pos.z, spawn.yaw, spawn.pitch);
     }

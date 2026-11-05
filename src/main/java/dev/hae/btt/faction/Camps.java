@@ -10,12 +10,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 public final class Camps {
     private Camps() {}
 
-    public static net.minecraft.text.MutableText name(Role role) {
-        String path = role.identifier().getPath();
-        return net.minecraft.text.Text.translatable("btt.campgroup." + path);
-    }
     public static Role campRole(GameWorldComponent game, ServerPlayerEntity player) {
-        if (dev.hae.btt.role.Werewolf.member(player)) return Roles.WEREWOLF;
         Role role = game.getRole(player);
         var state = PlayerState.KEY.get(player);
         if (Roles.campOf(game, player) == Roles.Faction.OUTSIDER) {
@@ -37,7 +32,6 @@ public final class Camps {
 
     public static void joinCamp(ServerPlayerEntity player, ServerPlayerEntity sourcePlayer) {
         var game = GameWorldComponent.KEY.get(player.getWorld());
-        if (game.getRole(player) == Roles.BLACKDEATH) return;
         var source = PlayerState.KEY.get(sourcePlayer);
         var state = PlayerState.KEY.get(player);
         Role role = campRole(game, sourcePlayer);
@@ -52,6 +46,7 @@ public final class Camps {
         state.joinedCampRole = role == null ? "" : role.identifier().toString();
         state.setCampOverride(camp);
         state.sync();
+        dev.hae.btt.trait.relationship.Relationships.onCampChanged(player);
         dev.hae.btt.record.GameRecordManager.recordCampChange(player, camp, sourcePlayer);
     }
 }

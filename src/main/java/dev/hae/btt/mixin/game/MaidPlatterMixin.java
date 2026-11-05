@@ -23,12 +23,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
-
-
-
-
-
-
 @Mixin(FoodPlatterBlock.class)
 public abstract class MaidPlatterMixin {
 
@@ -66,7 +60,6 @@ public abstract class MaidPlatterMixin {
 
         cir.setReturnValue(ActionResult.SUCCESS);
     }
-
 
     private static int heldFromPlatter(PlayerEntity player, List<ItemStack> platter) {
         java.util.Set<net.minecraft.item.Item> types = new java.util.HashSet<>();

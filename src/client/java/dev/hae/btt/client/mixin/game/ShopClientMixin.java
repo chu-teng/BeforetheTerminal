@@ -24,12 +24,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import java.util.List;
 import dev.hae.btt.mixin.game.ShopBuyMixin;
 
-
-
-
-
-
-
 @Mixin(LimitedInventoryScreen.class)
 public abstract class ShopClientMixin extends LimitedHandledScreen<PlayerScreenHandler> {
 
@@ -45,7 +39,7 @@ public abstract class ShopClientMixin extends LimitedHandledScreen<PlayerScreenH
     private static boolean bttKillerOnlyShop(GameWorldComponent instance, PlayerEntity p, Operation<Boolean> original) {
         if (!SeatAssignment.isBttMode(p.getWorld())) return original.call(instance, p);
 
-        return Roles.canUseKillerShop(instance.getRole(p));
+        return ShopGate.canAccess(instance, p);
     }
 
 

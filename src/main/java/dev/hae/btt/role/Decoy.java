@@ -37,7 +37,8 @@ public final class Decoy {
     }
 
     public static void marionette(ServerPlayerEntity player, List<Role> assigned) {
-        Role decoy = pickUnplayed(civilianPool(), assigned, player);
+        Role decoy = byId(PlayerState.KEY.get(player).decoyRole);
+        if (decoy == null) decoy = pickUnplayed(civilianPool(), assigned, player);
         if (decoy == null) return;
         setDecoy(player, decoy);
         RoleTransitions.replace(player, decoy, 0, Roles.CAMP_KILLER, false);
@@ -47,7 +48,8 @@ public final class Decoy {
     }
 
     public static void lunatic(ServerPlayerEntity player, List<Role> assigned) {
-        Role decoy = pickUnplayed(principalPool(), assigned, player);
+        Role decoy = byId(PlayerState.KEY.get(player).decoyRole);
+        if (decoy == null) decoy = pickUnplayed(principalPool(), assigned, player);
         if (decoy == null) return;
         setDecoy(player, decoy);
         RoleTransitions.replace(player, decoy, 0, Roles.CAMP_PASSENGER, false);
@@ -70,6 +72,10 @@ public final class Decoy {
         return byId(PlayerState.KEY.get(player).decoyRole) != null;
     }
 
+    public static List<Role> cognitivePool(Role real) {
+        return real == Roles.MARIONETTE ? civilianPool() : real == Roles.LUNATIC ? principalPool() : List.of();
+    }
+
 
 
 
@@ -77,7 +83,7 @@ public final class Decoy {
         List<Role> pool = new ArrayList<>();
         for (Role r : Roles.allRoles()) {
             if (Roles.factionOf(r) == Roles.Faction.PASSENGER && Roles.kindOf(r) != Roles.Kind.MAD
-                    && r != Roles.EX_UNDERCOVER && Roles.isImplemented(r)) pool.add(r);
+                    && r != Roles.MERCENARY && Roles.isImplemented(r)) pool.add(r);
         }
         return pool;
     }

@@ -78,11 +78,9 @@ public final class Traits {
 
 
 
-    public static final Modifier JUSTICE = reg("justice", COLOR_PASSENGER, false, true);
     public static final Modifier GLUTTON = reg("glutton", COLOR_PASSENGER, false, true);
-    public static final Modifier CHASTITY = reg("chastity", COLOR_PASSENGER, false, true);
     public static final Modifier HOLLOW = reg("hollow", COLOR_PASSENGER, false, true);
-    public static final Modifier PURITY = reg("purity", COLOR_PASSENGER, false, true);
+    public static final Modifier PURITY = reg("purity", COLOR_GENERIC, false, false);
     public static final Modifier ENDURANCE = reg("endurance", COLOR_PASSENGER, false, true);
     public static final Modifier OPTIMIST = reg("optimist", COLOR_PASSENGER, false, true);
     public static final Modifier ANXIOUS = reg("anxious", COLOR_PASSENGER, false, true);
@@ -98,7 +96,7 @@ public final class Traits {
     public static final Modifier RESERVED = reg("reserved", COLOR_GENERIC, false, false);
     public static final Modifier ALLERGIC = reg("allergic", COLOR_GENERIC, false, false);
     public static final Modifier HOARDING = reg("hoarding", COLOR_PASSENGER, false, true);
-    public static final Modifier TRUST = reg("trust", COLOR_GENERIC, false, false);
+    public static final Modifier TRUST = reg("trust", COLOR_PASSENGER, false, true);
     public static final Modifier CRUSH = reg("crush", COLOR_GENERIC, false, false);
     public static final Modifier RESONANT = reg("resonant", COLOR_GENERIC, false, false);
     public static final Modifier TALKATIVE = reg("talkative", COLOR_PASSENGER, false, true);
@@ -116,7 +114,9 @@ public final class Traits {
     public static final Modifier BOND = regFor("bond", Roles.Faction.OUTSIDER);
 
     public static final Modifier STEALTH = reg("stealth", COLOR_KILLER, true, false);
-    public static final Modifier PROFILING = regFor("profiling", Roles.Faction.OUTSIDER);
+    public static final Modifier WITNESS = regFor("witness", Roles.Faction.OUTSIDER);
+    public static final Modifier DESPERATION = reg("desperation", COLOR_PASSENGER, false, true);
+    public static final Modifier RHYTHM = reg("rhythm", COLOR_PASSENGER, false, true);
 
 
     private static final List<Modifier> IMPLEMENTED_POOL = List.of(
@@ -125,11 +125,11 @@ public final class Traits {
             LIGHT, SENSITIVE, OBSTINATE, SLEIGHT, TENACIOUS, CHILDLIKE, TEASE, ENERGETIC,
             NIGHT_OWL, IMPATIENT,
 
-            PURITY, ENDURANCE, OPTIMIST, HOLLOW, JUSTICE, GLUTTON, CHASTITY, ANXIOUS,
+            PURITY, ENDURANCE, OPTIMIST, HOLLOW, GLUTTON, ANXIOUS,
 
             ANATOMY, CLOSURE, RECKLESS, PREMEDITATION, SLACKER, GREED,
             FAMILIAR, EXCELLENT, LUCKY, CATCHER, DISGUISED, UPRISING, INSIGHT, STEALTH,
-            TRUST, CRUSH, RESONANT, TALKATIVE, PLAYFUL, AFTERLIFE, RESERVED, ALLERGIC, HOARDING, WISH, BOND, PROFILING);
+            TRUST, CRUSH, RESONANT, TALKATIVE, PLAYFUL, AFTERLIFE, RESERVED, ALLERGIC, HOARDING, WISH, BOND, WITNESS, DESPERATION, RHYTHM);
 
 
     public static boolean isPassengerSide(ServerPlayerEntity p) {
@@ -174,6 +174,11 @@ public final class Traits {
             if (mod != null && mod.identifier().equals(trait.identifier())) return true;
         }
         return false;
+    }
+
+    public static boolean greenInstinct(PlayerEntity player) {
+        return player != null && (has(player, INSIGHT) || has(player, UPRISING)
+                && !dev.hae.btt.component.GameState.KEY.get(player.getWorld()).epilogueType.isEmpty());
     }
 
 
@@ -253,6 +258,8 @@ public final class Traits {
                 }
             }
         }
+        var openingCamps = new java.util.HashMap<UUID, Roles.Faction>();
+        for (var player : players) openingCamps.put(player.getUuid(), openingCampFor(player));
         for (Modifier trait : pool) {
             if (forcedTraits.contains(trait)) continue;
 
@@ -260,7 +267,7 @@ public final class Traits {
             for (ServerPlayerEntity p : players) {
                 if (handed.contains(p.getUuid())) continue;
                 if (!Relationships.canReceiveModifier(world, p.getUuid())) continue;
-                if (!isEligible(p, trait)) continue;
+                if (!isEligible(openingCamps.get(p.getUuid()), trait)) continue;
                 candidates.add(p);
             }
             if (candidates.isEmpty()) {
@@ -275,7 +282,7 @@ public final class Traits {
         }
         for (ServerPlayerEntity player : players) {
             List<Modifier> eligible = IMPLEMENTED_POOL.stream()
-                    .filter(trait -> isEligible(player, trait) && !has(player, trait))
+                    .filter(trait -> isEligible(openingCamps.get(player.getUuid()), trait) && !has(player, trait))
                     .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
             while (comp.getModifiers(player.getUuid()).size() < SLOTS_PER_PLAYER && !eligible.isEmpty()) {
                 Modifier trait = eligible.remove(world.getRandom().nextInt(eligible.size()));
@@ -304,23 +311,25 @@ public final class Traits {
 
 
 
-    private static boolean isEligible(ServerPlayerEntity p, Modifier trait) {
-        var game = GameWorldComponent.KEY.get(p.getWorld());
+
+    public static Roles.Faction openingCampFor(ServerPlayerEntity player) {
+        var game = GameWorldComponent.KEY.get(player.getWorld());
+        if (Roles.hasCurrentOrPriorRole(game, player, Roles.MARIONETTE)) return Roles.Faction.PASSENGER;
+        if (Roles.hasCurrentOrPriorRole(game, player, Roles.LUNATIC)) return Roles.Faction.KILLER;
+        return Roles.campOf(game, player);
+    }
+
+    private static boolean isEligible(Roles.Faction openingCamp, Modifier trait) {
         var restriction = CAMP_RESTRICTIONS.get(trait);
-        if (Roles.hasCurrentOrPriorRole(game, p, Roles.MARIONETTE))
-            return restriction == null && !trait.killerOnly;
-        if (Roles.hasCurrentOrPriorRole(game, p, Roles.LUNATIC))
-            return restriction == null && !trait.civilianOnly;
-        if (restriction != null) return Roles.campOf(game, p) == restriction;
-        if (trait.killerOnly) return isKillerSide(p);
-        if (trait.civilianOnly) return isPassengerSide(p);
+        if (restriction != null) return openingCamp == restriction;
+        if (trait.killerOnly) return openingCamp == Roles.Faction.KILLER;
+        if (trait.civilianOnly) return openingCamp == Roles.Faction.PASSENGER;
         return true;
     }
 
 
 
     public static void tick(ServerPlayerEntity player) {
-        TraitEffects.tick(player);
         if (!GameFunctions.isPlayerAliveAndSurvival(player)) return;
         TraitStatusEffects.maintain(player, StatusEffects.SLOW_FALLING, has(player, LIGHT));
 
@@ -340,6 +349,13 @@ public final class Traits {
         applyImpatientSpeed(player);
 
         tickTenacious(player);
+    }
+
+    public static void clearPhysicalEffects(ServerPlayerEntity player) {
+        var scale = player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_SCALE);
+        if (scale != null) scale.removeModifier(CHILDLIKE_MODIFIER_ID);
+        var speed = player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_MOVEMENT_SPEED);
+        if (speed != null) speed.removeModifier(IMPATIENT_MODIFIER_ID);
     }
 
 
@@ -442,9 +458,7 @@ public final class Traits {
 
 
 
-    private static final int TEASE_TICKS = 1200;
-
-    private static final java.util.Map<UUID, Integer> TEASE_LEFT = new java.util.HashMap<>();
+    private static final int TEASE_TICKS = 2 * 60 * 20;
 
 
 
@@ -467,9 +481,9 @@ public final class Traits {
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.SubtitleS2CPacket(
                     Text.translatable("btt.epilogue." + key + ".line").withColor(color)));
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket(10, 70, 10));
-            if (track != null) p.playSoundToPlayer(track, net.minecraft.sound.SoundCategory.MASTER, 1.0f, 1.0f);
-            TEASE_LEFT.put(p.getUuid(), TEASE_TICKS);
+
         }
+        dev.hae.btt.registry.Sounds.requestEpilogue(world, track, TEASE_TICKS);
     }
 
 
@@ -484,36 +498,6 @@ public final class Traits {
 
     private static boolean anyRoleInPlay(GameWorldComponent gwc, Role role) {
         return gwc.getRoles().containsValue(role);
-    }
-
-
-    public static void tickTease(ServerPlayerEntity player) {
-        Integer left = TEASE_LEFT.get(player.getUuid());
-        if (left == null) return;
-        if (left <= 1) {
-            TEASE_LEFT.remove(player.getUuid());
-            for (net.minecraft.sound.SoundEvent s : dev.hae.btt.registry.Sounds.EPILOGUE_ALL) {
-                player.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.StopSoundS2CPacket(
-                        s.getId(), net.minecraft.sound.SoundCategory.MASTER));
-            }
-            return;
-        }
-        TEASE_LEFT.put(player.getUuid(), left - 1);
-    }
-
-
-    public static void clearRoundState() {
-        TEASE_LEFT.clear();
-    }
-
-    public static void clearRoundState(net.minecraft.server.world.ServerWorld world) {
-        for (var player : world.getPlayers()) TEASE_LEFT.remove(player.getUuid());
-    }
-
-
-    public static void onDisconnect(UUID uuid) {
-        if (uuid == null) return;
-        TEASE_LEFT.remove(uuid);
     }
 
 

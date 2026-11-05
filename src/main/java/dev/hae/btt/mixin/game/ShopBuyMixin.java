@@ -53,6 +53,7 @@ public abstract class ShopBuyMixin {
                 original.call(index);
                 return;
             }
+            if (!ShopGate.canAccess(GameWorldComponent.KEY.get(player.getWorld()), player)) return;
             if (PlayerState.KEY.get(player).isDrunk()) {
                 player.sendMessage(Text.translatable("btt.action.shop.drunk")
                         .withColor(0xFFFFFF), true);

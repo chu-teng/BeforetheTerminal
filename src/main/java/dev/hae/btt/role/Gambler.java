@@ -14,8 +14,12 @@ public final class Gambler {
     public static void initialize(ServerPlayerEntity player) {
         PlayerState state = PlayerState.KEY.get(player);
         var present = new java.util.HashSet<>(GameState.KEY.get(player.getWorld()).openingRoles.values());
-        state.gamblerTarget = (int) GuessPool.candidates(Roles.GAMBLER).stream()
-                .filter(role -> !present.contains(role.identifier().toString())).count() / 3;
+        var shared = GameState.KEY.get(player.getWorld());
+        var script = dev.hae.btt.game.GameModes.hasRule(player.getWorld(), dev.hae.btt.game.Rule.SCRIPT)
+                ? dev.hae.btt.game.Scripts.byId(shared.script) : null;
+        state.gamblerTarget = script == null ? shared.openingRoles.size() / 2
+                : (int) GuessPool.candidates(Roles.GAMBLER, script).stream()
+                    .filter(role -> !present.contains(role.identifier().toString())).count() / 2;
         state.gamblerAttempted = "";
         state.gamblerGuesses = "";
         AbilityState.KEY.get(player).setCooldown(0);

@@ -50,7 +50,7 @@ public final class GuideContent {
                     "Executions.", "Death.", "Epilogues.", "Endings."};
 
 
-    private static final Pattern ENTRY = Pattern.compile("^([ECPAMSO]\\d+[ABC]|\\d+)?\\s*【([^】]+)】\\s*(.*)$");
+    private static final Pattern ENTRY = Pattern.compile("^([ECPATMSO]\\d+[ABC]|\\d+)?\\s*【([^】]+)】\\s*(.*)$");
 
     private static final Pattern ENTRY_LABEL = Pattern.compile("^(\\d+)\\s*[、.．]\\s*([^：:]{1,16})[：:]\\s*(.*)$");
 
@@ -69,10 +69,10 @@ public final class GuideContent {
             {"rules", "序言", "角色", "流程", "能力", "场景", "模式", "奇遇"},
 
 
-            {"items", "免费道具", "乘客基础道具", "凶手基础道具"},
+            {"items", "免费道具", "乘客基础道具", "非乘客基础道具"},
             {"passengers", "执法乘客", "平民乘客"},
             {"killers", "主犯凶手", "从犯凶手"},
-            {"neutrals", "狂人中立", "独行中立", "外人中立"},
+            {"neutrals", "旅人中立", "独行中立", "外人中立"},
             {"traits", "关系特质", "通用特质", "乘客特质", "凶手特质", "独行特质", "外人特质"},
     };
 
@@ -143,7 +143,7 @@ public final class GuideContent {
             case ACCOMPLICE -> new String[]{"killers", "从犯凶手"};
             case LONE -> new String[]{"neutrals", "独行中立"};
             case OUTSIDER -> new String[]{"neutrals", "外人中立"};
-            case MAD -> new String[]{"neutrals", "狂人中立"};
+            case MAD -> new String[]{"neutrals", "旅人中立"};
         };
     }
 

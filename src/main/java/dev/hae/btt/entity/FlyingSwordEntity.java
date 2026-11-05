@@ -27,16 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-
-
-
-
-
-
-
-
-
-
 public class FlyingSwordEntity extends PersistentProjectileEntity {
 
     private static final TrackedData<Byte> DATA_HIT_DIRECTION =

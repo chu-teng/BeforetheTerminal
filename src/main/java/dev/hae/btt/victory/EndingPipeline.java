@@ -23,6 +23,13 @@ public final class EndingPipeline {
 
     public static Endings.Ending factionWin(net.minecraft.server.network.ServerPlayerEntity actor) {
         var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(actor.getWorld());
+        if (dev.hae.btt.game.GameModes.modeOf(game) == dev.hae.btt.game.BeforeTheTerminalGameMode.Mode.MOB) {
+            return switch (dev.hae.btt.component.PlayerState.KEY.get(actor).mobTeam) {
+                case dev.hae.btt.role.Mob.PINK -> Endings.Ending.MOB_PINK_WIN;
+                case dev.hae.btt.role.Mob.AZURE -> Endings.Ending.MOB_AZURE_WIN;
+                default -> Endings.Ending.NONE;
+            };
+        }
         return switch (dev.hae.btt.role.Roles.campOf(game, actor)) {
             case PASSENGER -> Endings.Ending.JOURNEY_END;
             case KILLER -> Endings.Ending.BLOOD_EXPRESS;
@@ -34,6 +41,27 @@ public final class EndingPipeline {
             }
             case SOLO -> Endings.Ending.NONE;
         };
+    }
+
+
+    public static Endings.Ending preferFactionEnding(Endings.Ending first, Endings.Ending next) {
+        return factionPriority(next) > factionPriority(first) ? next : first;
+    }
+
+    private static int factionPriority(Endings.Ending ending) {
+        return switch (ending) {
+            case NONE -> 0;
+            case TRIAL_COMPLETE, JOURNEY_END, BLACKDEATH_PASSENGER, HERETIC_PASSENGER -> 1;
+            case BLOOD_EXPRESS, NAKU_KORO, BLACKDEATH_KILLER, HERETIC_KILLER -> 2;
+            case MESSIAH_WIN, MAJO_WIN, GARDENER_WIN, LEGION_WIN, VOODOO_WIN, GODFATHER_WIN -> 3;
+            default -> 4;
+        };
+    }
+
+    public static void requestFactionWin(net.minecraft.server.network.ServerPlayerEntity actor) {
+        var effects = dev.hae.btt.component.GameState.KEY.get(actor.getWorld()).roleEffects;
+        var ending = preferFactionEnding(Endings.byName(effects.getString("factionObjective")), factionWin(actor));
+        if (ending != Endings.Ending.NONE) effects.putString("factionObjective", ending.name());
     }
 
     public static void factionLoss(net.minecraft.server.network.ServerPlayerEntity actor) {

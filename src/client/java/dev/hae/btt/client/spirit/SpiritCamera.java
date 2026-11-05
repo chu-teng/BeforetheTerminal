@@ -26,25 +26,9 @@ import dev.hae.btt.client.mixin.game.KeyBindingAccessor;
 import java.util.Collections;
 import java.util.UUID;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 public class SpiritCamera extends ClientPlayerEntity {
 
     private static final MinecraftClient MC = MinecraftClient.getInstance();
-
 
     static final double MAX_RADIUS = 30.0;
 

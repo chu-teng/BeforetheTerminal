@@ -42,7 +42,7 @@ public abstract class ShoujoInstinctMixin {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
 
 
-        if (Roles.isPlayingAs(gwc, viewer, Roles.TRAITOR) && !dev.hae.btt.component.PlayerState.KEY.get(viewer).werewolfAlly) {
+        if (Roles.isPlayingAs(gwc, viewer, Roles.DELINQUENT)) {
             cir.setReturnValue(-1);
             cir.cancel();
             return;
@@ -89,9 +89,7 @@ public abstract class ShoujoInstinctMixin {
         if (GameFunctions.isPlayerSpectatingOrCreative(viewer)) {
             return;
         }
-        if (Roles.isPlayingAs(GameWorldComponent.KEY.get(viewer.getWorld()), viewer, Roles.WEREWOLF)
-                || Roles.isPlayingAs(GameWorldComponent.KEY.get(viewer.getWorld()), viewer, Roles.TRAITOR)
-                    && !dev.hae.btt.component.PlayerState.KEY.get(viewer).werewolfAlly) {
+        if (Roles.isPlayingAs(GameWorldComponent.KEY.get(viewer.getWorld()), viewer, Roles.DELINQUENT)) {
             cir.setReturnValue(false);
         }
     }
@@ -220,7 +218,7 @@ public abstract class ShoujoInstinctMixin {
 
         if (gwc.getRole(viewer) == Roles.MORTICIAN) {
             boolean body = target instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity;
-            cir.setReturnValue(body ? Roles.MORTICIAN.color() : -1);
+            cir.setReturnValue(body ? (dev.hae.btt.component.CorpseState.KEY.get((dev.doctor4t.wathe.entity.PlayerBodyEntity) target).observedPassenger ? 0x4EDD35 : 0xDD0000) : -1);
             cir.cancel();
             return true;
         }

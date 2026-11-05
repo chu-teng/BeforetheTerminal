@@ -16,7 +16,6 @@ public class UndercoverTextsMixin {
     private static boolean renderCustomCohorts(GameWorldComponent instance, PlayerEntity player, Operation<Boolean> original) {
 
 
-
         if (dev.hae.btt.game.SeatAssignment.isBttMode(player.getWorld())
                 && instance.isRole(player, dev.hae.btt.role.Roles.UNDERCOVER)) {
             return true;

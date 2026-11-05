@@ -39,12 +39,6 @@ public final class SeatAssignment {
     }
 
 
-
-
-
-
-
-
     public record Roster(List<Role> seats, Map<UUID, Role> forced) {}
 
 
@@ -77,7 +71,7 @@ public final class SeatAssignment {
         boolean allowDuplicates = duplicates;
         duplicates = false;
         int n = players.size();
-        if (n < MIN_PLAYERS || n > MAX_PLAYERS) return null;
+        if (n < MIN_PLAYERS) return null;
 
 
 
@@ -269,6 +263,59 @@ public final class SeatAssignment {
     }
 
 
+    public record MobRoster(java.util.Map<UUID, Role> roles, java.util.Map<UUID, Integer> teams) {}
+
+
+    private static final Roles.Kind[] MOB_SEQUENCE = {Roles.Kind.PRINCIPAL, Roles.Kind.ACCOMPLICE,
+            Roles.Kind.ENFORCER, Roles.Kind.CIVILIAN, Roles.Kind.OUTSIDER,
+            Roles.Kind.ACCOMPLICE, Roles.Kind.ENFORCER, Roles.Kind.LONE};
+
+    public static MobRoster assignMobSeats(java.util.List<java.util.UUID> players) {
+        int n = players.size();
+        if (n < MIN_PLAYERS) return null;
+        java.util.List<java.util.UUID> shuffled = new java.util.ArrayList<>(players);
+        java.util.Collections.shuffle(shuffled, new java.util.Random());
+        int base = n / 2;
+        boolean odd = n % 2 == 1;
+        boolean pinkLonger = odd && new java.util.Random().nextBoolean();
+        int pink = base + (odd && pinkLonger ? 1 : 0);
+        int azure = base + (odd && !pinkLonger ? 1 : 0);
+        java.util.Map<Roles.Kind, java.util.List<Role>> pools = Roles.kindPools();
+        java.util.List<Role> used = new java.util.ArrayList<>();
+        java.util.Map<UUID, Role> roles = new java.util.HashMap<>();
+        java.util.Map<UUID, Integer> teams = new java.util.HashMap<>();
+        int index = 0;
+        for (int team = dev.hae.btt.role.Mob.PINK; team <= dev.hae.btt.role.Mob.AZURE; team++) {
+            int count = team == dev.hae.btt.role.Mob.PINK ? pink : azure;
+            boolean longer = odd && ((team == dev.hae.btt.role.Mob.PINK) == pinkLonger);
+            for (int slot = 0; slot < count && index < shuffled.size(); slot++, index++) {
+                Roles.Kind kind = longer && slot == count - 1
+                        ? Roles.Kind.CIVILIAN : MOB_SEQUENCE[slot % MOB_SEQUENCE.length];
+                Role role = takeMobRole(pools, kind);
+                if (role == null) {
+                    if (used.isEmpty()) return null;
+                    role = used.get(new java.util.Random().nextInt(used.size()));
+                } else used.add(role);
+                roles.put(shuffled.get(index), role);
+                teams.put(shuffled.get(index), team);
+            }
+        }
+        return index == n ? new MobRoster(roles, teams) : null;
+    }
+
+    private static Role takeMobRole(java.util.Map<Roles.Kind, java.util.List<Role>> pools, Roles.Kind kind) {
+        java.util.List<Roles.Kind> order = new java.util.ArrayList<>();
+        order.add(kind); order.add(Roles.Kind.CIVILIAN); order.add(Roles.Kind.ENFORCER);
+        for (Roles.Kind candidate : Roles.Kind.values()) if (!order.contains(candidate)) order.add(candidate);
+        for (Roles.Kind candidate : order) {
+            java.util.List<Role> pool = pools.get(candidate);
+            if (pool == null || pool.isEmpty()) continue;
+            return pool.remove(new java.util.Random().nextInt(pool.size()));
+        }
+        return null;
+    }
+
+
     private static dev.hae.btt.rotation.RotationStrength rotationStrength() {
         String raw = dev.hae.btt.config.BttConfig.HANDLER.instance().rotationStrength;
         try {
@@ -379,8 +426,9 @@ public final class SeatAssignment {
 
     private static int[] passengerQuotas(int passenger, int players) {
         int[] quota = new int[SEAT_ORDER.size()];
-        quota[0] = players / 3;
-        quota[1] = Math.max(0, passenger - quota[0]);
+        int enforcer = (passenger + 1) / 2;
+        quota[0] = enforcer;
+        quota[1] = Math.max(0, passenger - enforcer);
         return quota;
     }
 
@@ -390,7 +438,7 @@ public final class SeatAssignment {
 
     public static java.util.LinkedHashMap<String, Integer> categoryCounts(int players) {
         java.util.LinkedHashMap<String, Integer> out = new java.util.LinkedHashMap<>();
-        if (players < MIN_PLAYERS || players > MAX_PLAYERS) return out;
+        if (players < MIN_PLAYERS) return out;
         BaseSeats seats = baseSeats(players);
         int passenger = seats.passengerCount(players);
         if (passenger < 0) return out;
@@ -402,7 +450,7 @@ public final class SeatAssignment {
         out.put("btt.guide.killers.从犯凶手.title", seats.accomplice());
         out.put("btt.guide.neutrals.独行中立.title", seats.lone());
         out.put("btt.guide.neutrals.外人中立.title", seats.outsider());
-        out.put("btt.guide.neutrals.狂人中立.title", seats.mad());
+        out.put("btt.guide.neutrals.旅人中立.title", seats.mad());
         return out;
     }
 
@@ -436,7 +484,7 @@ public final class SeatAssignment {
             case ACCOMPLICE -> "btt.guide.killers.从犯凶手.title";
             case LONE -> "btt.guide.neutrals.独行中立.title";
             case OUTSIDER -> "btt.guide.neutrals.外人中立.title";
-            case MAD -> "btt.guide.neutrals.狂人中立.title";
+            case MAD -> "btt.guide.neutrals.旅人中立.title";
         };
     }
 

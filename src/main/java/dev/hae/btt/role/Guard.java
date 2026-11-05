@@ -64,6 +64,7 @@ public final class Guard {
         if (!lc.parasiteHost.isEmpty()) return;
         if (leech.distanceTo(target) > RANGE) return;
         lc.parasiteHost = target.getUuid().toString();
+        PlayerState.KEY.get(target).applyDrunk(Integer.MAX_VALUE);
         lc.sync();
     }
 

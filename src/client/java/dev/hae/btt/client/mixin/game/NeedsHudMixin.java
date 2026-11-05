@@ -2,6 +2,7 @@ package dev.hae.btt.client.mixin.game;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import dev.doctor4t.wathe.client.gui.MoodRenderer;
 import dev.hae.btt.component.NeedsState;
 import dev.hae.btt.game.SeatAssignment;
@@ -22,24 +23,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 @Mixin(MoodRenderer.class)
@@ -63,7 +46,9 @@ public abstract class NeedsHudMixin {
                                     RenderTickCounter tickCounter, CallbackInfo ci) {
         if (player == null || !SeatAssignment.isBttMode(player.getWorld())) return;
         NeedsState st = NeedsState.KEY.get(player);
-        float delta = tickCounter.getTickDelta(true);
+        float delta = Math.max(0.0F, tickCounter.getLastFrameDuration());
+        float fade = 1f - (float) Math.exp(-delta / 2f);
+        float slide = 1f - (float) Math.exp(-delta / 3f);
         List<String> active = new ArrayList<>();
         if (st != null && st.kinds != null && !st.kinds.isEmpty()) {
             for (String k : st.kinds.split(",")) if (!k.isEmpty()) active.add(k);
@@ -99,8 +84,8 @@ public abstract class NeedsHudMixin {
                 l.text = Text.translatable("task." + (fake ? "fake" : "feel"))
                         .append(Text.translatable("task." + l.kind.toLowerCase()));
             }
-            l.alpha = MathHelper.lerp(delta / 16.0F, l.alpha, present ? 1.0F : 0.0F);
-            l.offset = MathHelper.lerp(delta / 32.0F, l.offset, watheLines + l.index);
+            l.alpha = MathHelper.lerp(fade, l.alpha, present ? 1.0F : 0.0F);
+            l.offset = MathHelper.lerp(slide, l.offset, watheLines + l.index);
             if (l.alpha < 0.075F) toRemove.add(l.kind);
         }
         for (String kind : toRemove) BTT_LINES.remove(kind);
@@ -138,13 +123,13 @@ public abstract class NeedsHudMixin {
             if (w > widest) widest = w;
         }
         float target = hasRows ? Math.max(ourMax, 0f) : (watheLines > 0 ? watheLines - 1 : 0f);
-        moodOffset = MathHelper.lerp(delta / 8.0F, moodOffset, target);
+        moodOffset = MathHelper.lerp(slide, moodOffset, target);
 
         if (hasRows) {
             int bottomWidth = bottom == null ? 0 : textRenderer.getWidth(bottom.text);
             int measured = bottomWidth > 8 ? bottomWidth : widest;
             if (measured > 8) bttBarLastWidth = measured;
-            moodTextWidth = MathHelper.lerp(delta / 32.0F, moodTextWidth,
+            moodTextWidth = MathHelper.lerp(slide, moodTextWidth,
                     measured > 8 ? (float) measured : bttBarLastWidth);
         }
     }
@@ -157,5 +142,23 @@ public abstract class NeedsHudMixin {
     private static boolean bttHasRows(Map<?, ?> renderers, Operation<Boolean> original) {
         if (!BTT_LINES.isEmpty()) return false;
         return original.call(renderers);
+    }
+
+    @WrapOperation(method = "renderHud", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/render/RenderTickCounter;getTickDelta(Z)F"))
+    private static float btt$elapsedHudTime(RenderTickCounter counter, boolean ignoreFreeze,
+                                            Operation<Float> original,
+                                            @Local(argsOnly = true) PlayerEntity player) {
+        return SeatAssignment.isBttMode(player.getWorld())
+                ? Math.max(0.0F, counter.getLastFrameDuration()) : original.call(counter, ignoreFreeze);
+    }
+
+    @WrapOperation(method = "renderHud", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/util/math/MathHelper;lerp(FFF)F"))
+    private static float btt$stableHudSmoothing(float amount, float start, float end,
+                                               Operation<Float> original,
+                                               @Local(argsOnly = true) PlayerEntity player) {
+        if (SeatAssignment.isBttMode(player.getWorld())) amount = -(float) Math.expm1(-amount);
+        return original.call(amount, start, end);
     }
 }

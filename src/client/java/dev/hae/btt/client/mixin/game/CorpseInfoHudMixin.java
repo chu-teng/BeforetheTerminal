@@ -67,24 +67,6 @@ public abstract class CorpseInfoHudMixin {
             }
 
 
-            boolean mortician = gameWorldComponent.isRole(player, dev.hae.btt.role.Roles.MORTICIAN);
-            if (mortician) {
-                CorpseState corpseState = CorpseState.KEY.get(BttClient.targetBody);
-                if (!corpseState.observedPassengerKnown) return;
-                boolean passenger = corpseState.observedPassenger;
-
-
-                Text line = Text.translatable("hud.corpse.faction").withColor(Colors.RED)
-                        .append(Text.translatable(passenger ? "hud.corpse.passenger" : "hud.corpse.not_passenger")
-                                .withColor(passenger ? Colors.GREEN : Colors.RED));
-                context.getMatrices().push();
-                context.getMatrices().translate((float) context.getScaledWindowWidth() / 2.0F,
-                        (float) context.getScaledWindowHeight() / 2.0F + 6.0F, 0.0F);
-                context.getMatrices().scale(0.6F, 0.6F, 1.0F);
-                context.drawTextWithShadow(renderer, line, -renderer.getWidth(line) / 2, 16, Colors.WHITE);
-                context.getMatrices().pop();
-            }
-
 
             if (CorpseState.KEY.get(BttClient.targetBody).observedAutopsy) {
 
@@ -103,19 +85,21 @@ public abstract class CorpseInfoHudMixin {
                     name = Text.literal("a".repeat(player.getRandom().nextBetween(12,26))).formatted(Formatting.OBFUSCATED);
                 }
                 context.drawTextWithShadow(renderer, name, -renderer.getWidth(name) / 2, 32, Colors.RED);
-                Role foundRole = WatheRoles.CIVILIAN;
+                Role foundRole = null;
                 for (Role role : WatheRoles.ROLES) {
                     if (role.identifier().equals(bodyDeathReasonComponent.technicalRole)) foundRole =role;
                 }
-                if ((WatheClient.isPlayerSpectatingOrCreative() || gameWorldComponent.isRole(MinecraftClient.getInstance().player, dev.hae.btt.role.Roles.DOCTOR) || gameWorldComponent.isRole(MinecraftClient.getInstance().player, dev.hae.btt.role.Roles.AGENT) || dev.hae.btt.trait.Traits.has(MinecraftClient.getInstance().player, dev.hae.btt.trait.Traits.ANATOMY))  && !bodyDeathReasonComponent.scavenged ) {
+                if ((WatheClient.isPlayerSpectatingOrCreative() || gameWorldComponent.isRole(MinecraftClient.getInstance().player, dev.hae.btt.role.Roles.DOCTOR) || gameWorldComponent.isRole(MinecraftClient.getInstance().player, dev.hae.btt.role.Roles.DUCE) || dev.hae.btt.trait.Traits.has(MinecraftClient.getInstance().player, dev.hae.btt.trait.Traits.ANATOMY))  && !bodyDeathReasonComponent.scavenged ) {
                     net.minecraft.text.MutableText roleInfo = Text.translatable("hud.doctor.role_info").withColor(Colors.RED)
-                            .append(Harpymodloader.getRoleName(foundRole).withColor(foundRole.color()));
+                            .append(foundRole == null ? Text.translatable("btt.hud.unknown_role")
+                                    : Harpymodloader.getRoleName(foundRole).copy().withColor(foundRole.color()));
 
 
                     Role initialRole = dev.hae.btt.role.Roles.byId(bodyDeathReasonComponent.initialRole.toString());
-                    if (initialRole != null && !initialRole.identifier().equals(foundRole.identifier())) {
+                    if (foundRole != null && initialRole != null && dev.hae.btt.role.Roles.kindOf(initialRole) != null
+                            && !initialRole.identifier().equals(foundRole.identifier())) {
                         roleInfo.append(Text.translatable("hud.corpse.first_role",
-                                Harpymodloader.getRoleName(initialRole).withColor(initialRole.color())));
+                                Harpymodloader.getRoleName(initialRole).copy().withColor(initialRole.color())));
                     }
                     context.drawTextWithShadow(renderer, roleInfo, -renderer.getWidth(roleInfo) / 2, 48, Colors.WHITE);
                 }

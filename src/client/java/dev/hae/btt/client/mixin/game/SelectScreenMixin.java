@@ -54,6 +54,7 @@ public abstract class SelectScreenMixin extends LimitedHandledScreen<PlayerScree
         if (!gwc.isRunning()) return;
         RoleDef def = RoleDefs.get(dev.hae.btt.role.Roles.effectiveRole(gwc, player));
         if (def == null || !dev.hae.btt.client.ui.AbilityKey.isUiRole(def.role)) return;
+        if (def.role == Roles.BARBER && !dev.hae.btt.component.PlayerState.KEY.get(player).barberReady) return;
         boolean instant = dev.hae.btt.client.ui.AbilityKey.isInstant(def.role);
         boolean multiPick = dev.hae.btt.client.ui.AbilityKey.isMultiPick(def.role);
         boolean morph = dev.hae.btt.client.ui.AbilityKey.isMorphRole(def.role);
@@ -78,6 +79,7 @@ public abstract class SelectScreenMixin extends LimitedHandledScreen<PlayerScree
 
             entries.removeIf(uuid -> MinecraftClient.getInstance().world.getPlayerByUuid(uuid) == null);
         }
+        if (def.role == Roles.PROPHET) entries.remove(player.getUuid());
         int apart = 36;
         LimitedInventoryScreen self = (LimitedInventoryScreen) (Object) this;
         int x = self.width / 2 - entries.size() * apart / 2 + 9;
@@ -119,6 +121,8 @@ public abstract class SelectScreenMixin extends LimitedHandledScreen<PlayerScree
 
         boolean multiPick = def != null && AbilityKey.isMultiPick(def.role);
         if (dev.hae.btt.encounter.Memory.isBlind(player)) {
+            if (def == null || !AbilityKey.isAnyRole(def.role) || def.role == Roles.BARBER
+                    && !dev.hae.btt.component.PlayerState.KEY.get(player).barberReady) return;
             int count = multiPick ? dev.hae.btt.client.ui.MultiSelectState.needed(player) : 1;
             Text generic = Text.translatable("btt.memory.targets", Math.max(1, count));
             context.drawTextWithShadow(textRenderer, generic, width / 2 - textRenderer.getWidth(generic) / 2,
@@ -140,7 +144,9 @@ public abstract class SelectScreenMixin extends LimitedHandledScreen<PlayerScree
 
 
         if (def != null && AbilityKey.isMultiPick(def.role)) {
-            Text ready = def.role == Roles.JUDGE
+            Text ready = def.role == Roles.BARBER
+                    ? Text.translatable(dev.hae.btt.component.PlayerState.KEY.get(player).barberReady ? "btt.hud.barber.ready" : "btt.hud.barber.waiting")
+                    : def.role == Roles.JUDGE
                     ? Text.translatable("btt.hud.judge", dev.hae.btt.client.ui.MultiSelectState.needed(player))
                     : Text.translatable("btt.hud." + def.role.identifier().getPath());
             Text merged = dev.hae.btt.client.ui.SkillText.prompt(ready,
@@ -169,10 +175,6 @@ public abstract class SelectScreenMixin extends LimitedHandledScreen<PlayerScree
         } else if (role == dev.hae.btt.role.Roles.STAR) {
             key = "btt.hud.star.target";
             uuid = pc.starMark;
-        } else if (role == dev.hae.btt.role.Roles.GODFATHER) {
-            key = "btt.hud.godfather.target";
-            java.util.UUID revenge = dev.hae.btt.component.CurseState.KEY.get(self).target;
-            uuid = revenge == null ? null : revenge.toString();
         } else if (role == dev.hae.btt.role.Roles.MEDIUM) {
 
             key = "btt.hud.medium.target";

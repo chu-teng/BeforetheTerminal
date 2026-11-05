@@ -21,21 +21,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.objectweb.asm.Opcodes;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @Mixin(WorldBlackoutComponent.class)
 public abstract class WorldBlackoutMixin {
 
@@ -88,7 +73,6 @@ public abstract class WorldBlackoutMixin {
         this.bttEffectsActive = false;
         if (this.world instanceof ServerWorld sw && SeatAssignment.isBttMode(sw)) clearEffects(sw);
     }
-
 
     @Unique private void applyEffects(ServerWorld sw) {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(sw);

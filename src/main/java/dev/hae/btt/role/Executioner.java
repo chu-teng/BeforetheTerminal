@@ -12,7 +12,7 @@ import dev.hae.btt.component.PlayerState;
 import dev.hae.btt.victory.Endings;
 import dev.hae.btt.mixin.game.KillHookMixin;
 import dev.hae.btt.network.ActionReceiver;
-import dev.hae.btt.component.ExecutionerState;
+import dev.hae.btt.game.SeatAssignment;
 
 
 
@@ -74,16 +74,21 @@ public final class Executioner {
 
 
             dev.hae.btt.record.GameRecordManager.recordTalentUse(p, "executioner_target", null);
-            if (pc.executionerExecuted >= NEEDED) {
-                win(p, gwc, world);
-                return;
+            if (executed) {
+                var truth = Roles.realRole(gwc, victim);
+                var shown = truth;
+                if (Drunk.isDrunk(p)) {
+                    var wrong = Roles.allRoles().stream().filter(role -> role != truth).toList();
+                    if (!wrong.isEmpty()) shown = wrong.get(p.getRandom().nextInt(wrong.size()));
+                }
+                p.sendMessage(Text.translatable("btt.action.executioner.executed", victim.getName().getString(),
+                        SeatAssignment.displayName(shown).getString(), pc.executionerExecuted)
+                        .withColor(Roles.EXECUTIONER.color()), true);
+                if (pc.executionerExecuted >= NEEDED) win(p, gwc, world);
+            } else {
+                p.sendMessage(Text.translatable("btt.action.executioner.lost", victim.getName().getString())
+                        .withColor(Roles.EXECUTIONER.color()), true);
             }
-
-            p.sendMessage(Text.translatable(executed
-                            ? "btt.action.executioner.executed"
-                            : "btt.action.executioner.lost",
-                    victim.getName().getString(), pc.executionerExecuted)
-                    .withColor(Roles.EXECUTIONER.color()), true);
         }
     }
 

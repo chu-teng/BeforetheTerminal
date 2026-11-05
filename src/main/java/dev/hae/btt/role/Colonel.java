@@ -28,17 +28,14 @@ public final class Colonel {
         return game.isRunning() && game.getRole(player) == Roles.COLONEL && state.colonelFeigning && !state.isDrunk();
     }
 
-    public static boolean hypocrisy(PlayerEntity player) {
-        return player != null && SeatAssignment.isBttMode(player.getWorld())
-                && GameWorldComponent.KEY.get(player.getWorld()).isRunning() && dev.hae.btt.encounter.Backgrounds.isActive(player.getWorld(), dev.hae.btt.encounter.Backgrounds.HYPOCRISY);
-    }
+
     public static boolean pickupPrivilege(PlayerEntity player) {
-        return feigning(player) || hypocrisy(player) || Decoy.passengerFacade(player);
+        return feigning(player) || Decoy.passengerFacade(player);
     }
     public static boolean executionUser(PlayerEntity player, Identifier reason) {
         return player != null && (Decoy.passengerFacade(player) || Roles.isPassengerCampFor(GameWorldComponent.KEY.get(player.getWorld()), player)
                 || GameConstants.DeathReasons.GUN.equals(reason) && feigning(player)
-                || hypocrisy(player) && (GameConstants.DeathReasons.GUN.equals(reason) || DeathReasons.ARROW.equals(reason)));
+                );
     }
 
     public static boolean inPickup() { return PICKUP.get(); }

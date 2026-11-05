@@ -10,15 +10,14 @@ import dev.hae.btt.component.PlayerState;
 import dev.hae.btt.mixin.game.SpiritDamageMixin;
 import dev.hae.btt.role.Roles;
 
-
-
-
-
-
-
-
 public final class SpiritWalk {
     private SpiritWalk() {}
+    public static void beginTimed(ServerPlayerEntity player) {
+        var state = PlayerState.KEY.get(player);
+        state.sleepwalkTicks = 200;
+        state.dreamX = player.getX(); state.dreamY = player.getY(); state.dreamZ = player.getZ();
+        state.startProjecting(player.getX(), player.getY(), player.getZ());
+    }
 
 
     public static void toggle(ServerPlayerEntity user) {
@@ -52,6 +51,7 @@ public final class SpiritWalk {
 
     private static void returnToBodyInternal(ServerPlayerEntity user, Text message) {
         PlayerState pc = PlayerState.KEY.get(user);
+        pc.sleepwalkTicks = 0;
         pc.stopProjecting();
         if (GameWorldComponent.KEY.get(user.getWorld()).isRole(user, Roles.ASTRAL)) {
             AbilityState ability = AbilityState.KEY.get(user);
@@ -67,6 +67,13 @@ public final class SpiritWalk {
         if (!pc.isProjecting()) return;
         if (!GameFunctions.isPlayerAliveAndSurvival(user)) {
             pc.stopProjecting();
+            return;
+        }
+        if (gwc.isRole(user, Roles.MUYUUBYOU) && pc.sleepwalkTicks > 0 && --pc.sleepwalkTicks == 0) {
+            double x = pc.dreamX, y = pc.dreamY, z = pc.dreamZ;
+            pc.stopProjecting();
+            user.teleport(user.getServerWorld(), x, y, z, user.getYaw(), user.getPitch());
+            user.fallDistance = 0;
             return;
         }
         if (!gwc.isRole(user, Roles.MUYUUBYOU)) {

@@ -21,15 +21,6 @@ import net.minecraft.world.World;
 
 import java.util.List;
 
-
-
-
-
-
-
-
-
-
 public class PoisonNeedleItem extends Item {
 
     private static final int BASE_POISON_TICKS = GameConstants.getInTicks(0, 40);
@@ -59,6 +50,16 @@ public class PoisonNeedleItem extends Item {
         if (!GameFunctions.isPlayerAliveAndSurvival(victim)) return ActionResult.PASS;
         if (alchemist.distanceTo(victim) > RANGE) return ActionResult.PASS;
         if (ItemUse.cooling(alchemist, this)) return ActionResult.PASS;
+
+
+        var game = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world);
+        if (game.getRole(alchemist) == dev.hae.btt.role.Roles.LEGION) {
+            var kind = dev.hae.btt.role.Roles.kindOfReal(game, victim);
+            if (kind != null && kind.isNeutralKind()) {
+                GameFunctions.killPlayer(alchemist, true, alchemist, dev.hae.btt.combat.DeathReasons.FAILURE);
+                return ActionResult.SUCCESS;
+            }
+        }
 
         PlayerPoisonComponent poison = PlayerPoisonComponent.KEY.get(victim);
         int ticks = poison.poisonTicks > 0

@@ -48,7 +48,7 @@ public final class TargetedAbilities {
             return;
         }
         Role targetRole = gwc.getRole(target);
-        if (targetRole != null && Roles.kindOf(targetRole) == Roles.Kind.PRINCIPAL) {
+        if (targetRole != null && dev.hae.btt.role.Werewolf.matchesKind(gwc, user, target, Roles.Kind.PRINCIPAL)) {
 
 
             user.sendMessage(Text.translatable("btt.action.hunter.success", target.getName()).withColor(AbilityRules.roleColor(user)), true);
@@ -73,7 +73,7 @@ public final class TargetedAbilities {
             return;
         }
         Role targetRole = gwc.getRole(target);
-        if (targetRole != null && Roles.kindOf(targetRole) == Roles.Kind.PRINCIPAL) {
+        if (targetRole != null && dev.hae.btt.role.Werewolf.matchesKind(gwc, user, target, Roles.Kind.PRINCIPAL)) {
             Role mine = gwc.getRole(user);
             swapInventories(user, target);
             swapBalances(user, target);
@@ -128,15 +128,6 @@ public final class TargetedAbilities {
         pc.starMark = target.getUuidAsString();
         pc.sync();
         AbilityRules.setCooldown(ability, RoleDefs.CD_30S);
-    }
-
-
-    public static void revenge(ServerPlayerEntity user, ServerPlayerEntity target) {
-        AbilityState ability = AbilityState.KEY.get(user);
-        if (ability.cooldown > 0) return;
-        AbilityRules.setCooldown(ability, RoleDefs.CD_1MIN);
-        dev.hae.btt.component.CurseState.KEY.get(user).setTarget(target.getUuid());
-
     }
 
     public static void journalist(ServerPlayerEntity user, ServerPlayerEntity target) {
@@ -237,11 +228,15 @@ public final class TargetedAbilities {
         if (ability.cooldown > 0) return;
         if (user.distanceTo(target) > 6) return;
         if (target == user) return;
+        var effects = dev.hae.btt.component.GameState.KEY.get(user.getWorld()).roleEffects;
+        String defended = "lawyerDefended:" + target.getUuidAsString();
+        if (effects.getBoolean(defended)) return;
         if (!PlayerState.KEY.get(target).applyLawyerShield()) {
             return;
         }
+        effects.putBoolean(defended, true);
         dev.hae.btt.advancement.BttAdvancements.protection(user, target);
-        AbilityRules.setCooldown(ability, GameConstants.getInTicks(2, 0));
+        AbilityRules.setCooldown(ability, GameConstants.getInTicks(1, 0));
     }
 
 
@@ -281,6 +276,7 @@ public final class TargetedAbilities {
     }
 
     private static void witchBody(ServerPlayerEntity user, java.util.UUID selectedTarget) {
+        if (user.getUuid().equals(selectedTarget)) return;
         if (!AbilityRules.canAct(user)) return;
         var world = user.getWorld();
         GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
@@ -290,7 +286,7 @@ public final class TargetedAbilities {
         if (!gwc.isRunning() || !dev.doctor4t.wathe.game.GameFunctions.isPlayerAliveAndSurvival(user) || ability.cooldown > 0) return;
 
         java.util.UUID target = Puppeteer.redirectUuid(user, selectedTarget);
-        if (target == null || world.getPlayerByUuid(target) == null) return;
+        if (target == null || target.equals(user.getUuid()) || world.getPlayerByUuid(target) == null) return;
 
         if (Roles.hasCurrentRole(gwc, user, Roles.WITCH)) {
             if (ability.cooldown > 0) return;
@@ -303,6 +299,7 @@ public final class TargetedAbilities {
                 AbilityRules.recordUse(user, targetPlayer(world, target), Roles.WITCH);
                 return;
             }
+            Folklorist.targeted(user, java.util.List.of(targetPlayer(world, target)));
             CurseState.KEY.get(user).setTarget(target);
             Folklorist.onAnyoneAbility(user, gwc);
             AbilityRules.recordUse(user, targetPlayer(world, target), Roles.WITCH);

@@ -46,6 +46,9 @@ public abstract class BowItemMixin {
             cir.setReturnValue(TypedActionResult.fail(stack));
             return;
         }
+        if (!world.isClient() && dev.hae.btt.trait.TraitRules.weaponAttempt(user)) {
+            cir.setReturnValue(TypedActionResult.fail(stack)); return;
+        }
         user.setCurrentHand(hand);
         cir.setReturnValue(TypedActionResult.consume(stack));
     }
@@ -73,15 +76,6 @@ public abstract class BowItemMixin {
             arrow.pickupType = PersistentProjectileEntity.PickupPermission.DISALLOWED;
             ((BttArrowMarker) arrow).btt$markArrow(false, 0);
             world.spawnEntity(arrow);
-            if (dev.hae.btt.role.Colonel.hypocrisy(shooter)
-                    && !dev.hae.btt.role.Roles.isPassengerCampFor(GameWorldComponent.KEY.get(world), shooter)) {
-                for (int slot = 0; slot < shooter.getInventory().size(); slot++) {
-                    if (shooter.getInventory().getStack(slot) == stack) {
-                        shooter.dropItem(shooter.getInventory().removeStack(slot, 1), false, false);
-                        break;
-                    }
-                }
-            }
 
             if (dev.hae.btt.game.GameModes.isDebate(world)
                     && dev.hae.btt.role.Roles.kindOf(GameWorldComponent.KEY.get(world).getRole(shooter))

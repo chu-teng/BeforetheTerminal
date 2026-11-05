@@ -26,7 +26,6 @@ import java.util.function.Predicate;
 
 
 
-
 public final class ShopBuilder {
     private final World world;
     private final @Nullable PlayerEntity buyer;
