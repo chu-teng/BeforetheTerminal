@@ -87,6 +87,14 @@ public final class PlayerObservation {
             Role role = Roles.realRole(game, target);
             return GameFunctions.isPlayerAliveAndSurvival(target) && role != null ? role.color() : -1;
         }
+        if (GameFunctions.isPlayerAliveAndSurvival(viewer) && Roles.hasCurrentRole(game, viewer, Roles.PSYCHIC)
+                && dev.hae.btt.role.Psychic.target(viewer) == target) {
+            return Roles.PSYCHIC.color();
+        }
+        if (GameFunctions.isPlayerAliveAndSurvival(viewer) && GameFunctions.isPlayerAliveAndSurvival(target)
+                && Roles.hasCurrentRole(game, viewer, Roles.ALCHEMIST)
+                && dev.doctor4t.wathe.cca.PlayerPoisonComponent.KEY.get(target).poisonTicks > 0)
+            return Roles.ALCHEMIST.color();
         if (Traits.greenInstinct(viewer)
                 && GameFunctions.isPlayerAliveAndSurvival(target)) return GREEN;
         if (!Roles.isKillerCampFor(game, viewer) && dev.hae.btt.faction.Camps.sharesRoleCamp(game, viewer, Roles.GODFATHER))

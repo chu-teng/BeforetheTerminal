@@ -41,6 +41,6 @@ public abstract class InfiniteMoodMixin {
             self.setMood(1f);
             return;
         }
-        if (!dev.hae.btt.role.Guru.sheltered(player)) self.setMood(value);
+        if (!dev.hae.btt.role.Psychic.sheltered(player)) self.setMood(value);
     }
 }

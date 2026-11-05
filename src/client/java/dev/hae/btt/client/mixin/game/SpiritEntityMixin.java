@@ -15,7 +15,8 @@ public class SpiritEntityMixin {
     @Inject(method = "changeLookDirection", at = @At("HEAD"), cancellable = true)
     private void btt$spiritRedirectLook(double cursorDeltaX, double cursorDeltaY, CallbackInfo ci) {
         if ((Object)this == MinecraftClient.getInstance().player && MinecraftClient.getInstance().player != null
-                && dev.hae.btt.component.PlayerState.KEY.get(MinecraftClient.getInstance().player).trapped) { ci.cancel(); return; }
+                && (dev.hae.btt.component.PlayerState.KEY.get(MinecraftClient.getInstance().player).trapped
+                    || dev.hae.btt.item.AmuletItem.isCharging(MinecraftClient.getInstance().player))) { ci.cancel(); return; }
         if (SpiritCameraHandler.isActive() && (Object) this == MinecraftClient.getInstance().player) {
             SpiritCamera camera = SpiritCameraHandler.getSpiritCamera();
             if (camera != null) {

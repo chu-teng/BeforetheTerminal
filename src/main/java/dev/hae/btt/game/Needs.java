@@ -98,7 +98,7 @@ public final class Needs {
         java.util.List<String> completed = new java.util.ArrayList<>();
         for (int i = kinds.size() - 1; i >= 0; i--) {
             String kind = kinds.get(i);
-            if (!isRecovery(kind) && !dev.hae.btt.role.Guru.sheltered(player)) mood.setMood(mood.getMood() - GameConstants.MOOD_DRAIN);
+            if (!isRecovery(kind) && !dev.hae.btt.role.Psychic.sheltered(player)) mood.setMood(mood.getMood() - GameConstants.MOOD_DRAIN);
             boolean done = false;
             switch (kind) {
                 case "SOLITUDE" -> {
@@ -309,7 +309,7 @@ public final class Needs {
 
 
     public static int drainingCount(ServerPlayerEntity player) {
-        if (dev.hae.btt.role.Guru.sheltered(player)) return 0;
+        if (dev.hae.btt.role.Psychic.sheltered(player)) return 0;
         return (int) active(player).stream().filter(kind -> !isRecovery(kind)).count();
     }
 

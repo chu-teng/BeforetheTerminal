@@ -50,7 +50,7 @@ public final class GuideContent {
                     "Executions.", "Death.", "Epilogues.", "Endings."};
 
 
-    private static final Pattern ENTRY = Pattern.compile("^([ECPATMSO]\\d+[ABC]|\\d+)?\\s*【([^】]+)】\\s*(.*)$");
+    private static final Pattern ENTRY = Pattern.compile("^([ECPATMSOVDRL]\\d+[ABC]|\\d+)?\\s*【([^】]+)】\\s*(.*)$");
 
     private static final Pattern ENTRY_LABEL = Pattern.compile("^(\\d+)\\s*[、.．]\\s*([^：:]{1,16})[：:]\\s*(.*)$");
 

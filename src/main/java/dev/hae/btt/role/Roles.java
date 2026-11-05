@@ -240,7 +240,7 @@ public final class Roles {
     public static final Role COMEDIAN = register("comedian", 0xBDB76B, Faction.KILLER, Kind.ACCOMPLICE);
     public static final Role KHESHIG = register("kheshig", 0xD2B48C, Faction.KILLER, Kind.ACCOMPLICE);
     public static final Role PSYCHOPATH = register("psychopath", 0xF0E68C, Faction.KILLER, Kind.ACCOMPLICE);
-    public static final Role GURU = register("guru", 0xFFD700, Faction.KILLER, Kind.ACCOMPLICE);
+    public static final Role PSYCHIC = register("psychic", 0xFFD700, Faction.KILLER, Kind.ACCOMPLICE);
     public static final Role SAINT = register("saint", 0xFFA500, Faction.PASSENGER, Kind.MAD);
     public static final Role HERMIT = register("hermit", 0xFF4500, Faction.PASSENGER, Kind.MAD);
     public static final Role DELINQUENT = register("delinquent", 0xFF7F50, Faction.KILLER, Kind.MAD,
@@ -311,7 +311,7 @@ public final class Roles {
 
             PHILOSOPHER,
 
-            HIKIKOMORI, GURU,
+            HIKIKOMORI, PSYCHIC,
 
             LEGION, VOODOO,
 

@@ -50,7 +50,7 @@ public final class BttRecordHooks {
 
 
         BttEvents.SkillUsed.EVENT.register((user, target, skill) -> {
-            dev.hae.btt.role.Guru.observe(user);
+            dev.hae.btt.role.Psychic.observe(user);
             dev.hae.btt.role.Scribe.observe(user, "btt.skill." + skill.getPath());
             net.minecraft.nbt.NbtCompound extra = new net.minecraft.nbt.NbtCompound();
             extra.putBoolean("drunk", dev.hae.btt.component.PlayerState.KEY.get(user).isDrunk());

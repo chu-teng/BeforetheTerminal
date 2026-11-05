@@ -245,7 +245,8 @@ public class PlayerState implements AutoSyncedComponent, org.ladysnake.cca.api.v
 
     public String initialRole = "";
     public boolean trapped = false;
-    public boolean guruSheltered = false;
+    public boolean psychicSheltered = false;
+    public float amuletYaw, amuletPitch;
     public net.minecraft.item.ItemStack craftItem = net.minecraft.item.ItemStack.EMPTY;
     public long craftReadyAt = 0;
     public String initialWeapon = "";
@@ -812,7 +813,8 @@ public class PlayerState implements AutoSyncedComponent, org.ladysnake.cca.api.v
         priorRoleTicks = 0;
         initialRole = "";
         trapped = false;
-        guruSheltered = false;
+        psychicSheltered = false;
+        amuletYaw = amuletPitch = 0;
         craftItem = net.minecraft.item.ItemStack.EMPTY;
         craftReadyAt = 0;
         initialWeapon = "";
@@ -949,7 +951,7 @@ public class PlayerState implements AutoSyncedComponent, org.ladysnake.cca.api.v
         tag.putInt("priorRoleTicks", priorRoleTicks);
         tag.putString("initialRole", initialRole);
         tag.putBoolean("trapped", trapped);
-        tag.putBoolean("guruSheltered", guruSheltered);
+        tag.putBoolean("psychicSheltered", psychicSheltered);
         tag.put("craftItem", craftItem.encodeAllowEmpty(registryLookup));
         tag.putLong("craftReadyAt", craftReadyAt);
         tag.putString("initialWeapon", initialWeapon);
@@ -1107,7 +1109,7 @@ public class PlayerState implements AutoSyncedComponent, org.ladysnake.cca.api.v
         this.priorRole = tag.contains("priorRole") ? tag.getString("priorRole") : "";
         this.priorRoleTicks = tag.getInt("priorRoleTicks");
         this.trapped = tag.getBoolean("trapped");
-        this.guruSheltered = tag.getBoolean("guruSheltered");
+        this.psychicSheltered = tag.getBoolean("psychicSheltered");
         this.initialRole = tag.contains("initialRole") ? tag.getString("initialRole") : "";
         this.craftItem = net.minecraft.item.ItemStack.fromNbtOrEmpty(registryLookup, tag.getCompound("craftItem"));
         this.craftReadyAt = tag.getLong("craftReadyAt");

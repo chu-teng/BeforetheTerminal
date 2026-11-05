@@ -6,13 +6,15 @@ A social deduction game on an express train heading to the terminal.
 
 Before the Terminal is a multiplayer social deduction mod for Minecraft, requiring Wathe and HarpyModLoader.
 
+See the [guide](GUIDE.md) for detailed gameplay.
+
 **Development version: 0.7.2-h1.4.** Issue reports are welcome; please include versions, logs and reproduction steps.
 
 ## Gameplay
 
-- **Roles**: Seven categories: law enforcement and civilian passengers; principal and accomplice murderers; and traveler, solo and outsider neutrals. Passengers and murderers oppose each other. Solos pursue individual objectives, while outsiders form their own factions. See the [guide](GUIDE.md) for the current role roster.
+- **Roles**: Seven categories: passengers are Townsfolk and Villagers; murderers are Demons and Minions; neutrals are Travelers, Loners and Outsiders.
 
-- **Factions**: Passenger, murderer, solo and outsider factions. Outsider factions include the Cult, Garden, Coven, Mafia, Remnant and Legion.
+- **Factions**: Passengers, murderers, Loners and Outsiders. Passengers and murderers oppose each other; Loners pursue individual objectives, while Outsiders form their own factions.
 
 - **Modes**: Script (6–14 players), Draft (6–22), Memory, Mob and Custom (6 or more). Custom combines base and optional rules; encounters add randomly chosen special rules outside Mob mode.
 
@@ -26,7 +28,7 @@ Before the Terminal is a multiplayer social deduction mod for Minecraft, requiri
 
 ## Playing
 
-Requires Minecraft **1.21.1**, Java **21** and Fabric Loader **0.17.2+**. Install BTT and its required dependencies on both client and server, using matching versions.
+Requires Minecraft **1.21.1**, Java **21** and Fabric Loader **0.17.2+**. Install BTT and its required dependencies on both client and server, using matching versions. MidnightLib is bundled by Wathe and does not require a separate download for normal play.
 
 | Dependency                                                | Version                                                           |
 | --------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -37,13 +39,13 @@ Requires Minecraft **1.21.1**, Java **21** and Fabric Loader **0.17.2+**. Instal
 | YetAnotherConfigLib                                       | 3.8.0+1.21.1-fabric or a compatible newer release                 |
 | Simple Voice Chat                                         | Recommended; required for voice-based abilities and communication |
 
-**Maps are not included.** Supply a map and its data pack separately. For example, the Harpy Express map requires rooms and spawn points to be added to its data pack. Community maps are recommended. Place a control panel at the front of the train and a lookout seat at the rear, along with one or two sets each of chandelier and wire mechanisms in the corridors; these are required for normal gameplay.
+**Maps are not included.** Supply a map and its data pack separately. For example, the Harpy Express map requires rooms and spawn points to be added to its data pack. Community maps are recommended. Place a control panel at the front and a lookout seat at the rear. Corridors need one or two sets of chandelier and wire mechanisms, one or two accessible pools (players normally cannot jump or swim), and note blocks. These facilities are required for normal gameplay. Note plates in all rooms and Firecracker plates in some rooms are recommended.
 
 Right-click the compass to select the mode, script and encounter. Use `/maps vote` to start a map vote, or `/maps vote <id>` to select a registered map directly. Pull the whistle to start a round, or use `/maps start` (using the selected next-round mode) or `/wathe:start btt:before_the_terminal wathe:harpy_express_night` as an administrator.
 
-Replay controls are under `/btt replay [play|stop]`; map-specific settings are under `/maps`. MidnightLib is bundled by Wathe and does not require a separate download for normal play.
+Replay controls are under `/btt replay [play|stop]`; map-specific settings are under `/maps`. Use `/forceRole` and `/forceModifier` to specify roles and traits for the next round.
 
-Default keys: **G** for abilities, **E** for inventory and available shops, and **K** for the guide. Use `/forceRole` and `/forceModifier` to specify roles and traits for the next round.
+Default keys: **G** for abilities, **E** for inventory and available shops, and **K** for the guide.
 
 ## Building
 

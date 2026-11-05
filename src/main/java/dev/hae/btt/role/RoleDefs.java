@@ -261,7 +261,7 @@ public final class RoleDefs {
 
         def(Roles.PHILOSOPHER).untargeted(RoleSelectionAbilities::philosopher).initialize(p -> initialAbilityCd(p, CD_1MIN));
         def(Roles.HIKIKOMORI).wake(LucidDream::begin);
-        def(Roles.GURU).kit(p -> giveWithInitialCd(p, BttItems.AMULET)).onTick(Guru::tick);
+        def(Roles.PSYCHIC).kit(p -> giveWithInitialCd(p, BttItems.AMULET)).onTick(Psychic::tick);
 
 
         def(Roles.PUPPETEER).multiTargeted(RoleDef.distinctTargets(2, 2), Puppeteer::manipulate).initialize(p -> initialAbilityCd(p, CD_1MIN));

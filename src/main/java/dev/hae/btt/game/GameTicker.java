@@ -55,7 +55,7 @@ public final class GameTicker {
                 state.closeConsole();
             }
         }
-        dev.hae.btt.role.Guru.refresh(serverWorld);
+        dev.hae.btt.role.Psychic.refresh(serverWorld);
         if (!(gwc.getGameMode() instanceof BeforeTheTerminalGameMode)) return;
         dev.hae.btt.role.LucidDream.tick(serverWorld);
         dev.hae.btt.role.Smuggler.tickWorld(serverWorld);
