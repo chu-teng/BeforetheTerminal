@@ -45,9 +45,9 @@ public final class GuideContent {
 
 
     private static final String[] RULE_LABELS =
-            {"类别", "席位", "阵营", "理智", "狂气", "道具", "能力", "处决", "死亡", "尾声", "结局",
+            {"类别", "席位", "阵营", "理智", "需求", "狂气", "道具", "能力", "醉酒", "转换", "处决", "死亡", "尾声", "结局",
                     "Categories.", "Seats.", "Factions.", "Sanity.", "Madness.", "Items.", "Abilities.",
-                    "Executions.", "Death.", "Epilogues.", "Endings."};
+                    "Needs.", "Drunkenness.", "Conversion.", "Executions.", "Death.", "Epilogues.", "Endings."};
 
 
     private static final Pattern ENTRY = Pattern.compile("^([ECPATMSOVDRL]\\d+[ABC]|\\d+)?\\s*【([^】]+)】\\s*(.*)$");
@@ -198,6 +198,7 @@ public final class GuideContent {
                 if (label != null) {
                     out.add(new Line(Kind.HEADING, label, ACCENT));
                     String rest = line.substring(label.length()).trim();
+                    if (rest.startsWith("。")) rest = rest.substring(1).stripLeading();
                     if (!rest.isEmpty()) out.add(new Line(Kind.BODY, rest, INK));
                 } else {
                     out.add(new Line(Kind.BODY, line, INK));
@@ -249,7 +250,7 @@ public final class GuideContent {
     private static String ruleLabel(String line) {
         for (String label : RULE_LABELS) {
             if (line.startsWith(label) && line.length() > label.length()
-                    && (line.charAt(label.length()) == ' ' || line.charAt(label.length()) == '\u3000')) {
+                    && (line.charAt(label.length()) == ' ' || line.charAt(label.length()) == '\u3000' || line.charAt(label.length()) == '。')) {
                 return label;
             }
         }

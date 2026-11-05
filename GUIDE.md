@@ -42,6 +42,8 @@ You know your role, traits and the current encounter. You wake in your room with
 
 **Drunkenness.** You are not told when you become drunk. Skills, talents and shops fail: non-information effects disappear and direct or indirect information becomes incorrect. Drunk murderers cannot spend madness. Equipment, instinct, and obvious abilities usable unconditionally at any time remain functional, including some actions bound to the skill key.
 
+**Conversion.** When a Townsperson joins another faction after having dropped their gun or bow, they receive it again; returning to the passenger faction removes it. Other roles cannot join a Loner faction. A Loner joining another faction can no longer win through their Loner objective, but may continue using their abilities after meeting it. Some roles perceive a role different from their technical role; this is a perceived-role override. Some use another role's abilities, and some temporarily become another role. The role first assigned to them is their initial role.
+
 ### Setting
 
 Rooms contain a bed and a plate with a Note; first-class rooms also contain Firecrackers.

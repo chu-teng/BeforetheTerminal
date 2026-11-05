@@ -37,7 +37,8 @@ public abstract class CrossbowPresetMixin {
     private void btt$crossbowPreset(ItemStack stack, World world, Entity entity, int slot, boolean selected, CallbackInfo ci) {
         if (!((Object) this instanceof CrossbowItem)) return;
         if (!SeatAssignment.isBttMode(world)) return;
-        if (stack.contains(DataComponentTypes.LORE)) return;
+        var lore = stack.get(DataComponentTypes.LORE);
+        if (lore != null && !lore.lines().isEmpty()) return;
         var registry = world.getRegistryManager().get(RegistryKeys.ENCHANTMENT);
         if (registry != null) {
             registry.getEntry(Enchantments.MULTISHOT).ifPresent(entry -> stack.addEnchantment(entry, 1));
@@ -46,7 +47,6 @@ public abstract class CrossbowPresetMixin {
         stack.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, false);
         stack.set(DataComponentTypes.HIDE_ADDITIONAL_TOOLTIP, Unit.INSTANCE);
         stack.set(DataComponentTypes.LORE, new LoreComponent(List.of(
-                Text.translatable("item.btt.crossbow.desc1").setStyle(Style.EMPTY.withItalic(false).withColor(0xAAAAAA)),
-                Text.translatable("item.btt.crossbow.desc2").setStyle(Style.EMPTY.withItalic(false).withColor(0xAAAAAA)))));
+                Text.translatable("item.btt.crossbow.desc").setStyle(Style.EMPTY.withItalic(false).withColor(0xAAAAAA)))));
     }
 }

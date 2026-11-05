@@ -11,17 +11,12 @@ import net.minecraft.text.Text;
 
 
 
-
-
-
-
-
-
-
 public final class OpeningNotices {
     private OpeningNotices() {}
 
     private static final int RESEND_INTERVAL = 20;
+
+    private static final int WELCOME_TEXT_TICKS = 180;
 
     public static void enqueue(ServerPlayerEntity player, Text text) {
         var state = PlayerState.KEY.get(player);
@@ -42,11 +37,12 @@ public final class OpeningNotices {
         long until = GameState.KEY.get(player.getWorld()).roleEffects.getLong("openingUntil");
 
         if (!GameFunctions.isPlayerAliveAndSurvival(player) || now >= until) {
+            if (state.openingMessageAt != 0) player.sendMessage(Text.empty(), true);
             state.openingMessages.clear();
             state.openingMessageAt = 0;
             return;
         }
-        if (now < state.openingMessageAt) return;
+        if (now < until - WELCOME_TEXT_TICKS || now < state.openingMessageAt) return;
         int index = state.openingMessages.size() == 1
                 ? 0 : (int) ((now / RESEND_INTERVAL) % state.openingMessages.size());
         var text = Text.Serialization.fromJson(state.openingMessages.get(index), player.getRegistryManager());
